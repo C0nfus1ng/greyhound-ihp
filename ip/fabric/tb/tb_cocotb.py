@@ -10,7 +10,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 from cocotb.triggers import Timer, Edge, RisingEdge, FallingEdge
 from cocotb.regression import TestFactory
-from cocotb.runner import get_runner
+from cocotb_tools.runner import get_runner
 
 random.seed()
 
@@ -34,9 +34,10 @@ run_all_ones    = False
 run_counter     = False
 run_passthrough = False
 run_sram        = False
-run_bram        = True
+run_bram        = False
 run_peripheral  = False
 run_custom_instruction = False
+run_partial     = True
 
 def set_fabric_io(dut, value):
     value = value & 0xFFFFFFFF
@@ -109,15 +110,15 @@ async def zero_bitstream(dut):
     dut.bitstream_data_i.value = 1<<DESYNC_FLAG
     await ClockCycles(dut.clk_i, 1)
 
-async def upload_bitstream(dut, name):
+async def upload_bitstream(dut, name, file_name=None):
     """
     Read data until start of bitstream is detected
     Write data until desync bit is in header
     """
 
-    print(f'Uploading bitstream: {name}')
+    print(f'Uploading bitstream: {name}/{name if file_name is None else file_name}.bit')
 
-    with open(f'../../user_designs/{name}/{name}.bit', 'br') as f:
+    with open(f'../../user_designs/{name}/{name if file_name is None else file_name}.bit', 'br') as f:
 
         # Wait for start of bitstream
         while (data := f.read(4)) != None:
@@ -531,16 +532,55 @@ async def test_custom_instruction(dut):
 
     await ClockCycles(dut.clk_i, 10)
 
-if __name__ == "__main__":
+@cocotb.test(skip=run_partial==False)
+async def test_partial(dut):
+    """Load partial bitstreams"""
 
+    # TODO Partial config flow: 
+    # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
+    # 2) Partition by editing bel.v2.txt and note all used pips of static parts
+    # 3) Produce static bitstream as base for the FPGA
+    # 4) Edit bel.v2.txt for the slot to create and remove used routes of the static part from pips file
+    # 5) After PNR add static routes crossing/supplying slot to its fasm file (Don't forget lut for data out)
+    # 6) Generate slot bitstream, extract the wanted region as -part
+    # 7) Start over from 4 for other slots
+    # 8) When slots are symetrical allow changing the header to change uploaded slot
+
+    # Start the clock
+    c = Clock(dut.clk_i, 10, 'ns')
+    await cocotb.start(c.start())
+
+    # Assign default values
+    await set_defaults(dut)
+    await reset_design(dut)
+    dut._log.info("Reset done")
+    
+    await upload_bitstream(dut, 'partial', 'static')
+
+    await ClockCycles(dut.clk_i, 100)
+
+    await upload_bitstream(dut, 'partial', 'slot0-part')
+    await ClockCycles(dut.clk_i, 100)
+
+    await upload_bitstream(dut, 'partial', 'slot1-part')
+    await ClockCycles(dut.clk_i, 100)
+
+    await upload_bitstream(dut, 'partial', 'slot0-part')
+    await ClockCycles(dut.clk_i, 100)
+
+if __name__ == "__main__":
+    testbench_path = Path(__file__).resolve().parent
     sim = os.getenv("SIM", "icarus")
-    pdk_root = os.getenv("PDK_ROOT", Path("~/.ciel").expanduser())
+    pdk_root = os.getenv("PDK_ROOT", testbench_path / '../../../IHP-Open-PDK')
     pdk = os.getenv("PDK", "ihp-sg13g2")
     scl = os.getenv("SCL", "sg13g2_stdcell")
     gl = os.getenv("GL", None)
 
     proj_path = Path(__file__).resolve().parent
     
+    print(testbench_path)
+    print(pdk_root)
+
     # Add fabric wrapper, fabric config and tb wrapper
     sources = [
         '../rtl/fabric_wrapper.sv',
@@ -548,12 +588,12 @@ if __name__ == "__main__":
         'tb_icarus.sv',
         
         # SRAM models
-        proj_path / '../../' / "RM_IHPSG13_1P_1024x32_c2_bm_bist" / "verilog" / "RM_IHPSG13_1P_1024x32_c2_bm_bist.v",
-        proj_path / '../../' / "RM_IHPSG13_1P_1024x32_c2_bm_bist" / "verilog" / "RM_IHPSG13_1P_core_behavioral_bm_bist.v",
-
+        Path(pdk_root) / pdk / "libs.ref" / "sg13g2_sram" / "verilog" / "RM_IHPSG13_1P_1024x32_c2_bm_bist.v",
+        Path(pdk_root) / pdk / "libs.ref" / "sg13g2_sram" / "verilog" / "RM_IHPSG13_1P_core_behavioral_bm_bist.v",
+        
         # BRAM models
-        proj_path / '../../' / "RM_IHPSG13_2P_1024x16_c2_bm_bist" / "verilog" / "RM_IHPSG13_2P_1024x16_c2_bm_bist.v",
-        proj_path / '../../' / "RM_IHPSG13_2P_1024x16_c2_bm_bist" / "verilog" / "RM_IHPSG13_2P_core_behavioral_bm_bist_ideal.v",
+        Path(pdk_root) / pdk / "libs.ref" / "sg13g2_sram" / "verilog" / "RM_IHPSG13_2P_1024x16_c2_bm_bist.v",
+        Path(pdk_root) / pdk / "libs.ref" / "sg13g2_sram" / "verilog" / "RM_IHPSG13_2P_core_behavioral_bm_bist_ideal.v",
 
         # SCL models (for the clock gate)
         Path(pdk_root) / pdk / "libs.ref" / scl / "verilog" / f"{scl}.v"

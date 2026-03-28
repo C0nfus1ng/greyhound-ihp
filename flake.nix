@@ -40,6 +40,7 @@
               cocotbext-spi = callPythonPackage ./nix/cocotbext-spi.nix { };
               cocotbext-uart = callPythonPackage ./nix/cocotbext-uart.nix { };
               cocotbext-jtag = callPythonPackage ./nix/cocotbext-jtag.nix { };
+              fasm = callPythonPackage ./nix/fasm.nix { };
             }
           ))
           ];
@@ -82,6 +83,7 @@
           cocotb-bus
           cocotbext-jtag
           standard-telnetlib
+          fasm
         ];
       }) {};
     });

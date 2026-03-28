@@ -46,7 +46,14 @@ module tb;
     wire  [3:0] fabric_warmboot_slot_o;
     wire        fabric_warmboot_reset_i;
     
-    assign fabric_warmboot_reset_i = busy_o;
+
+    logic [1:0] tmp;
+    always_ff @(posedge clk_i) begin
+        tmp[0] <= busy_o;
+        tmp[1] <= tmp[0];
+    end
+    assign fabric_warmboot_reset_i = tmp[1] & !tmp[0];
+    //assign fabric_warmboot_reset_i = busy_o;
 
     // CPU_IRQ
     wire  [3:0] fabric_irq_o;
