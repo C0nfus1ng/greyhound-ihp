@@ -40,6 +40,8 @@
               cocotbext-spi = callPythonPackage ./nix/cocotbext-spi.nix { };
               cocotbext-uart = callPythonPackage ./nix/cocotbext-uart.nix { };
               cocotbext-jtag = callPythonPackage ./nix/cocotbext-jtag.nix { };
+              FABulous-bit-gen = callPythonPackage ./nix/FABulous-bit-gen.nix { };
+              fabulous-fpga = callPythonPackage ./nix/fabulous-fpga.nix { };
               fasm = callPythonPackage ./nix/fasm.nix { };
             }
           ))
@@ -83,6 +85,8 @@
           cocotb-bus
           cocotbext-jtag
           standard-telnetlib
+          FABulous-bit-gen
+          fabulous-fpga
           fasm
         ];
       }) {};

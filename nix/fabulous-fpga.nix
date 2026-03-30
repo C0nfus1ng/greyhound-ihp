@@ -1,0 +1,83 @@
+{
+  fetchFromGitHub,
+  buildPythonPackage,
+  setuptools,
+  setuptools-scm,
+  python-dotenv,
+  loguru,
+  requests,
+  cmd2,
+  bitarray,
+  pydantic,
+  pydantic-settings,
+  packaging,
+  typer,
+  gnureadline,
+  FABulous-bit-gen,
+  pyyaml,
+  click,
+  version ? "v2.0.0b4",
+  rev ? null,
+  sha256 ? "sha256-u5yjombMBFUo/CQZQyXzFiZzzbTqbsnG7dVYFpExU44=",
+}:
+let
+
+  self = buildPythonPackage {
+    pname = "FABulous";
+    format = "pyproject";
+    inherit version;
+
+    src = fetchFromGitHub {
+      owner = "FPGA-Research";
+      repo = "FABulous";
+      rev = if rev == null then version else rev;
+      inherit sha256;
+    };
+
+    build-system = [
+      setuptools
+      setuptools-scm
+    ];
+
+    dependencies = [
+      python-dotenv
+      loguru
+      requests
+      cmd2
+      bitarray
+      pydantic
+      pydantic-settings
+      packaging
+      typer
+      gnureadline
+      FABulous-bit-gen
+      pyyaml
+      click
+    ];
+
+    # Remove the executables as they make problems with Nix?
+    postPatch = ''
+      substituteInPlace pyproject.toml \
+        --replace "FABulous = \"FABulous.FABulous:main\"" ""
+      substituteInPlace pyproject.toml \
+        --replace "fabulous = \"FABulous.FABulous:main\"" ""
+      substituteInPlace pyproject.toml \
+        --replace "bit_gen = \"FABulous.fabric_cad.bit_gen:bit_gen\"" ""
+
+      substituteInPlace pyproject.toml \
+        --replace "pydantic>=2.12.1" "pydantic>=2.11.1"
+      substituteInPlace pyproject.toml \
+        --replace "pydantic-settings>=2.10.1" "pydantic-settings>=2.8.1"
+      substituteInPlace pyproject.toml \
+        --replace "typer>=0.20.0" "pydantic-settings>=0.15.2"
+      substituteInPlace pyproject.toml \
+        --replace "packaging>=25.0" "packaging>=24.2"
+      substituteInPlace pyproject.toml \
+        --replace "typer>=0.16.1" "typer>=0.15.2"
+      substituteInPlace pyproject.toml \
+        --replace "\"librelane>=3.0.0.dev43\"," ""
+    '';
+
+  };
+in
+self

@@ -5,6 +5,8 @@ import argparse
 import csv
 import re
 import yaml
+from loguru import logger
+from FABulous.fabric_generator.parser import parse_csv
 
 from fasm import (
     parse_fasm_filename,
@@ -16,19 +18,19 @@ from fasm import (
 class Slot:
     start = 0
     end = 0
-    slot_name = ""
-    slot_format = ""
+    name = ""
+    format_ = ""
 
-    def __init__(self, start, end, slot_name, slot_format):
-        self.start       = start
-        self.end         = end
-        self.slot_name   = slot_name
-        self.slot_format = slot_format
+    def __init__(self, start, end, name, format_):
+        self.start   = start
+        self.end     = end
+        self.name    = name
+        self.format_ = format_
 
     @classmethod
     def to_yaml(cls, dumper, data):
         return dumper.represent_mapping("tag:yaml.org,2002:map",
-                {"Start": data.start, "End": data.end, "Name": data.slot_name, "Format": data.slot_format})
+                {"Start": data.start, "End": data.end, "Name": data.name, "Format": data.format_})
 
 class Point:
     x = 0
@@ -44,51 +46,44 @@ class Point:
                 {"x": data.x, "y": data.y})
 
 class FabricLayout:
-    layout = list(list())
-    layout_format = list(list())
+    fabric = None
+    layout_format = dict()
     length = 0
     height = 0
-    longest_tile_name = 6
+    tile_name_max_length = 6
     last_color = 0
     slots = list()
-    connection_point = list()
+    points = list()
 
-    def getColorString(self): # Cycle colors 
+    def get_color_string(self): # Cycle colors 
         color = self.last_color+1
         self.last_color = color%6
         return f"\033[3{color}m"
 
-    def createSlot(self, start, end, slot_name, slot_format=None):
-        if slot_format:
-            color = slot_format
+    def create_slot(self, start, end, name, format_=None):
+        if format_:
+            color = format_
         else:
-            color = self.getColorString()
+            color = self.get_color_string()
         
         for col in range(start, end+1):
             for row in range(self.height):
-                self.layout_format[row][col] += color
-        slot = Slot(start, end, slot_name, color)
+                self.layout_format[f"X{col}Y{row}"] += color
+        slot = Slot(start, end, name, color)
         self.slots.append(slot)
 
-    def stripSlot(self, slot):
+    def strip_slot(self, slot):
         for col in range(slot.start, slot.end+1):
             for row in range(self.height):
-                self.layout_format[row][col] = self.layout_format[row][col].replace(slot.slot_format, "")
+                self.layout_format[f"X{col}Y{row}"] = self.layout_format[f"X{col}Y{row}"].replace(slot.format_, "")
 
         self.slots.remove(slot)
 
     @classmethod
     def to_yaml(cls, dumper, data):
-        layout_format_dict = {}
-
-        for row in range(len(data.layout_format)):
-            for col in range(len(data.layout_format[row])):
-                if data.layout_format[row][col]:
-                    layout_format_dict[f"X{col}Y{row}"] = data.layout_format[row][col]
-
         return dumper.represent_mapping("tag:yaml.org,2002:map",
-                {"Length": data.length, "Height": data.height, "Column Length": data.longest_tile_name, 
-                 "Last Color": data.last_color, "Slots": data.slots, "Points": data.connection_point, "Format": layout_format_dict})
+                {"Length": data.length, "Height": data.height, "Column Length": data.tile_name_max_length, 
+                 "Last Color": data.last_color, "Slots": data.slots, "Points": data.points, "Format": data.layout_format})
 
 def create_partition(layout: FabricLayout):
     print("Slots can only be vertical")
@@ -96,21 +91,21 @@ def create_partition(layout: FabricLayout):
     while True:
         slot_type = input("Slot type (static/dynamic): ")
         if slot_type == "dynamic":
-            slot_name = f"Slot{len(layout.slots):2}"
+            name = f"Slot{len(layout.slots):2}"
             break
         elif slot_type == "static":
-            slot_name = f"Static"
+            name = f"Static"
             break
 
     for slot in layout.slots:
-        if slot_name == slot.slot_name:
+        if name == slot.name:
             print("This slot already exists, modify it with the e command")
             print()
             return
 
     first_column = int(input("First column: "))
     last_column = int(input("Last column: "))
-    layout.createSlot(first_column, last_column, slot_name)
+    layout.create_slot(first_column, last_column, name)
     print()
 
 def delete_partition(layout: FabricLayout):
@@ -122,16 +117,17 @@ def delete_partition(layout: FabricLayout):
             return
 
         for slot in layout.slots:
-            if user_input == slot.slot_name:
+            if user_input == slot.name:
                 edit_slot = slot
                 break
 
         if edit_slot:
             break
 
-    print(f"Deleting slot {edit_slot.slot_name}")
+    print(f"Deleting slot {edit_slot.name}")
+
     # Remove slot
-    layout.stripSlot(edit_slot)
+    layout.strip_slot(edit_slot)
 
 def edit_partition(layout: FabricLayout):
     while True:
@@ -142,21 +138,22 @@ def edit_partition(layout: FabricLayout):
             return
 
         for slot in layout.slots:
-            if user_input == slot.slot_name:
+            if user_input == slot.name:
                 edit_slot = slot
                 break
 
         if edit_slot:
             break
 
-    print(f"Editing slot {edit_slot.slot_name}")
+    print(f"Editing slot {edit_slot.name}")
     print("Slots can only be vertical")
+
     # Remove slot
-    layout.stripSlot(edit_slot)
+    layout.strip_slot(edit_slot)
 
     first_column = int(input("First column: "))
     last_column = int(input("Last column: "))
-    layout.createSlot(first_column, last_column, edit_slot.slot_name, edit_slot.slot_format)
+    layout.create_slot(first_column, last_column, edit_slot.name, edit_slot.format_)
     print()
 
 def create_connection(layout: FabricLayout):
@@ -168,8 +165,8 @@ def create_connection(layout: FabricLayout):
         print()
         return
 
-    layout.connection_point.append(Point(slot_connection[0], slot_connection[1]))
-    layout.layout_format[slot_connection[1]][slot_connection[0]] += "\033[1m\033[3m"
+    layout.points.append(Point(slot_connection[0], slot_connection[1]))
+    layout.layout_format[f"X{slot_connection[0]}Y{slot_connection[1]}"] += "\033[1m\033[3m"
     print()
 
 def delete_connection(layout: FabricLayout):
@@ -180,7 +177,7 @@ def delete_connection(layout: FabricLayout):
         if user_input == "x":
             return
 
-        for point in layout.connection_point:
+        for point in layout.points:
             if user_input == f"X{point.x}Y{point.y}":
                 edit_point = point
                 break
@@ -189,8 +186,8 @@ def delete_connection(layout: FabricLayout):
             break
 
     print(f"Deleting connection point X{edit_point.x}Y{point.y}")
-    layout.layout_format[edit_point.y][edit_point.x] = layout.layout_format[edit_point.y][edit_point.x].replace("\033[1m\033[3m", "")
-    layout.connection_point.remove(edit_point)
+    layout.layout_format[f"X{edit_point.x}Y{edit_point.y}"] = layout.layout_format[f"X{edit_point.x}Y{edit_point.y}"].replace("\033[1m\033[3m", "")
+    layout.points.remove(edit_point)
     
 def edit_connection(layout: FabricLayout):
     while True:
@@ -200,7 +197,7 @@ def edit_connection(layout: FabricLayout):
         if user_input == "x":
             return
 
-        for point in layout.connection_point:
+        for point in layout.points:
             if user_input == f"X{point.x}Y{point.y}":
                 edit_point = point
                 break
@@ -209,8 +206,8 @@ def edit_connection(layout: FabricLayout):
             break
 
     print(f"Editing connection point X{edit_point.x}Y{edit_point.y}")
-    layout.layout_format[edit_point.y][edit_point.x] = layout.layout_format[edit_point.y][edit_point.x].replace("\033[1m\033[3m", "")
-    layout.connection_point.remove(edit_point)
+    layout.layout_format[f"X{edit_point.x}Y{edit_point.y}"] = layout.layout_format[f"X{edit_point.x}Y{edit_point.y}"].replace("\033[1m\033[3m", "")
+    layout.points.remove(edit_point)
     create_connection(layout)
 
 def write_config(layout: FabricLayout, file_path = None):
@@ -233,7 +230,7 @@ def write_config(layout: FabricLayout, file_path = None):
                 return
 
     with open(file_path, "w") as file:
-        yaml.dump(fabric_layout, file, sort_keys=False)
+        yaml.dump(layout, file, sort_keys=False)
 
     print("Wrote config successfully")
 
@@ -252,61 +249,75 @@ def load_config(layout: FabricLayout, file_path = None):
             elif user_input == "n":
                 return
 
-    with open(file_path, 'r') as file:
-        layout_config = yaml.safe_load(file)
-
-    if layout.height != layout_config["Height"] or layout.length != layout_config["Length"] or layout.longest_tile_name != layout_config["Column Length"]:
-        print("Loading file failed. Size Mismatch")
+    try:
+        with open(file_path, 'r') as file:
+            layout_config = yaml.safe_load(file)
+    except FileNotFoundError:
+        print("File to load not found")
+        return
+    except yaml.parser.ParserError:
+        print("File cannot be parsed")
         return
 
-    # Load color
-    layout.last_color = layout_config["Last Color"]
+    if layout_config == None:
+        print("File to load is empty")
+        return
 
-    # Load slots
-    layout.slots.clear()
-    for slot in layout_config["Slots"]:
-        layout.slots.append(Slot(slot["Start"], slot["End"], slot["Name"], slot["Format"]))
-    
-    # Load Points
-    layout.connection_point.clear()
-    for point in layout_config["Points"]:
-        layout.connection_point.append(Point(point["x"], point["y"]))
+    if not isinstance(layout_config, dict):
+        print("File format is not supported")
+        return
 
-    # Load format
-    for row in range(layout.height):
-        for col in range(layout.length):
-            try:
-                layout.layout_format[row][col] = layout_config["Format"][f"X{col}Y{row}"]
-            except:
-                layout.layout_format[row][col] = "\033[0m"
+    try:
+        if layout.height != layout_config["Height"] or layout.length != layout_config["Length"] or layout.tile_name_max_length != layout_config["Column Length"]:
+            print("Loading file failed. Size Mismatch")
+            return
 
-    #print(layout_config)
+        # Load color
+        layout.last_color = layout_config["Last Color"]
+
+        # Load slots
+        layout.slots.clear()
+        for slot in layout_config["Slots"]:
+            layout.slots.append(Slot(slot["Start"], slot["End"], slot["Name"], slot["Format"]))
+        
+        # Load Points
+        layout.points.clear()
+        for point in layout_config["Points"]:
+            layout.points.append(Point(point["x"], point["y"]))
+
+        # Load format
+        for row in range(layout.height):
+            for col in range(layout.length):
+                layout.layout_format = layout_config["Format"]
+    except KeyError:
+        print("File has missing keys")
+        return
 
 def print_layout(layout: FabricLayout):
     # Slot overview
     for slot in layout.slots:
-        first = 10 + slot.start*layout.longest_tile_name
-        last = first - 2 + (slot.end-slot.start+1)*layout.longest_tile_name
+        first = 10 + slot.start*layout.tile_name_max_length
+        last = first - 2 + (slot.end-slot.start+1)*layout.tile_name_max_length
         mid = first + int((last-first)/2)-4
-        print(slot.slot_format + " "*(first) + "|<" + " "*(mid-first) + slot.slot_name + " "*(last-mid-len(slot.slot_name)-2) + ">|\033[0m")
+        print(slot.format_ + " "*(first) + "|<" + " "*(mid-first) + slot.name + " "*(last-mid-len(slot.name)-2) + ">|\033[0m")
 
     # Table
     print("Row/Col | ", end='')
     for col in range(layout.length):
-        print("%*.*s" % (-layout.longest_tile_name, layout.longest_tile_name, f"X{col:02}"), end='')
+        print("%*.*s" % (-layout.tile_name_max_length, layout.tile_name_max_length, f"X{col:02}"), end='')
 
     print() # Newline
-    print("-"*(10+layout.length*layout.longest_tile_name))
+    print("-"*(10+layout.length*layout.tile_name_max_length))
     for row in range(layout.height):
         print("%-7.7s | " % (f"Y{row:02}"), end='')
         for col in range(layout.length):
-            if layout.layout_format[row][col] != "":
-                print(layout.layout_format[row][col], end='')
-                print("%*.*s" % (-layout.longest_tile_name, layout.longest_tile_name, layout.layout[row][col]), end='')
-                print("\033[0m", end='')
-            else:
-                print("%*.*s" % (-layout.longest_tile_name, layout.longest_tile_name, layout.layout[row][col]), end='')
+            print(layout.layout_format[f"X{col}Y{row}"], end='')
+            print("%*.*s" % (-layout.tile_name_max_length, layout.tile_name_max_length, layout.fabric.tile[row][col].name if layout.fabric.tile[row][col] else "NULL"), end='')
+            print("\033[0m", end='')
         print()
+
+def file_gen(layout: FabricLayout):
+    print("hi")
 
 def print_help():
     print("Help:")
@@ -315,7 +326,7 @@ def print_help():
     print("d to delete an existing slot or connection point")
     print("q to quit")
     print("p to view config")
-    print("l to load another config")
+    print("l to load/use another config")
     print("w to write the config")
     print("h for this help text")
 
@@ -331,31 +342,26 @@ def select_partition_connection(layout: FabricLayout, part_function, con_functio
             con_function(layout)
             break
 
-def slot_part(generate_files, config_path):
-    # Partition eFPGA
-    # Write static bel and pips
+# Initialize the config structure
+def init_config(layout: FabricLayout, config_path):
     fabulous_fabric = environ.get("FABULOUS_FABRIC", "../../fabric.csv")
-    fabric_layout = FabricLayout()
 
-    with open(fabulous_fabric, newline='') as fabric_file:
-        fabric_layout_reader = csv.reader(fabric_file)
-        read_fabric_layout = False
-        for row in fabric_layout_reader:
-            if (row[0] == "FabricBegin"):
-                read_fabric_layout = True
-                continue
-            elif (row[0] == "FabricEnd"):
-                break
-            
-            if read_fabric_layout:
-                fabric_layout.layout.append(row)
-                fabric_layout.layout_format.append([""]*len(row))
-                fabric_layout.height = fabric_layout.height+1
-                fabric_layout.length = max(fabric_layout.length, len(row))
-                fabric_layout.longest_tile_name = max(fabric_layout.longest_tile_name, len(max(row, key=len)))
+    logger.disable("FABulous")
+    fabric = parse_csv.parseFabricCSV("../../fabric.csv")
+
+    layout.layout_format = dict.fromkeys([f"X{x%fabric.numberOfColumns}Y{int(x/fabric.numberOfColumns)}" for x in range(fabric.numberOfRows*fabric.numberOfColumns)], "")
+    layout.height = fabric.numberOfRows
+    layout.length = fabric.numberOfColumns
+    layout.tile_name_max_length = len(max(fabric.tileDic, key=len))
+    layout.fabric = fabric
 
     if config_path:
-        load_config(fabric_layout, config_path)
+        load_config(layout, config_path)
+
+# Interactivly partition slots
+def slot_part(generate_files, config_path):
+    fabric_layout = FabricLayout()
+    init_config(fabric_layout, config_path)
 
     print_layout(fabric_layout)
     print()
@@ -380,7 +386,7 @@ def slot_part(generate_files, config_path):
         elif user_input == "w":
             write_config(fabric_layout, config_path)
             if generate_files:
-                print("hi")
+                file_gen(layout)
         elif user_input == "h":
             print_help()
         else:
@@ -402,16 +408,18 @@ def slot_part(generate_files, config_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate eFPGA Slots")
-    parser.add_argument("-p", "--partition", action="store_true", help="Interactivly create partitioning")
-    parser.add_argument("-g", "--generate", action="store_true", help="Generate bel and pips files")
-    parser.add_argument("-f", "--file", help="Config file to use")
+    arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots")
+    arg_parser.add_argument("-p", "--partition", action="store_true", help="Interactivly create partitioning and write files")
+    arg_parser.add_argument("-g", "--generate", action="store_true", help="Generate bel and pips files from config")
+    arg_parser.add_argument("-f", "--file", help="Config file to use")
 
-    args = parser.parse_args()
+    args = arg_parser.parse_args()
 
     if args.partition:
         slot_part(args.generate, args.file)
     elif args.generate:
-        print("hi")
+        fabric_layout = FabricLayout()
+        init_config(fabric_layout, args.file)
+        file_gen(fabric_layout)
 
     print("Done")
