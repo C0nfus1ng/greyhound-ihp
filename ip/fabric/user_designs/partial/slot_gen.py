@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 
 from os import environ
+from os import makedirs
 import argparse
 import csv
 import re
 import yaml
 from loguru import logger
 from FABulous.fabric_generator.parser import parse_csv
-import FABulous.fabric_cad.gen_npnr_model as model_gen_npnr
+from FABulous.fabric_definition.Bel import Bel
+from FABulous.fabric_definition.define import IO, Direction
+from pathlib import Path
+import FABulous.fabric_cad.gen_npnr_model as gen_npnr_model
+import FABulous.fabric_cad.gen_bitstream_spec as gen_bitstream_spec
 import copy
+import pickle
 
 from fasm import (
     parse_fasm_filename,
@@ -344,52 +350,137 @@ def print_layout(layout: FabricLayout):
 
 
 def file_gen(layout: FabricLayout, option_static):
+    # TODO remove?
     fabulous_root = environ.get("FABULOUS_ROOT", "../../macro/ihp-sg13g2/fabulous")
-    print("hi")
+    # TODO allow folder change
+    base_dir = ".build"
 
     # Build fabric per slot
     for slot in layout.slots:
+        static_slot = False
+
         if slot.name == "Static" and option_static:
+            static_slot = True
             print("Static Slot")
         elif slot.name != "Static" and not option_static:
-            print("Dynamic Slot: {slot.name}")
+            print(f"Dynamic Slot: {slot.name}")
         else:
             print(f"Skip Slot: {slot.name}")
             continue
 
         tmp_fabric = copy.deepcopy(layout.fabric)
-        tmp_fabric.tile = [[None]*layout.length]*layout.height
+        tmp_fabric.tile = [[None for x in range(layout.length)] for x in range(layout.height)]
 
-        # Tiles only
+        # Only use tiles and pips from slot
         for row in range(layout.height):
             for col in range(slot.start, slot.end+1):
                 tmp_fabric.tile[row][col] = layout.fabric.tile[row][col]
 
-        # Fix Tiles
-        # TODO
-        for row in range(layout.height):
-            for col in range(0, slot.start) or range(slot.end+1, layout.length):
-                print(f"Row {row}, Col {col}")
-
-        return
-        npnr_model = model_gen_npnr.genNextpnrModel(tmp_fabric)
-
-        # TODO allow folder change
-        with open(f".build/{slot.name}/pips.txt", "w") as f:
-            f.write(npnr_model[0])
-
-        with open(f".build/{slot.name}/bel.v2.txt", "w") as f:
-            f.write(npnr_model[2])
-
-        # TODO
         # Static slot gen
+        if static_slot:
+            # Add pips from bridges
+            for bridge in layout.bridges:
+                tile = layout.fabric.tile[bridge.x][bridge.y]
+                if tile == None:
+                    continue
+
+                tmp_fabric.tile[bridge.x][bridge.y] = copy.deepcopy(tile)
+                tmp_fabric.tile[bridge.x][bridge.y].bels.clear() # No bell routing for bridges
+                noConfigBits = sum([bel.configBit for bel in tile.bels])
+                bel = Bel(Path(f"dummy_bridge.v"), "", "dummy_bridge", [], [], [], [], noConfigBits, {}, False, {}, {}, {})
+                tmp_fabric.tile[bridge.x][bridge.y].bels.append(bel)
+
+            # Add pips from connections    
+            for con_point in layout.points:
+                tile = layout.fabric.tile[con_point.x][con_point.y]
+                if tile == None:
+                    continue
+
+                tmp_fabric.tile[con_point.x][con_point.y] = copy.deepcopy(tile)
+                noConfigBits = sum([bel.configBit for bel in tmp_fabric.tile[con_point.x][con_point.y].bels])
+                tmp_fabric.tile[con_point.x][con_point.y].bels.clear()
+
+                # Add special bels from connections
+                io_ports = [p for p in tile.portsInfo if p.sourceName != "NULL" and p.wireDirection != Direction.JUMP]
+
+                filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
+                belPrefix = ""
+                module_name = f"{slot.name}_slot_con_X{con_point.x}Y{con_point.y}"
+                internal: list[tuple[str, IO]] = []
+                external: list[tuple[str, IO]] = []
+                config: list[tuple[str, IO]] = []
+                shared: list[tuple[str, IO]] = []
+                belMapDic = {}
+                userClk = False
+                ports_vectors: dict[str, dict[str, tuple[IO, int]]] = {}
+                # define port types
+                ports_vectors["internal"] = {}
+                ports_vectors["external"] = {}
+                ports_vectors["config"] = {}
+                ports_vectors["shared"] = {}
+                carry: dict[str, dict[IO, str]] = {}
+                localSharedPorts: dict[str, tuple[str, IO]] = {}
+
+                # Write verilog conn file
+                slot_module_str = []
+                slot_module_str.append(f"// Auto generated file, all changes to this file will be lost\n")
+
+                bel_letter = chr(ord('A')+len(tmp_fabric.tile[con_point.x][con_point.y].bels))
+                slot_module_str.append(f"// Instantiate with (* keep, BEL=\"X{con_point.x}Y{con_point.y}.{bel_letter}\" *) {slot.name}_slot_con_X{con_point.x}Y{con_point.y} ...")
+                slot_module_str.append("(* blackbox, keep*)")
+                slot_module_str.append(f"module {slot.name}_slot_con_X{con_point.x}Y{con_point.y} (")
+
+                for port in io_ports:
+                    if port.inOut == IO.INPUT:
+                        inout = "input"
+                    elif port.inOut == IO.OUTPUT:
+                        inout = "output"
+                    else:
+                        inout = "// unknown IO"
+
+                    for wire_nbr in range(port.wireCount):
+                        slot_module_str.append(f"  {inout} {port.name}{wire_nbr},")
+                        internal.append((f"{port.name}{wire_nbr}", port.inOut))
+                        ports_vectors["internal"][f"{port.name}{wire_nbr}"] = (port.inOut, 1)
+
+                slot_module_str.append(");\nendmodule")
+
+                bel = Bel(filename, belPrefix, module_name, internal, external, config, shared, noConfigBits, belMapDic, userClk, ports_vectors, carry, localSharedPorts)
+                tmp_fabric.tile[con_point.x][con_point.y].bels.append(bel)
+
+                verilog_module = "\n".join(slot_module_str)
+                with open(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v", "w") as f:
+                    f.write(verilog_module)
 
         # Dynamic slot gen
+        # TODO
+        else:
+            print("hi")
+        # Add pips from connections without static used pips (combine all used pips so slots are symmetrical)
+
+        # Add bels from connections
+
+        # Combine fasm files?
+
+
+        npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)
+
+        
+        # Generate files for NextPNR
+        makedirs(f"{base_dir}/{slot.name}/.FABulous", exist_ok=True)
+        with open(f"{base_dir}/{slot.name}/.FABulous/pips.txt", "w") as f:
+            f.write(npnr_model[0])
+
+        with open(f"{base_dir}/{slot.name}/.FABulous/bel.v2.txt", "w") as f:
+            f.write(npnr_model[2])
+
+        spec_object = gen_bitstream_spec.generateBitstreamSpec(tmp_fabric)
+        with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
+            pickle.dump(spec_object, f)
 
 
 
-    # print(layout.fabric.tile[1][0].bels[0].belFeatureMap)
-    # print(npnr_model)
+
 
 def print_help():
     print("Help:")
@@ -429,6 +520,7 @@ def select_partition_connection(layout: FabricLayout, part_function, con_functio
 
 # Initialize the config structure
 def init_config(layout: FabricLayout, config_path):
+    # TODO make argument
     fabulous_fabric = environ.get("FABULOUS_FABRIC", "../../fabric.csv")
 
     logger.disable("FABulous")
@@ -498,6 +590,7 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
 
+    # TODO supertiles?
     if args.partition:
         slot_part(args.generate, args.file, args.static)
     elif args.generate:
