@@ -9,6 +9,8 @@ import yaml
 from loguru import logger
 from FABulous.fabric_generator.parser import parse_csv
 from FABulous.fabric_definition.Bel import Bel
+from FABulous.fabric_definition.Fabric import Fabric
+from FABulous.fabric_definition.Tile import Tile
 from FABulous.fabric_definition.define import IO, Direction
 from pathlib import Path
 import FABulous.fabric_cad.gen_npnr_model as gen_npnr_model
@@ -111,13 +113,13 @@ class FabricLayout:
                 {"Length": data.length, "Height": data.height, "Column Length": data.tile_name_max_length, 
                  "Last Color": data.last_color, "Slots": data.slots, "Points": data.points, "Bridges": data.bridges})
 
-def create_partition(layout: FabricLayout):
+def create_slot(layout: FabricLayout):
     print("Slots can only be vertical")
     print("There can only be 1 static slot")
     while True:
         slot_type = input("Slot type (static/dynamic): ")
         if slot_type == "dynamic":
-            name = f"Slot{len(layout.slots):2}"
+            name = f"Slot{len(layout.slots)}"
             break
         elif slot_type == "static":
             name = f"Static"
@@ -134,10 +136,10 @@ def create_partition(layout: FabricLayout):
     layout.create_slot(first_column, last_column, name)
     print()
 
-def edit_partition(layout: FabricLayout, delete):
+def edit_slot(layout: FabricLayout, delete):
     while True:
         edit_slot = None
-        user_input = input(f"Enter partition name to {"delete" if delete else "edit"}/Use x to leave: ")
+        user_input = input(f"Enter slot name to {"delete" if delete else "edit"}/Use x to leave: ")
 
         if user_input == "x":
             return
@@ -345,19 +347,88 @@ def print_layout(layout: FabricLayout):
             print(Format.get_default(), end='')
         print()
 
+def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], tmp_fabric:Fabric, nbr_config_bits:int, static_slot:bool):
+    # Add special bels from connections
+    io_ports = [p for p in tile.portsInfo if p.sourceName != "NULL" and p.wireDirection != Direction.JUMP]
 
+    filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
+    bel_prefix = ""
+    module_name = f"{slot.name}_slot_con_X{con_point.x}Y{con_point.y}"
+    internal: list[tuple[str, IO]] = []
+    external: list[tuple[str, IO]] = []
+    config: list[tuple[str, IO]] = []
+    shared: list[tuple[str, IO]] = []
+    bel_map_dic = {}
+    user_clk = False
+    ports_vectors: dict[str, dict[str, tuple[IO, int]]] = {}
+    # define port types
+    ports_vectors["internal"] = {}
+    ports_vectors["external"] = {}
+    ports_vectors["config"] = {}
+    ports_vectors["shared"] = {}
+    carry: dict[str, dict[IO, str]] = {}
+    local_shared_ports: dict[str, tuple[str, IO]] = {}
 
+    # Write verilog conn file
+    slot_module_str = []
+    slot_module_str.append(f"// Auto generated file, all changes to this file will be lost\n")
 
+    slot_module_str.append(f"// Instantiate with (* keep, BEL=\"X{con_point.x}Y{con_point.y}.A\" *) {slot.name}_slot_con_X{con_point.x}Y{con_point.y} ...")
+    slot_module_str.append("(* blackbox, keep*)")
+    slot_module_str.append(f"module {slot.name}_slot_con_X{con_point.x}Y{con_point.y} (")
 
-def file_gen(layout: FabricLayout, option_static):
+    for port in io_ports:
+        if (static_slot and port.inOut == IO.INPUT) or (not static_slot and port.inOut == IO.OUTPUT):
+            inout = "input"
+            slot_port_inout = IO.INPUT
+        elif (static_slot and port.inOut == IO.OUTPUT) or (not static_slot and port.inOut == IO.INPUT):
+            inout = "output"
+            slot_port_inout = IO.OUTPUT
+        else:
+            inout = "// unknown IO"
+            slot_port_inout = IO.INOUT
+
+        for wire_nbr in range(port.wireCount):
+            slot_module_str.append(f"  {inout} {port.name}{wire_nbr},")
+            internal.append((f"{port.name}{wire_nbr}", slot_port_inout))
+            ports_vectors["internal"][f"{port.name}{wire_nbr}"] = (slot_port_inout, 1)
+
+    slot_module_str.append(");\nendmodule")
+
+    bel = Bel(filename, bel_prefix, module_name, internal, external, config, shared, nbr_config_bits, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
+    tmp_fabric.tile[con_point.y][con_point.x].bels.insert(0, bel) # Insert in front of all other bels, fixes some kind of npnr assert
+
+    verilog_module = "\n".join(slot_module_str)
+    with open(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v", "w") as f:
+        f.write(verilog_module)
+
+def npnr_file_gen(layout: FabricLayout, option_static):
     # TODO remove?
     fabulous_root = environ.get("FABULOUS_ROOT", "../../macro/ihp-sg13g2/fabulous")
     # TODO allow folder change
     base_dir = ".build"
 
+    # Read static fasm file TODO move into else
+    if not option_static:
+        fasm_parsed = parse_fasm_filename("static.fasm") # TODO make configurable
+        fasm_canon_str = fasm_tuple_to_string(fasm_parsed, True)
+        fasm_canon_list = list(parse_fasm_string(fasm_canon_str))
+
+        fasm_wires = {}
+        for fasm_line in fasm_canon_list:
+            fasm_tile_vals = set_feature_to_str(fasm_line.set_feature).split(".")
+            fasm_tile_loc = fasm_tile_vals[0]
+
+            if fasm_tile_loc not in fasm_wires.keys():
+                fasm_wires[fasm_tile_loc] = []
+
+            # tile:{(src_wire, dst_wire)}
+            fasm_wires[fasm_tile_loc].append((fasm_tile_vals[1], fasm_tile_vals[2]))
+
     # Build fabric per slot
     for slot in layout.slots:
         static_slot = False
+        makedirs(f"{base_dir}/{slot.name}/.FABulous", exist_ok=True)
 
         if slot.name == "Static" and option_static:
             static_slot = True
@@ -376,98 +447,94 @@ def file_gen(layout: FabricLayout, option_static):
             for col in range(slot.start, slot.end+1):
                 tmp_fabric.tile[row][col] = layout.fabric.tile[row][col]
 
-        # Static slot gen
+        # Static slot gen # TODO external connections
         if static_slot:
             # Add pips from bridges
             for bridge in layout.bridges:
-                tile = layout.fabric.tile[bridge.x][bridge.y]
+                tile = layout.fabric.tile[bridge.y][bridge.x]
                 if tile == None:
                     continue
 
-                tmp_fabric.tile[bridge.x][bridge.y] = copy.deepcopy(tile)
-                tmp_fabric.tile[bridge.x][bridge.y].bels.clear() # No bell routing for bridges
-                noConfigBits = sum([bel.configBit for bel in tile.bels])
-                bel = Bel(Path(f"dummy_bridge.v"), "", "dummy_bridge", [], [], [], [], noConfigBits, {}, False, {}, {}, {})
-                tmp_fabric.tile[bridge.x][bridge.y].bels.append(bel)
+                tmp_fabric.tile[bridge.y][bridge.x] = copy.deepcopy(tile)
+                tmp_fabric.tile[bridge.y][bridge.x].bels.clear() # No bell routing for bridges
+                nbr_config_bits = sum([bel.configBit for bel in tile.bels])
+                bel = Bel(Path(f"dummy_bridge.v"), "", "dummy_bridge", [], [], [], [], nbr_config_bits, {}, False, {}, {}, {})
+                tmp_fabric.tile[bridge.y][bridge.x].bels.append(bel)
 
             # Add pips from connections    
             for con_point in layout.points:
-                tile = layout.fabric.tile[con_point.x][con_point.y]
+                tile = layout.fabric.tile[con_point.y][con_point.x]
                 if tile == None:
                     continue
 
-                tmp_fabric.tile[con_point.x][con_point.y] = copy.deepcopy(tile)
-                noConfigBits = sum([bel.configBit for bel in tmp_fabric.tile[con_point.x][con_point.y].bels])
-                tmp_fabric.tile[con_point.x][con_point.y].bels.clear()
+                tmp_fabric.tile[con_point.y][con_point.x] = copy.deepcopy(tile)
+                nbr_config_bits = sum([bel.configBit for bel in tmp_fabric.tile[con_point.y][con_point.x].bels])
+                tmp_fabric.tile[con_point.y][con_point.x].bels.clear()
 
-                # Add special bels from connections
-                io_ports = [p for p in tile.portsInfo if p.sourceName != "NULL" and p.wireDirection != Direction.JUMP]
+                verilog_gen(tile, slot, base_dir, con_point, tmp_fabric, nbr_config_bits, static_slot)
 
-                filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
-                belPrefix = ""
-                module_name = f"{slot.name}_slot_con_X{con_point.x}Y{con_point.y}"
-                internal: list[tuple[str, IO]] = []
-                external: list[tuple[str, IO]] = []
-                config: list[tuple[str, IO]] = []
-                shared: list[tuple[str, IO]] = []
-                belMapDic = {}
-                userClk = False
-                ports_vectors: dict[str, dict[str, tuple[IO, int]]] = {}
-                # define port types
-                ports_vectors["internal"] = {}
-                ports_vectors["external"] = {}
-                ports_vectors["config"] = {}
-                ports_vectors["shared"] = {}
-                carry: dict[str, dict[IO, str]] = {}
-                localSharedPorts: dict[str, tuple[str, IO]] = {}
-
-                # Write verilog conn file
-                slot_module_str = []
-                slot_module_str.append(f"// Auto generated file, all changes to this file will be lost\n")
-
-                bel_letter = chr(ord('A')+len(tmp_fabric.tile[con_point.x][con_point.y].bels))
-                slot_module_str.append(f"// Instantiate with (* keep, BEL=\"X{con_point.x}Y{con_point.y}.{bel_letter}\" *) {slot.name}_slot_con_X{con_point.x}Y{con_point.y} ...")
-                slot_module_str.append("(* blackbox, keep*)")
-                slot_module_str.append(f"module {slot.name}_slot_con_X{con_point.x}Y{con_point.y} (")
-
-                for port in io_ports:
-                    if port.inOut == IO.INPUT:
-                        inout = "input"
-                    elif port.inOut == IO.OUTPUT:
-                        inout = "output"
-                    else:
-                        inout = "// unknown IO"
-
-                    for wire_nbr in range(port.wireCount):
-                        slot_module_str.append(f"  {inout} {port.name}{wire_nbr},")
-                        internal.append((f"{port.name}{wire_nbr}", port.inOut))
-                        ports_vectors["internal"][f"{port.name}{wire_nbr}"] = (port.inOut, 1)
-
-                slot_module_str.append(");\nendmodule")
-
-                bel = Bel(filename, belPrefix, module_name, internal, external, config, shared, noConfigBits, belMapDic, userClk, ports_vectors, carry, localSharedPorts)
-                tmp_fabric.tile[con_point.x][con_point.y].bels.append(bel)
-
-                verilog_module = "\n".join(slot_module_str)
-                with open(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v", "w") as f:
-                    f.write(verilog_module)
+            npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)
 
         # Dynamic slot gen
-        # TODO
+        # TODO force snyc slots
         else:
-            print("hi")
-        # Add pips from connections without static used pips (combine all used pips so slots are symmetrical)
+            # Check overlap of static with this slot
+            overlapping_bridge_tiles = {}
+            overlapping_point_tiles = {}
 
-        # Add bels from connections
+            for bridge in layout.bridges:
+                if slot.start <= bridge.x and bridge.x <= slot.end:
+                    overlapping_bridge_tiles[bridge] = layout.fabric.tile[bridge.y][bridge.x]
+            
+            for point in layout.points:
+                if slot.start <= point.x and point.x <= slot.end:
+                    overlapping_point_tiles[point] = layout.fabric.tile[point.y][point.x]
 
-        # Combine fasm files?
 
+            # Add custom bel
+            for pos, tile in overlapping_point_tiles.items():
+                if tile == None:
+                    continue
 
-        npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)
+                tmp_fabric.tile[pos.y][pos.x] = copy.deepcopy(tile)
+                verilog_gen(tile, slot, base_dir, pos, tmp_fabric, 0, static_slot)
 
+            tmp_npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)            
+
+            # Remove pips of the overlapping tiles
+            tmp_pips = tmp_npnr_model[0].split("\n")
+            removed_pips = []
+
+            for pos, tile in overlapping_bridge_tiles.items():
+                if tile == None:
+                    continue
+
+                # Search and remove wires
+                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:          
+                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}"
+                    for pip in tmp_pips:
+                        if re.match(search_pip, pip):
+                            removed_pips.append(pip)
+                            tmp_pips.remove(pip)
+
+            for pos, tile in overlapping_point_tiles.items():
+                if tile == None:
+                    continue
+                                
+                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:          
+                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}"
+                    for pip in tmp_pips:
+                        if re.match(search_pip, pip):
+                            removed_pips.append(pip)
+                            tmp_pips.remove(pip)
+
+            npnr_model = ("\n".join(tmp_pips), tmp_npnr_model[1], tmp_npnr_model[2], tmp_npnr_model[3])
+            print("Removed pips:")
+            print("\n".join(removed_pips))
+
+        # TODO (Extra step after pnr) Write missing fasm lines (need all lines from static slot)
         
         # Generate files for NextPNR
-        makedirs(f"{base_dir}/{slot.name}/.FABulous", exist_ok=True)
         with open(f"{base_dir}/{slot.name}/.FABulous/pips.txt", "w") as f:
             f.write(npnr_model[0])
 
@@ -478,9 +545,9 @@ def file_gen(layout: FabricLayout, option_static):
         with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
             pickle.dump(spec_object, f)
 
-
-
-
+def combine_fasm():
+    print("hi")
+    # TODO 
 
 def print_help():
     print("Help:")
@@ -490,10 +557,10 @@ def print_help():
     print("q to quit")
     print("p to view config")
     print("l to load/use another config")
-    print("w to write the config")
+    print("w to write the config and generate the nextpnr, combine the fasm files depanding on the set flags")
     print("h for this help text")
 
-def select_partition_connection(layout: FabricLayout, part_function, con_function, delete = None):
+def select_slot_connection(layout: FabricLayout, part_function, con_function, delete = None):
     print("s for slot")
     print("c for connection point")
     print("b for bridge point")
@@ -534,8 +601,8 @@ def init_config(layout: FabricLayout, config_path):
     if config_path:
         load_config(layout, config_path)
 
-# Interactivly partition slots
-def slot_part(generate_files, config_path, option_static):
+# Interactivly partition into slots
+def slot_part(generate_files, config_path, option_static, option_combine):
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path)
 
@@ -550,11 +617,11 @@ def slot_part(generate_files, config_path, option_static):
             print("Quitting")
             break
         elif user_input == "n":
-            select_partition_connection(fabric_layout, create_partition, create_connection)
+            select_slot_connection(fabric_layout, create_slot, create_connection)
         elif user_input == "e":
-            select_partition_connection(fabric_layout, edit_partition, edit_connection, False)
+            select_slot_connection(fabric_layout, edit_slot, edit_connection, False)
         elif user_input == "d":
-            select_partition_connection(fabric_layout, edit_partition, edit_connection, True)
+            select_slot_connection(fabric_layout, edit_slot, edit_connection, True)
         elif user_input == "p":
             print_layout(fabric_layout)
         elif user_input == "l":
@@ -562,7 +629,9 @@ def slot_part(generate_files, config_path, option_static):
         elif user_input == "w":
             write_config(fabric_layout, config_path)
             if generate_files:
-                file_gen(layout, option_static)
+                npnr_file_gen(layout, option_static)
+            if option_combine:
+                combine_fasm()
         elif user_input == "h":
             print_help()
         else:
@@ -583,20 +652,26 @@ def slot_part(generate_files, config_path, option_static):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots")
-    arg_parser.add_argument("-p", "--partition", action="store_true", help="Interactivly create partitioning and write files")
+    arg_parser.add_argument("-i", "--interactive", action="store_true", help="Interactivly partition eFPGA into slots and write files")
     arg_parser.add_argument("-g", "--generate", action="store_true", help="Generate bel and pips files from config")
     arg_parser.add_argument("-f", "--file", help="Config file to use")
     arg_parser.add_argument("-s", "--static", action="store_true", help="Generate the static slot")
+    arg_parser.add_argument("-c", "--combine", action="store_true", help="Combine the static and dynamic fasm files")
 
     args = arg_parser.parse_args()
 
     # TODO supertiles?
-    if args.partition:
-        slot_part(args.generate, args.file, args.static)
-    elif args.generate:
+    if args.interactive:
+        slot_part(args.generate, args.file, args.static, args.combine)
+        return
+
+    if args.generate:
         if args.file:
             fabric_layout = FabricLayout()
             init_config(fabric_layout, args.file)
-            file_gen(fabric_layout, args.static)
+            npnr_file_gen(fabric_layout, args.static)
         else:
             print("The -g parameter requires the -f parameter")
+    
+    if args.combine:
+        combine_fasm()

@@ -10,12 +10,12 @@ Slots:
     Specifier: "\e[31m"
 - Start: 2
   End: 2
-  Name: Slot 1
+  Name: Slot1
   Format:
     Specifier: "\e[32m"
 - Start: 4
   End: 4
-  Name: Slot 2
+  Name: Slot2
   Format:
     Specifier: "\e[33m"
 Points:
