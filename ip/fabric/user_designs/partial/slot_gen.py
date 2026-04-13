@@ -18,6 +18,15 @@ import FABulous.fabric_cad.gen_bitstream_spec as gen_bitstream_spec
 import copy
 import pickle
 
+# Workaround to import existing modules
+import sys
+bit_tool_dir = Path(__file__).parent.parent.resolve()
+sys.path.insert(0, str(bit_tool_dir))
+#import module_in_parent_dir
+from bit_gen import genBitstream
+from bit_to_hex import bit_to_hex
+sys.path.remove(str(bit_tool_dir))
+
 from fasm import (
     parse_fasm_filename,
     fasm_tuple_to_string,
@@ -403,14 +412,12 @@ def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], t
         f.write(verilog_module)
 
 def npnr_file_gen(layout: FabricLayout, option_static):
-    # TODO remove?
-    fabulous_root = environ.get("FABULOUS_ROOT", "../../macro/ihp-sg13g2/fabulous")
     # TODO allow folder change
     base_dir = ".build"
 
     # Read static fasm file TODO move into else
     if not option_static:
-        fasm_parsed = parse_fasm_filename("static.fasm") # TODO make configurable
+        fasm_parsed = parse_fasm_filename("static.fasm") # TODO make configurable (subset from base dir)
         fasm_canon_str = fasm_tuple_to_string(fasm_parsed, True)
         fasm_canon_list = list(parse_fasm_string(fasm_canon_str))
 
@@ -490,7 +497,6 @@ def npnr_file_gen(layout: FabricLayout, option_static):
                 if slot.start <= point.x and point.x <= slot.end:
                     overlapping_point_tiles[point] = layout.fabric.tile[point.y][point.x]
 
-
             # Add custom bel
             for pos, tile in overlapping_point_tiles.items():
                 if tile == None:
@@ -532,8 +538,6 @@ def npnr_file_gen(layout: FabricLayout, option_static):
             print("Removed pips:")
             print("\n".join(removed_pips))
 
-        # TODO (Extra step after pnr) Write missing fasm lines (need all lines from static slot)
-        
         # Generate files for NextPNR
         with open(f"{base_dir}/{slot.name}/.FABulous/pips.txt", "w") as f:
             f.write(npnr_model[0])
@@ -545,9 +549,83 @@ def npnr_file_gen(layout: FabricLayout, option_static):
         with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
             pickle.dump(spec_object, f)
 
-def combine_fasm():
-    print("hi")
-    # TODO 
+def combine_fasm(layout: FabricLayout):
+    # TODO allow folder change
+    base_dir = ".build"
+
+    # Parse fasm file
+    fasm_static_parsed = parse_fasm_filename("static.fasm") # TODO make configurable (subset from base dir)
+    fasm_static_str = fasm_tuple_to_string(fasm_static_parsed, True)
+    fasm_static_list = list(parse_fasm_string(fasm_static_str))
+    fasm_static_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_static_list]
+
+    for slot in layout.slots:
+        if slot.name == "Static":
+            print("Skipped Static slot")
+            continue
+
+        fasm_dynamic_parsed = parse_fasm_filename(f"{slot.name}.fasm") # TODO make configurable (subset from base dir)
+        fasm_dynamic_str = fasm_tuple_to_string(fasm_dynamic_parsed, True)
+        fasm_dynamic_list = list(parse_fasm_string(fasm_dynamic_str))
+        fasm_dynamic_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_dynamic_list]
+
+        # Get slot intersection
+        fasm_overlap_str = []
+        fasm_overlap_str.append("# Lines from Static slot")
+        for col in range(slot.start, slot.end+1):
+            search_line = f"X{col}.*"
+
+            for fasm_static_line_str in fasm_static_list_str:
+                if re.match(search_line, fasm_static_line_str):
+                    if fasm_static_line_str in fasm_dynamic_list_str:
+                        raise RuntimeError("Dynamic slot uses same route as Static slot.")
+                    
+                    fasm_overlap_str.append(fasm_static_line_str)
+
+        fasm_overlap_str.append("\n")
+        print("\n".join(fasm_overlap_str))
+
+        makedirs(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", exist_ok=True)
+        with open(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", "w") as fasm_file: # TODO make configurable (subset from base dir)
+            fasm_file.write("\n".join(fasm_overlap_str))
+            fasm_file.write(fasm_dynamic_str)
+
+def gen_bitstream(layout: FabricLayout):
+    # TODO allow folder change
+    base_dir = ".build"
+
+    for slot in layout.slots:    
+        if slot.name == "Static":
+            # Create bitstream
+            genBitstream("static.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{slot.name}.bit")  # TODO make configurable (subset from base dir)
+            
+            # Make hex files
+            bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}.bit", f"{base_dir}/{slot.name}/{slot.name}.hex", bytes_per_word=1)
+        else:
+            genBitstream(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{slot.name}.bit")
+            bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}.bit", f"{base_dir}/{slot.name}/{slot.name}.hex", bytes_per_word=1)
+
+            # Create the slot representation
+            with open(f"{base_dir}/{slot.name}/{slot.name}.bit", 'rb') as bitstream_file_in:
+                with open(f"{base_dir}/{slot.name}/{slot.name}-slot.bit", 'wb') as bitstream_file_out:
+                    # Add file header
+                    bitstream_file_out.write(0xFAB0FAB1.to_bytes(4))
+
+                    bitstream_file_in.seek(20)
+                    data = bitstream_file_in.read(76)
+                    
+                    while data:
+                        col = int.from_bytes(data[:1], "big")>>3
+                        
+                        if (col >= slot.start) and (col <= slot.end):
+                            bitstream_file_out.write(data)
+
+                        data = bitstream_file_in.read(76)
+                    
+                    # Add desync
+                    bitstream_file_out.write(0x00100000.to_bytes(4))
+
+            bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}-slot.bit", f"{base_dir}/{slot.name}/{slot.name}-slot.hex", bytes_per_word=1)
 
 def print_help():
     print("Help:")
@@ -557,7 +635,7 @@ def print_help():
     print("q to quit")
     print("p to view config")
     print("l to load/use another config")
-    print("w to write the config and generate the nextpnr, combine the fasm files depanding on the set flags")
+    print("w to write the config and generate the nextpnr, combine the fasm files, generate the bitstream depending on the set flags")
     print("h for this help text")
 
 def select_slot_connection(layout: FabricLayout, part_function, con_function, delete = None):
@@ -587,11 +665,8 @@ def select_slot_connection(layout: FabricLayout, part_function, con_function, de
 
 # Initialize the config structure
 def init_config(layout: FabricLayout, config_path):
-    # TODO make argument
-    fabulous_fabric = environ.get("FABULOUS_FABRIC", "../../fabric.csv")
-
     logger.disable("FABulous")
-    fabric = parse_csv.parseFabricCSV("../../fabric.csv")
+    fabric = parse_csv.parseFabricCSV("../../fabric.csv") # TODO make argument
 
     layout.height = fabric.numberOfRows
     layout.length = fabric.numberOfColumns
@@ -602,7 +677,7 @@ def init_config(layout: FabricLayout, config_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine):
+def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream):
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path)
 
@@ -631,7 +706,9 @@ def slot_part(generate_files, config_path, option_static, option_combine):
             if generate_files:
                 npnr_file_gen(layout, option_static)
             if option_combine:
-                combine_fasm()
+                combine_fasm(layout)
+            if option_bitstream:
+                gen_bitstream(layout)
         elif user_input == "h":
             print_help()
         else:
@@ -651,27 +728,50 @@ def slot_part(generate_files, config_path, option_static, option_combine):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots")
+    arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots") # TODO add Usage instructions
     arg_parser.add_argument("-i", "--interactive", action="store_true", help="Interactivly partition eFPGA into slots and write files")
     arg_parser.add_argument("-g", "--generate", action="store_true", help="Generate bel and pips files from config")
     arg_parser.add_argument("-f", "--file", help="Config file to use")
     arg_parser.add_argument("-s", "--static", action="store_true", help="Generate the static slot")
     arg_parser.add_argument("-c", "--combine", action="store_true", help="Combine the static and dynamic fasm files")
+    arg_parser.add_argument("-b", "--bitstream", action="store_true", help="Generate the bitstream from the slots")
 
     args = arg_parser.parse_args()
 
     # TODO supertiles?
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine)
-        return
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream)
+        exit
+
+    fabric_layout = None
 
     if args.generate:
         if args.file:
-            fabric_layout = FabricLayout()
-            init_config(fabric_layout, args.file)
+            if fabric_layout == None:
+                fabric_layout = FabricLayout()
+                init_config(fabric_layout, args.file)
+
             npnr_file_gen(fabric_layout, args.static)
         else:
             print("The -g parameter requires the -f parameter")
     
     if args.combine:
-        combine_fasm()
+        if args.file:
+            if fabric_layout == None:
+                fabric_layout = FabricLayout()
+                init_config(fabric_layout, args.file)
+
+            combine_fasm(fabric_layout)
+        else:
+            print("The -c parameter requires the -f parameter")
+
+    if args.bitstream:
+        if args.file:
+            if fabric_layout == None:
+                fabric_layout = FabricLayout()
+                init_config(fabric_layout, args.file)
+
+            gen_bitstream(fabric_layout)
+        else:
+            print("The -b parameter requires the -f parameter")
+        
