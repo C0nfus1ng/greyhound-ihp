@@ -411,13 +411,9 @@ def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], t
     with open(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v", "w") as f:
         f.write(verilog_module)
 
-def npnr_file_gen(layout: FabricLayout, option_static):
-    # TODO allow folder change
-    base_dir = ".build"
-
-    # Read static fasm file TODO move into else
+def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
     if not option_static:
-        fasm_parsed = parse_fasm_filename("static.fasm") # TODO make configurable (subset from base dir)
+        fasm_parsed = parse_fasm_filename(f"{base_dir}/Static/Static.fasm")
         fasm_canon_str = fasm_tuple_to_string(fasm_parsed, True)
         fasm_canon_list = list(parse_fasm_string(fasm_canon_str))
 
@@ -454,7 +450,7 @@ def npnr_file_gen(layout: FabricLayout, option_static):
             for col in range(slot.start, slot.end+1):
                 tmp_fabric.tile[row][col] = layout.fabric.tile[row][col]
 
-        # Static slot gen # TODO external connections
+        # Static slot gen
         if static_slot:
             # Add pips from bridges
             for bridge in layout.bridges:
@@ -483,7 +479,6 @@ def npnr_file_gen(layout: FabricLayout, option_static):
             npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)
 
         # Dynamic slot gen
-        # TODO force snyc slots
         else:
             # Check overlap of static with this slot
             overlapping_bridge_tiles = {}
@@ -549,12 +544,9 @@ def npnr_file_gen(layout: FabricLayout, option_static):
         with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
             pickle.dump(spec_object, f)
 
-def combine_fasm(layout: FabricLayout):
-    # TODO allow folder change
-    base_dir = ".build"
-
+def combine_fasm(layout: FabricLayout, base_dir):
     # Parse fasm file
-    fasm_static_parsed = parse_fasm_filename("static.fasm") # TODO make configurable (subset from base dir)
+    fasm_static_parsed = parse_fasm_filename(f"{base_dir}/Static/Static.fasm")
     fasm_static_str = fasm_tuple_to_string(fasm_static_parsed, True)
     fasm_static_list = list(parse_fasm_string(fasm_static_str))
     fasm_static_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_static_list]
@@ -564,7 +556,7 @@ def combine_fasm(layout: FabricLayout):
             print("Skipped Static slot")
             continue
 
-        fasm_dynamic_parsed = parse_fasm_filename(f"{slot.name}.fasm") # TODO make configurable (subset from base dir)
+        fasm_dynamic_parsed = parse_fasm_filename(f"{base_dir}/{slot.name}/{slot.name}.fasm")
         fasm_dynamic_str = fasm_tuple_to_string(fasm_dynamic_parsed, True)
         fasm_dynamic_list = list(parse_fasm_string(fasm_dynamic_str))
         fasm_dynamic_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_dynamic_list]
@@ -585,19 +577,16 @@ def combine_fasm(layout: FabricLayout):
         fasm_overlap_str.append("\n")
         print("\n".join(fasm_overlap_str))
 
-        makedirs(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", exist_ok=True)
-        with open(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", "w") as fasm_file: # TODO make configurable (subset from base dir)
+        makedirs(f"{base_dir}/{slot.name}", exist_ok=True)
+        with open(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", "w") as fasm_file:
             fasm_file.write("\n".join(fasm_overlap_str))
             fasm_file.write(fasm_dynamic_str)
 
-def gen_bitstream(layout: FabricLayout):
-    # TODO allow folder change
-    base_dir = ".build"
-
+def gen_bitstream(layout: FabricLayout, base_dir):
     for slot in layout.slots:    
         if slot.name == "Static":
             # Create bitstream
-            genBitstream("static.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{slot.name}.bit")  # TODO make configurable (subset from base dir)
+            genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/Static.bit")
             
             # Make hex files
             bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}.bit", f"{base_dir}/{slot.name}/{slot.name}.hex", bytes_per_word=1)
@@ -664,9 +653,9 @@ def select_slot_connection(layout: FabricLayout, part_function, con_function, de
             break
 
 # Initialize the config structure
-def init_config(layout: FabricLayout, config_path):
+def init_config(layout: FabricLayout, config_path, fabric_path):
     logger.disable("FABulous")
-    fabric = parse_csv.parseFabricCSV("../../fabric.csv") # TODO make argument
+    fabric = parse_csv.parseFabricCSV(fabric_path)
 
     layout.height = fabric.numberOfRows
     layout.length = fabric.numberOfColumns
@@ -677,9 +666,9 @@ def init_config(layout: FabricLayout, config_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream):
+def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path):
     fabric_layout = FabricLayout()
-    init_config(fabric_layout, config_path)
+    init_config(fabric_layout, config_path, fabric_path)
 
     print_layout(fabric_layout)
     print()
@@ -704,43 +693,67 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
         elif user_input == "w":
             write_config(fabric_layout, config_path)
             if generate_files:
-                npnr_file_gen(layout, option_static)
+                npnr_file_gen(layout, option_static, base_dir)
             if option_combine:
-                combine_fasm(layout)
+                combine_fasm(layout, base_dir)
             if option_bitstream:
-                gen_bitstream(layout)
+                gen_bitstream(layout, base_dir)
         elif user_input == "h":
             print_help()
         else:
             print("Command not found")
             print_help()
 
-
-    # TODO Partial config flow: 
-    # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
-    # 2) Partition by editing bel.v2.txt and note all used pips of static parts
-    # 3) Produce static bitstream as base for the FPGA
-    # 4) Edit bel.v2.txt for the slot to create and remove used routes of the static part from pips file
-    # 5) After PNR add static routes crossing/supplying slot to its fasm file (Don't forget lut for data out)
-    # 6) Generate slot bitstream, extract the wanted region as -part
-    # 7) Start over from 4 for other slots
-    # 8) When slots are symetrical allow changing the header to change uploaded slot
-
-
+# Partial config flow: 
+# 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
+# 2) Partition by editing bel.v2.txt and note all used pips of static parts
+# 3) Produce static bitstream as base for the FPGA
+# 4) Edit bel.v2.txt for the slot to create and remove used routes of the static part from pips file
+# 5) After PNR add static routes crossing/supplying slot to its fasm file (Don't forget lut for data out)
+# 6) Generate slot bitstream, extract the wanted region as -part
+# 7) Start over from 4 for other slots
+# 8) When slots are symetrical allow changing the header to change uploaded slot
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots") # TODO add Usage instructions
+    arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots\n"\
+                                                     "Usage:\n"\
+                                                     "1) Run -i to create a config file\n"\
+                                                     "2) Run -gsf <conf_file> to generate the static slot config\n"\
+                                                     "3) Run yosys and nextpnr to generate the static slot fasm file\n"\
+                                                     "4) Run -gf <conf_file> to generate the dynamic slot configs\n"\
+                                                     "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
+                                                     "5) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
+                                                     "6) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
+                                                     "--basedir and --fabric can be combined with all options\n"\
+                                                     "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command")
     arg_parser.add_argument("-i", "--interactive", action="store_true", help="Interactivly partition eFPGA into slots and write files")
     arg_parser.add_argument("-g", "--generate", action="store_true", help="Generate bel and pips files from config")
     arg_parser.add_argument("-f", "--file", help="Config file to use")
     arg_parser.add_argument("-s", "--static", action="store_true", help="Generate the static slot")
     arg_parser.add_argument("-c", "--combine", action="store_true", help="Combine the static and dynamic fasm files")
     arg_parser.add_argument("-b", "--bitstream", action="store_true", help="Generate the bitstream from the slots")
+    arg_parser.add_argument("--basedir", help="Base build directory for the slot generation, defaults to .build")
+    arg_parser.add_argument("--fabric", help="fabric.csv file, defaults to fabric.csv")
 
     args = arg_parser.parse_args()
 
+    if not args.basedir:
+        base_dir = ".build"
+    else:
+        base_dir = args.basedir
+        print(args.basedir)
+
+    if not args.fabric:
+        fabric_path = "fabric.csv"
+    else:
+        fabric_path = args.fabric
+        print(args.fabric)
+
+    # TODO yosys and nextpnr from within this script?
+    # TODO force snyc slots?
     # TODO supertiles?
+    # TODO external connections?
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path)
         exit
 
     fabric_layout = None
@@ -749,9 +762,9 @@ if __name__ == "__main__":
         if args.file:
             if fabric_layout == None:
                 fabric_layout = FabricLayout()
-                init_config(fabric_layout, args.file)
+                init_config(fabric_layout, args.file, fabric_path)
 
-            npnr_file_gen(fabric_layout, args.static)
+            npnr_file_gen(fabric_layout, args.static, base_dir)
         else:
             print("The -g parameter requires the -f parameter")
     
@@ -759,9 +772,9 @@ if __name__ == "__main__":
         if args.file:
             if fabric_layout == None:
                 fabric_layout = FabricLayout()
-                init_config(fabric_layout, args.file)
+                init_config(fabric_layout, args.file, fabric_path)
 
-            combine_fasm(fabric_layout)
+            combine_fasm(fabric_layout, base_dir)
         else:
             print("The -c parameter requires the -f parameter")
 
@@ -769,9 +782,9 @@ if __name__ == "__main__":
         if args.file:
             if fabric_layout == None:
                 fabric_layout = FabricLayout()
-                init_config(fabric_layout, args.file)
+                init_config(fabric_layout, args.file, fabric_path)
 
-            gen_bitstream(fabric_layout)
+            gen_bitstream(fabric_layout, base_dir)
         else:
             print("The -b parameter requires the -f parameter")
         
