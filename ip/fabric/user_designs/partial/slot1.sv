@@ -4,20 +4,18 @@ module slot1(
     output wire       lut4_in_o,
 );
     wire rst;
-    logic [1:0] roll;
-
-	// assign lut4_in_o = '1;
+    logic [3:0] roll;
 
     assign rst = lut4_o_i[0];
 
     always_ff @(posedge clk) begin
         if (rst) begin
             lut4_in_o <= '0;
-            roll      <= 2'b01;
+            roll      <= 4'b0011;
         end
         else begin
             lut4_in_o <= roll[0];
-            roll      <= {roll[0], roll[1]};
+            roll      <= {roll[2:0], roll[3]};
         end
     end
 

@@ -1,50 +1,50 @@
 # Paths
-# FABULOUS_ROOT = ../../macro/ihp-sg13g2/fabulous
-FABULOUS_ROOT = .build/static
 EXTRA_PRIMITIVES_PATH = ../extra_primitives.v
 BIT_GEN = ../bit_gen.py
 BIT_TO_HEX = ../bit_to_hex.py
+BASE_FOLDER = .build
 
 # Adjust sources
-# RTL = top_wrapper.v partial.sv slot0.sv slot1.sv slot2.sv ../primitive_wrappers.v
-RTL = ../top_wrapper.v static_slot.sv static_top.sv ../primitive_wrappers.v
-TOP = top_wrapper
-DESIGN_NAME = static
+static-fasm: RTL = ../top_wrapper.v .build/Static/Static_slot_con_X2Y1.v .build/Static/Static_slot_con_X4Y1.v  static_slot.sv static_top.sv ../primitive_wrappers.v
+static-fasm: TOP = top_wrapper
+static-fasm: SLOT_ROOT = Static
+static-fasm: synth pnr
+.PHONY: static-fasm
 
-# Include base Makefile
-include ../makefile.include
+slot1-fasm: RTL = .build/Slot1/Slot1_slot_con_X2Y1.v slot1_wrapper.v slot1.sv ../primitive_wrappers.v
+slot1-fasm: TOP = slot1_wrapper
+slot1-fasm: SLOT_ROOT = Slot1
+slot1-fasm: synth pnr
+.PHONY: slot1-fasm
 
-slot0-synth: RTL = slot0_wrapper.v slot0.sv ../primitive_wrappers.v
-slot0-synth: TOP = slot0_wrapper
-slot0-synth: DESIGN_NAME = slot0
-slot0-synth: FABULOUS_ROOT = .build/slot0
-slot0-synth: synth
-.PHONY: slot0-synth
+slot2-fasm: RTL = .build/Slot2/Slot2_slot_con_X4Y1.v slot2_wrapper.v slot2.sv ../primitive_wrappers.v
+slot2-fasm: TOP = slot2_wrapper
+slot2-fasm: SLOT_ROOT = Slot2
+slot2-fasm: synth pnr
+.PHONY: slot2-fasm
 
-slot0-pnr: RTL = slot0_wrapper.v slot0.sv ../primitive_wrappers.v
-slot0-pnr: TOP = slot0_wrapper
-slot0-pnr: DESIGN_NAME = slot0
-slot0-pnr: FABULOUS_ROOT = .build/slot0
-slot0-pnr: pnr
-.PHONY: slot0-pnr
+synth:
+	yosys \
+	-p \
+	"synth_fabulous \
+	-top $(TOP) \
+	-json $(BASE_FOLDER)/$(SLOT_ROOT)/$(SLOT_ROOT).json \
+	-lut 4 \
+	-extra-plib $(EXTRA_PRIMITIVES_PATH)" \
+	$(RTL)
+.PHONY: synth
 
-slot0-bit: RTL = slot0_wrapper.v slot0.sv ../primitive_wrappers.v
-slot0-bit: TOP = slot0_wrapper
-slot0-bit: DESIGN_NAME = slot0
-slot0-bit: FABULOUS_ROOT = .build/slot0
-slot0-bit: bitstream hex
-.PHONY: slot0-bit
+pnr:
+	FAB_ROOT=$(BASE_FOLDER)/$(SLOT_ROOT)/ \
+	nextpnr-generic \
+	--uarch fabulous \
+	--json $(BASE_FOLDER)/$(SLOT_ROOT)/$(SLOT_ROOT).json \
+	-o fasm=$(BASE_FOLDER)/$(SLOT_ROOT)/$(SLOT_ROOT).fasm \
+	--verbose \
+	--log $(BASE_FOLDER)/$(SLOT_ROOT)/$(SLOT_ROOT)_log.txt \
+	--timing-allow-fail
+.PHONY: pnr
 
-slot1-pnr: RTL = slot1_wrapper.v slot1.sv ../primitive_wrappers.v
-slot1-pnr: TOP = slot1_wrapper
-slot1-pnr: DESIGN_NAME = slot1
-slot1-pnr: FABULOUS_ROOT = .build/slot1
-slot1-pnr: synth pnr
-.PHONY: slot1-pnr
-
-slot1-bit: RTL = slot1_wrapper.v slot1.sv ../primitive_wrappers.v
-slot1-bit: TOP = slot1_wrapper
-slot1-bit: DESIGN_NAME = slot1
-slot1-bit: FABULOUS_ROOT = .build/slot1
-slot1-bit: bitstream hex
-.PHONY: slot1-bit
+clean:
+	rm -rf $(BASE_FOLDER)
+.PHONY: clean

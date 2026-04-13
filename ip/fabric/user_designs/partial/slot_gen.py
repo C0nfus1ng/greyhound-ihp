@@ -740,18 +740,17 @@ if __name__ == "__main__":
         base_dir = ".build"
     else:
         base_dir = args.basedir
-        print(args.basedir)
 
     if not args.fabric:
         fabric_path = "fabric.csv"
     else:
         fabric_path = args.fabric
-        print(args.fabric)
 
     # TODO yosys and nextpnr from within this script?
     # TODO force snyc slots?
     # TODO supertiles?
     # TODO external connections?
+    # TODO auto gen makefile?
     if args.interactive:
         slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path)
         exit

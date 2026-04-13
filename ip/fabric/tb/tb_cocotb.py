@@ -535,17 +535,6 @@ async def test_custom_instruction(dut):
 @cocotb.test(skip=run_partial==False)
 async def test_partial(dut):
     """Load partial bitstreams"""
-
-    # TODO Partial config flow: 
-    # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
-    # 2) Partition by editing bel.v2.txt and note all used pips of static parts
-    # 3) Produce static bitstream as base for the FPGA
-    # 4) Edit bel.v2.txt for the slot to create and remove used routes of the static part from pips file
-    # 5) After PNR add static routes crossing/supplying slot to its fasm file (Don't forget lut for data out)
-    # 6) Generate slot bitstream, extract the wanted region as -part
-    # 7) Start over from 4 for other slots
-    # 8) When slots are symetrical allow changing the header to change uploaded slot
-
     # Start the clock
     c = Clock(dut.clk_i, 10, 'ns')
     await cocotb.start(c.start())
@@ -555,17 +544,18 @@ async def test_partial(dut):
     await reset_design(dut)
     dut._log.info("Reset done")
     
-    await upload_bitstream(dut, 'partial', 'static')
+    # Upload static part and slots
+    await upload_bitstream(dut, 'partial/.build/Static', 'Static')
 
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial', 'slot0-part')
+    await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial', 'slot1-part')
+    await upload_bitstream(dut, 'partial/.build/Slot2', 'Slot2-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial', 'slot0-part')
+    await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot')
     await ClockCycles(dut.clk_i, 100)
 
 if __name__ == "__main__":
