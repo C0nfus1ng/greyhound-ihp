@@ -356,13 +356,52 @@ def print_layout(layout: FabricLayout):
             print(Format.get_default(), end='')
         print()
 
-def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], tmp_fabric:Fabric, nbr_config_bits:int, static_slot:bool):
+def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool):
     # Add special bels from connections
     io_ports = [p for p in tile.portsInfo if p.sourceName != "NULL" and p.wireDirection != Direction.JUMP]
-
     filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
-    bel_prefix = ""
+
+    # Write verilog conn file
+    slot_module_str = []
+    slot_module_str.append(f"// Auto generated file, all changes to this file will be lost\n")
+
+    slot_module_str.append(f"// Instantiate with (* keep, BEL=\"X{con_point.x}Y{con_point.y}.A\" *) {slot.name}_slot_con_X{con_point.x}Y{con_point.y} ...")
+    slot_module_str.append("(* blackbox, keep*)")
+    slot_module_str.append(f"module {slot.name}_slot_con_X{con_point.x}Y{con_point.y} (")
+
+    for port in io_ports:
+        if (static_slot and port.inOut == IO.INPUT) or (not static_slot and port.inOut == IO.OUTPUT):
+            inout = "input"
+        elif (static_slot and port.inOut == IO.OUTPUT) or (not static_slot and port.inOut == IO.INPUT):
+            inout = "output"
+        else:
+            inout = "// unknown IO"
+
+        for wire_nbr in range(port.wireCount):
+            slot_module_str.append(f"  {inout} {port.name}{wire_nbr},")
+
+    slot_module_str.append(");\nendmodule")
+
+    verilog_module = "\n".join(slot_module_str)
+    with open(filename, "w") as f:
+        f.write(verilog_module)
+
+def strip_bel_pips(bels:list[Bel]):
+    print("hi")
+    remove_pips = []
+    for bel in bels:
+        remove_pips += bel.inputs
+        remove_pips += bel.outputs
+
+    return remove_pips
+
+def bel_gen_from_slot(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool, filename:Path = None, module_name:str = None):
+    filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
     module_name = f"{slot.name}_slot_con_X{con_point.x}Y{con_point.y}"
+    return bel_gen(tile, filename, module_name, static_slot)
+
+def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool):
+    bel_prefix = ""
     internal: list[tuple[str, IO]] = []
     external: list[tuple[str, IO]] = []
     config: list[tuple[str, IO]] = []
@@ -378,38 +417,21 @@ def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], t
     carry: dict[str, dict[IO, str]] = {}
     local_shared_ports: dict[str, tuple[str, IO]] = {}
 
-    # Write verilog conn file
-    slot_module_str = []
-    slot_module_str.append(f"// Auto generated file, all changes to this file will be lost\n")
-
-    slot_module_str.append(f"// Instantiate with (* keep, BEL=\"X{con_point.x}Y{con_point.y}.A\" *) {slot.name}_slot_con_X{con_point.x}Y{con_point.y} ...")
-    slot_module_str.append("(* blackbox, keep*)")
-    slot_module_str.append(f"module {slot.name}_slot_con_X{con_point.x}Y{con_point.y} (")
+    io_ports = [p for p in tile.portsInfo if p.sourceName != "NULL" and p.wireDirection != Direction.JUMP]
 
     for port in io_ports:
         if (static_slot and port.inOut == IO.INPUT) or (not static_slot and port.inOut == IO.OUTPUT):
-            inout = "input"
             slot_port_inout = IO.INPUT
         elif (static_slot and port.inOut == IO.OUTPUT) or (not static_slot and port.inOut == IO.INPUT):
-            inout = "output"
             slot_port_inout = IO.OUTPUT
         else:
-            inout = "// unknown IO"
             slot_port_inout = IO.INOUT
 
         for wire_nbr in range(port.wireCount):
-            slot_module_str.append(f"  {inout} {port.name}{wire_nbr},")
             internal.append((f"{port.name}{wire_nbr}", slot_port_inout))
             ports_vectors["internal"][f"{port.name}{wire_nbr}"] = (slot_port_inout, 1)
 
-    slot_module_str.append(");\nendmodule")
-
-    bel = Bel(filename, bel_prefix, module_name, internal, external, config, shared, nbr_config_bits, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
-    tmp_fabric.tile[con_point.y][con_point.x].bels.insert(0, bel) # Insert in front of all other bels, fixes some kind of npnr assert
-
-    verilog_module = "\n".join(slot_module_str)
-    with open(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v", "w") as f:
-        f.write(verilog_module)
+    return Bel(filename, bel_prefix, module_name, internal, external, config, shared, 0, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
 
 def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
     if not option_static:
@@ -452,6 +474,8 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
 
         # Static slot gen
         if static_slot:
+            remove_pips = {}
+
             # Add pips from bridges
             for bridge in layout.bridges:
                 tile = layout.fabric.tile[bridge.y][bridge.x]
@@ -459,25 +483,34 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
                     continue
 
                 tmp_fabric.tile[bridge.y][bridge.x] = copy.deepcopy(tile)
-                tmp_fabric.tile[bridge.y][bridge.x].bels.clear() # No bell routing for bridges
-                nbr_config_bits = sum([bel.configBit for bel in tile.bels])
-                bel = Bel(Path(f"dummy_bridge.v"), "", "dummy_bridge", [], [], [], [], nbr_config_bits, {}, False, {}, {}, {})
-                tmp_fabric.tile[bridge.y][bridge.x].bels.append(bel)
+                remove_pips[bridge] = strip_bel_pips(tmp_fabric.tile[bridge.y][bridge.x].bels) # Remove bel specific connections
 
-            # Add pips from connections    
+            # Add pips from connections
             for con_point in layout.points:
                 tile = layout.fabric.tile[con_point.y][con_point.x]
                 if tile == None:
                     continue
 
                 tmp_fabric.tile[con_point.y][con_point.x] = copy.deepcopy(tile)
-                nbr_config_bits = sum([bel.configBit for bel in tmp_fabric.tile[con_point.y][con_point.x].bels])
-                tmp_fabric.tile[con_point.y][con_point.x].bels.clear()
+                remove_pips[con_point] = strip_bel_pips(tmp_fabric.tile[con_point.y][con_point.x].bels)
+                bel = bel_gen_from_slot(tile, slot, base_dir, con_point, static_slot)
+                tmp_fabric.tile[con_point.y][con_point.x].bels.insert(0, bel) # Insert in front of all other bels, fixes some kind of npnr assert
+                verilog_gen(tile, slot, base_dir, con_point, static_slot)
 
-                verilog_gen(tile, slot, base_dir, con_point, tmp_fabric, nbr_config_bits, static_slot)
+            tmp_npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)
 
-            npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)
+            # Remove pips of the undesired bels
+            tmp_pips = tmp_npnr_model[0].split("\n")
+            removed_pips = []
 
+            for pos, tile_list in remove_pips.items():
+                # Search and remove wires
+                for wire in tile_list:
+                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,"+r"([^\.]+\."+f"{wire}$)|({wire}"+r"\..+$)"
+                    for pip in tmp_pips:
+                        if re.match(search_pip, pip):
+                            removed_pips.append(pip)
+                            tmp_pips.remove(pip)
         # Dynamic slot gen
         else:
             # Check overlap of static with this slot
@@ -498,7 +531,9 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
                     continue
 
                 tmp_fabric.tile[pos.y][pos.x] = copy.deepcopy(tile)
-                verilog_gen(tile, slot, base_dir, pos, tmp_fabric, 0, static_slot)
+                bel = bel_gen_from_slot(tile, slot, base_dir, pos, static_slot)
+                tmp_fabric.tile[pos.y][pos.x].bels.insert(0, bel)
+                verilog_gen(tile, slot, base_dir, pos, static_slot)
 
             tmp_npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)            
 
@@ -511,8 +546,8 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
                     continue
 
                 # Search and remove wires
-                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:          
-                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}"
+                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:
+                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
                     for pip in tmp_pips:
                         if re.match(search_pip, pip):
                             removed_pips.append(pip)
@@ -522,16 +557,16 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
                 if tile == None:
                     continue
                                 
-                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:          
-                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}"
+                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:
+                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
                     for pip in tmp_pips:
                         if re.match(search_pip, pip):
                             removed_pips.append(pip)
                             tmp_pips.remove(pip)
 
-            npnr_model = ("\n".join(tmp_pips), tmp_npnr_model[1], tmp_npnr_model[2], tmp_npnr_model[3])
-            print("Removed pips:")
-            print("\n".join(removed_pips))
+        npnr_model = ("\n".join(tmp_pips), tmp_npnr_model[1], tmp_npnr_model[2], tmp_npnr_model[3])
+        print("Removed pips:")
+        print("\n".join(removed_pips))
 
         # Generate files for NextPNR
         with open(f"{base_dir}/{slot.name}/.FABulous/pips.txt", "w") as f:
@@ -587,11 +622,12 @@ def gen_bitstream(layout: FabricLayout, base_dir):
         if slot.name == "Static":
             # Create bitstream
             genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/Static.bit")
-            
+
             # Make hex files
-            bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}.bit", f"{base_dir}/{slot.name}/{slot.name}.hex", bytes_per_word=1)
+            bit_to_hex(f"{base_dir}/Static/Static.bit", f"{base_dir}/Static/Static.hex", bytes_per_word=1)
         else:
             genBitstream(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{slot.name}.bit")
+
             bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}.bit", f"{base_dir}/{slot.name}/{slot.name}.hex", bytes_per_word=1)
 
             # Create the slot representation
@@ -714,17 +750,19 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
 # 7) Start over from 4 for other slots
 # 8) When slots are symetrical allow changing the header to change uploaded slot
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Generate eFPGA Slots\n"\
-                                                     "Usage:\n"\
-                                                     "1) Run -i to create a config file\n"\
-                                                     "2) Run -gsf <conf_file> to generate the static slot config\n"\
-                                                     "3) Run yosys and nextpnr to generate the static slot fasm file\n"\
-                                                     "4) Run -gf <conf_file> to generate the dynamic slot configs\n"\
-                                                     "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
-                                                     "5) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
-                                                     "6) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
-                                                     "--basedir and --fabric can be combined with all options\n"\
-                                                     "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command")
+    usage = "Generate eFPGA Slots\n"\
+            "Usage:\n"\
+            "1) Run -i to create a config file\n"\
+            "2) Run -gsf <conf_file> to generate the static slot config\n"\
+            "3) Run yosys and nextpnr to generate the static slot fasm file\n"\
+            "4) Run -gf <conf_file> to generate the dynamic slot configs\n"\
+            "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
+            "5) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
+            "6) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
+            "--basedir, --fabric and --spec can be combined with all options and are used if applicable\n"\
+            "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command"
+
+    arg_parser = argparse.ArgumentParser(description=usage)
     arg_parser.add_argument("-i", "--interactive", action="store_true", help="Interactivly partition eFPGA into slots and write files")
     arg_parser.add_argument("-g", "--generate", action="store_true", help="Generate bel and pips files from config")
     arg_parser.add_argument("-f", "--file", help="Config file to use")
@@ -732,9 +770,14 @@ if __name__ == "__main__":
     arg_parser.add_argument("-c", "--combine", action="store_true", help="Combine the static and dynamic fasm files")
     arg_parser.add_argument("-b", "--bitstream", action="store_true", help="Generate the bitstream from the slots")
     arg_parser.add_argument("--basedir", help="Base build directory for the slot generation, defaults to .build")
-    arg_parser.add_argument("--fabric", help="fabric.csv file, defaults to fabric.csv")
+    arg_parser.add_argument("--fabric", help="fabric.csv file path, defaults to fabric.csv")
+    arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
 
     args = arg_parser.parse_args()
+    
+    if not any(vars(args).values()):
+        print(usage)
+        exit
 
     if not args.basedir:
         base_dir = ".build"

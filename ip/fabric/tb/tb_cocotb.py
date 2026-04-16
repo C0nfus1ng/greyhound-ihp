@@ -546,7 +546,6 @@ async def test_partial(dut):
     
     # Upload static part and slots
     await upload_bitstream(dut, 'partial/.build/Static', 'Static')
-
     await ClockCycles(dut.clk_i, 100)
 
     await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot')
