@@ -1,10 +1,44 @@
 # Paths
 EXTRA_PRIMITIVES_PATH = ../extra_primitives.v
-BIT_GEN = ../bit_gen.py
-BIT_TO_HEX = ../bit_to_hex.py
 BASE_FOLDER = .build
+SLOT_GEN = slot_gen.py
+SLOT_CONFIG = slot_config.yaml
+FABRIC = ../../fabric.csv
 
-# Adjust sources
+# Make all slots
+all:
+	@echo '---------------------------'
+	@echo 'Generate static slot'
+	@echo '---------------------------'
+	@echo ''
+	$(MAKE) static-gen
+
+	@echo ''
+	@echo '---------------------------'
+	@echo 'Generate static fasm file'
+	@echo '---------------------------'
+	@echo ''
+	$(MAKE) static-fasm
+
+	@echo ''
+	@echo '---------------------------'
+	@echo 'Generate dynamic slot'
+	@echo '---------------------------'
+	@echo ''
+	@$(MAKE) dynamic-gen
+	
+	$(MAKE) slot1-fasm-wrapper
+	$(MAKE) slot2-fasm-wrapper
+
+	@echo ''
+	@echo '---------------------------'
+	@echo 'Generate bitstreams'
+	@echo '---------------------------'
+	@echo ''
+	$(MAKE) bit-gen
+.PHONY: all
+
+# Slot sources
 static-fasm: RTL = ../top_wrapper.v .build/Static/Static_slot_con_X2Y1.v .build/Static/Static_slot_con_X4Y1.v  static_slot.sv static_top.sv ../primitive_wrappers.v
 static-fasm: TOP = top_wrapper
 static-fasm: SLOT_ROOT = Static
@@ -22,6 +56,28 @@ slot2-fasm: TOP = slot2_wrapper
 slot2-fasm: SLOT_ROOT = Slot2
 slot2-fasm: synth pnr
 .PHONY: slot2-fasm
+
+slot1-fasm-wrapper slot2-fasm-wrapper: slot%-fasm-wrapper:
+	@echo ''
+	@echo '---------------------------'
+	@echo 'Generate dynamic fasm file'
+	@echo '---------------------------'
+	@echo ''
+	$(MAKE) slot$*-fasm
+.PHONY: slot%-fasm-wrapper
+
+# Helper functions
+static-gen:
+	python3 slot_gen.py -gsf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+.PHONY: static-gen
+
+dynamic-gen:
+	python3 slot_gen.py -gf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+.PHONY: dynamic-gen
+
+bit-gen:
+	python3 slot_gen.py -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+.PHONY: bit-gen
 
 synth:
 	yosys \

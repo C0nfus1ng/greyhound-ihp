@@ -387,7 +387,6 @@ def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], s
         f.write(verilog_module)
 
 def strip_bel_pips(bels:list[Bel]):
-    print("hi")
     remove_pips = []
     for bel in bels:
         remove_pips += bel.inputs
@@ -610,6 +609,7 @@ def combine_fasm(layout: FabricLayout, base_dir):
                     fasm_overlap_str.append(fasm_static_line_str)
 
         fasm_overlap_str.append("\n")
+        print(f"Appending to {slot.name}")
         print("\n".join(fasm_overlap_str))
 
         makedirs(f"{base_dir}/{slot.name}", exist_ok=True)
@@ -789,11 +789,9 @@ if __name__ == "__main__":
     else:
         fabric_path = args.fabric
 
-    # TODO yosys and nextpnr from within this script?
     # TODO force snyc slots?
     # TODO supertiles?
     # TODO external connections?
-    # TODO auto gen makefile?
     if args.interactive:
         slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path)
         exit
