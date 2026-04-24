@@ -57,7 +57,7 @@ slot2-fasm: SLOT_ROOT = Slot2
 slot2-fasm: synth pnr
 .PHONY: slot2-fasm
 
-slot1-fasm-wrapper slot2-fasm-wrapper: slot%-fasm-wrapper:
+slot%-fasm-wrapper:
 	@echo ''
 	@echo '---------------------------'
 	@echo 'Generate dynamic fasm file'
@@ -72,7 +72,7 @@ static-gen:
 .PHONY: static-gen
 
 dynamic-gen:
-	python3 slot_gen.py -gf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+	python3 slot_gen.py -gmf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
 .PHONY: dynamic-gen
 
 bit-gen:

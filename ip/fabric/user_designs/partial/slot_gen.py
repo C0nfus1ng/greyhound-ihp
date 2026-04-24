@@ -432,7 +432,58 @@ def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool):
 
     return Bel(filename, bel_prefix, module_name, internal, external, config, shared, 0, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
 
-def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
+def get_overlapping_tiles(layout: FabricLayout, point_list: [Point], slot: Slot, option_merge: bool):
+    overlapping_tiles = {}
+
+    for point in point_list:
+        if slot.start <= point.x and point.x <= slot.end:
+            if point not in overlapping_tiles.keys():
+                overlapping_tiles[point] = []
+
+            overlapping_tiles[point].append((point, layout.fabric.tile[point.y][point.x]))
+
+        if option_merge:
+            slot_length = slot.end-slot.start
+
+            # Check if tile would overlap in other slots, and "make" it overlap this slot too then
+            for other_slot in layout.slots:
+                if other_slot.name == "Static" or other_slot == slot:
+                    continue
+                
+                if not (other_slot.start <= point.x and point.x <= other_slot.end):
+                    # Tile does not overlap with this slot
+                    continue
+
+                pos_other_slot = (point.x - other_slot.start, point.y)
+
+                if pos_other_slot[0] <= slot_length:
+                    if point not in overlapping_tiles.keys():
+                        overlapping_tiles[point] = []
+
+                    overlapping_tiles[point].append((Point(slot.start + pos_other_slot[0], pos_other_slot[1], other_slot.formatting), layout.fabric.tile[pos_other_slot[1]][slot.start + pos_other_slot[0]]))
+
+    return overlapping_tiles
+
+def remove_pips_fasm(overlapping_tiles, fasm_wires, tmp_pips, removed_pips):
+    for pos, tile_list in overlapping_tiles.items():
+        for tile in tile_list:
+            if tile[1] == None:
+                continue
+            
+            # Search and remove wires
+            for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:
+                search_pip = f"X{tile[0].x}Y{tile[0].y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
+                for pip in tmp_pips:
+                    if re.match(search_pip, pip):
+                        removed_pips.append(pip)
+                        tmp_pips.remove(pip)
+
+    return (tmp_pips, removed_pips)
+
+def npnr_file_gen(layout: FabricLayout, option_static, base_dir, option_merge):
+    if option_static and option_merge:
+        print("Warning static has priority over merge option, no merge will be done.")
+
     if not option_static:
         fasm_parsed = parse_fasm_filename(f"{base_dir}/Static/Static.fasm")
         fasm_canon_str = fasm_tuple_to_string(fasm_parsed, True)
@@ -513,55 +564,26 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
         # Dynamic slot gen
         else:
             # Check overlap of static with this slot
-            overlapping_bridge_tiles = {}
-            overlapping_point_tiles = {}
-
-            for bridge in layout.bridges:
-                if slot.start <= bridge.x and bridge.x <= slot.end:
-                    overlapping_bridge_tiles[bridge] = layout.fabric.tile[bridge.y][bridge.x]
-            
-            for point in layout.points:
-                if slot.start <= point.x and point.x <= slot.end:
-                    overlapping_point_tiles[point] = layout.fabric.tile[point.y][point.x]
+            overlapping_bridge_tiles = get_overlapping_tiles(layout, layout.bridges, slot, option_merge)
+            overlapping_point_tiles = get_overlapping_tiles(layout, layout.points, slot, option_merge)
 
             # Add custom bel
-            for pos, tile in overlapping_point_tiles.items():
-                if tile == None:
-                    continue
-
-                tmp_fabric.tile[pos.y][pos.x] = copy.deepcopy(tile)
-                bel = bel_gen_from_slot(tile, slot, base_dir, pos, static_slot)
-                tmp_fabric.tile[pos.y][pos.x].bels.insert(0, bel)
-                verilog_gen(tile, slot, base_dir, pos, static_slot)
+            for pos, tile_list in overlapping_point_tiles.items():
+                for tile in tile_list:  
+                    if tile[0] != pos or tile[1] == None:
+                        continue
+                    
+                    print(f"Create Bel for tile X{pos.x}Y{pos.y}")
+                    tmp_fabric.tile[pos.y][pos.x] = copy.deepcopy(tile[1])
+                    bel = bel_gen_from_slot(tile[1], slot, base_dir, pos, static_slot)
+                    tmp_fabric.tile[pos.y][pos.x].bels.insert(0, bel)
+                    verilog_gen(tile[1], slot, base_dir, pos, static_slot)
 
             tmp_npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)            
 
             # Remove pips of the overlapping tiles
-            tmp_pips = tmp_npnr_model[0].split("\n")
-            removed_pips = []
-
-            for pos, tile in overlapping_bridge_tiles.items():
-                if tile == None:
-                    continue
-
-                # Search and remove wires
-                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:
-                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
-                    for pip in tmp_pips:
-                        if re.match(search_pip, pip):
-                            removed_pips.append(pip)
-                            tmp_pips.remove(pip)
-
-            for pos, tile in overlapping_point_tiles.items():
-                if tile == None:
-                    continue
-                                
-                for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:
-                    search_pip = f"X{pos.x}Y{pos.y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
-                    for pip in tmp_pips:
-                        if re.match(search_pip, pip):
-                            removed_pips.append(pip)
-                            tmp_pips.remove(pip)
+            bridge_pips_fasm = remove_pips_fasm(overlapping_bridge_tiles, fasm_wires, tmp_npnr_model[0].split("\n"), [])
+            (tmp_pips, removed_pips) = remove_pips_fasm(overlapping_point_tiles, fasm_wires, bridge_pips_fasm[0], bridge_pips_fasm[1])
 
         npnr_model = ("\n".join(tmp_pips), tmp_npnr_model[1], tmp_npnr_model[2], tmp_npnr_model[3])
         print("Removed pips:")
@@ -702,7 +724,7 @@ def init_config(layout: FabricLayout, config_path, fabric_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path):
+def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path, option_merge):
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
 
@@ -729,7 +751,7 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
         elif user_input == "w":
             write_config(fabric_layout, config_path)
             if generate_files:
-                npnr_file_gen(layout, option_static, base_dir)
+                npnr_file_gen(layout, option_static, base_dir, option_merge)
             if option_combine:
                 combine_fasm(layout, base_dir)
             if option_bitstream:
@@ -755,10 +777,10 @@ if __name__ == "__main__":
             "1) Run -i to create a config file\n"\
             "2) Run -gsf <conf_file> to generate the static slot config\n"\
             "3) Run yosys and nextpnr to generate the static slot fasm file\n"\
-            "4) Run -gf <conf_file> to generate the dynamic slot configs\n"\
+            "4) Run -g[m]f <conf_file> to generate the dynamic slot configs\n"\
             "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
-            "5) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
-            "6) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
+            "6) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
+            "7) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
             "--basedir, --fabric and --spec can be combined with all options and are used if applicable\n"\
             "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command"
 
@@ -769,6 +791,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-s", "--static", action="store_true", help="Generate the static slot")
     arg_parser.add_argument("-c", "--combine", action="store_true", help="Combine the static and dynamic fasm files")
     arg_parser.add_argument("-b", "--bitstream", action="store_true", help="Generate the bitstream from the slots")
+    arg_parser.add_argument("-m", "--merge", action="store_true", help="Merge used wires for  slot connection across all slots")
     arg_parser.add_argument("--basedir", help="Base build directory for the slot generation, defaults to .build")
     arg_parser.add_argument("--fabric", help="fabric.csv file path, defaults to fabric.csv")
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
@@ -789,11 +812,11 @@ if __name__ == "__main__":
     else:
         fabric_path = args.fabric
 
-    # TODO force snyc slots?
+    # TODO slot merging to super slot?
     # TODO supertiles?
     # TODO external connections?
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path, args.merge)
         exit
 
     fabric_layout = None
@@ -804,7 +827,7 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            npnr_file_gen(fabric_layout, args.static, base_dir)
+            npnr_file_gen(fabric_layout, args.static, base_dir, args.merge)
         else:
             print("The -g parameter requires the -f parameter")
     

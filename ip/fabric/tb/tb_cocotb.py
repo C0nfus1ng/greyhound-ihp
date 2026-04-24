@@ -110,7 +110,7 @@ async def zero_bitstream(dut):
     dut.bitstream_data_i.value = 1<<DESYNC_FLAG
     await ClockCycles(dut.clk_i, 1)
 
-async def upload_bitstream(dut, name, file_name=None):
+async def upload_bitstream(dut, name, file_name=None, start_column=0):
     """
     Read data until start of bitstream is detected
     Write data until desync bit is in header
@@ -145,7 +145,8 @@ async def upload_bitstream(dut, name, file_name=None):
             if data == None:
                 break
             header = int.from_bytes(data, "big")
-            
+            header = (header & 0x07FF_FFFF) | ((((header & 0xF800_0000) >> 27) + start_column) << 27)
+
             print(f'--- header: 0x{header:08x}')
 
             # Write header
@@ -556,6 +557,15 @@ async def test_partial(dut):
 
     await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot')
     await ClockCycles(dut.clk_i, 100)
+
+    # Interchange slots
+    await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot', 2)
+    await ClockCycles(dut.clk_i, 100)
+
+    await upload_bitstream(dut, 'partial/.build/Slot2', 'Slot2-slot', -2)
+    await ClockCycles(dut.clk_i, 100)
+
+    
 
 if __name__ == "__main__":
     testbench_path = Path(__file__).resolve().parent
