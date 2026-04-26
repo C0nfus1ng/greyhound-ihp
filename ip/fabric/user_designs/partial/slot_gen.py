@@ -92,6 +92,9 @@ class Point:
         return dumper.represent_mapping("tag:yaml.org,2002:map",
                 {"x": data.x, "y": data.y, "Format": data.formatting})
 
+    def __lt__(self, other):
+        return self.x < other.x
+
 class FabricLayout:
     fabric = None
     length = 0
@@ -432,47 +435,101 @@ def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool):
 
     return Bel(filename, bel_prefix, module_name, internal, external, config, shared, 0, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
 
+def get_slot_mismatch(layout, slot, other_slot):
+    # Static slot is exempt
+    if other_slot.name == "Static":
+        return True
+
+    # Slot cannot overlap with itself
+    if other_slot == slot:
+        return True
+
+    # Slot width is different
+    if (other_slot.end-other_slot.start) != (slot.end-slot.start):
+        return True
+
+    # Slots partially overlap
+    if (slot.start >= other_slot.start and slot.start <= other_slot.end) or (slot.end >= other_slot.start and slot.end <= other_slot.end):
+        return True
+
+    static_slots = []
+    static_other_slots = []
+    for bridge in layout.bridges:
+        if slot.start <= bridge.x and bridge.x <= slot.end:
+            static_slots.append((bridge.x, bridge.y, 0))
+
+        if other_slot.start <= bridge.x and bridge.x <= other_slot.end:
+            static_other_slots.append((bridge.x, bridge.y, 0))
+
+    for point in layout.points:
+        if slot.start <= point.x and point.x <= slot.end:
+            static_slots.append((point.x, point.y, 1))
+
+        if other_slot.start <= point.x and point.x <= other_slot.end:
+            static_other_slots.append((point.x, point.y, 1))
+
+    # Different amount of connectors
+    if len(static_slots) != len(static_other_slots):
+        return True
+
+    # Sort for the slots
+    static_slots.sort()
+    static_other_slots.sort()
+    
+    for i in range(len(static_slots)):
+        # Connector type mismatch
+        if static_slots[i][2] != static_other_slots[i][2]:
+            return True
+
+    return False
+
+
 def get_overlapping_tiles(layout: FabricLayout, point_list: [Point], slot: Slot, option_merge: bool):
     overlapping_tiles = {}
 
     for point in point_list:
+
         if slot.start <= point.x and point.x <= slot.end:
             if point not in overlapping_tiles.keys():
-                overlapping_tiles[point] = []
+                overlapping_tiles[point] = {}
 
-            overlapping_tiles[point].append((point, layout.fabric.tile[point.y][point.x]))
+            overlapping_tiles[point][(point.x, point.y)] = layout.fabric.tile[point.y][point.x]
 
         if option_merge:
             slot_length = slot.end-slot.start
 
             # Check if tile would overlap in other slots, and "make" it overlap this slot too then
             for other_slot in layout.slots:
-                if other_slot.name == "Static" or other_slot == slot:
-                    continue
-                
+                # Other slot does not overlap with point
                 if not (other_slot.start <= point.x and point.x <= other_slot.end):
-                    # Tile does not overlap with this slot
+                    continue
+
+                # Slot can not be used to overlap
+                if get_slot_mismatch(layout, slot, other_slot):
                     continue
 
                 pos_other_slot = (point.x - other_slot.start, point.y)
 
                 if pos_other_slot[0] <= slot_length:
                     if point not in overlapping_tiles.keys():
-                        overlapping_tiles[point] = []
+                        overlapping_tiles[point] = {}
 
-                    overlapping_tiles[point].append((Point(slot.start + pos_other_slot[0], pos_other_slot[1], other_slot.formatting), layout.fabric.tile[pos_other_slot[1]][slot.start + pos_other_slot[0]]))
+                    if (slot.start + pos_other_slot[0], pos_other_slot[1]) in overlapping_tiles[point].keys():
+                        continue
+
+                    overlapping_tiles[point][(slot.start + pos_other_slot[0], pos_other_slot[1])] = layout.fabric.tile[pos_other_slot[1]][slot.start + pos_other_slot[0]]
 
     return overlapping_tiles
 
 def remove_pips_fasm(overlapping_tiles, fasm_wires, tmp_pips, removed_pips):
     for pos, tile_list in overlapping_tiles.items():
-        for tile in tile_list:
-            if tile[1] == None:
+        for (x, y), tile in tile_list.items():
+            if tile == None:
                 continue
-            
+
             # Search and remove wires
             for fasm_wire in fasm_wires[f"X{pos.x}Y{pos.y}"]:
-                search_pip = f"X{tile[0].x}Y{tile[0].y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
+                search_pip = f"X{x}Y{y},[^,]+,[^,]+,[^,]+,[^,]+,{fasm_wire[0]}"+r"\."+f"{fasm_wire[1]}$"
                 for pip in tmp_pips:
                     if re.match(search_pip, pip):
                         removed_pips.append(pip)
@@ -569,15 +626,15 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir, option_merge):
 
             # Add custom bel
             for pos, tile_list in overlapping_point_tiles.items():
-                for tile in tile_list:  
-                    if tile[0] != pos or tile[1] == None:
+                for (x, y), tile in tile_list.items():  
+                    if (x != pos.x or y != pos.y) or tile == None:
                         continue
                     
                     print(f"Create Bel for tile X{pos.x}Y{pos.y}")
-                    tmp_fabric.tile[pos.y][pos.x] = copy.deepcopy(tile[1])
-                    bel = bel_gen_from_slot(tile[1], slot, base_dir, pos, static_slot)
+                    tmp_fabric.tile[pos.y][pos.x] = copy.deepcopy(tile)
+                    bel = bel_gen_from_slot(tile, slot, base_dir, pos, static_slot)
                     tmp_fabric.tile[pos.y][pos.x].bels.insert(0, bel)
-                    verilog_gen(tile[1], slot, base_dir, pos, static_slot)
+                    verilog_gen(tile, slot, base_dir, pos, static_slot)
 
             tmp_npnr_model = gen_npnr_model.genNextpnrModel(tmp_fabric)            
 
@@ -773,6 +830,7 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
 # 8) When slots are symetrical allow changing the header to change uploaded slot
 if __name__ == "__main__":
     usage = "Generate eFPGA Slots\n"\
+            "Use -h, --help to get the help text for all flags\n"\
             "Usage:\n"\
             "1) Run -i to create a config file\n"\
             "2) Run -gsf <conf_file> to generate the static slot config\n"\
@@ -812,9 +870,6 @@ if __name__ == "__main__":
     else:
         fabric_path = args.fabric
 
-    # TODO slot merging to super slot?
-    # TODO supertiles?
-    # TODO external connections?
     if args.interactive:
         slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path, args.merge)
         exit

@@ -1,7 +1,7 @@
 Length: 12
 Height: 18
 Column Length: 15
-Last Color: 3
+Last Color: 0
 Slots:
 - Start: 0
   End: 1
@@ -18,12 +18,31 @@ Slots:
   Name: Slot2
   Format:
     Specifier: "\e[33m"
+- Start: 5
+  End: 5
+  Name: Slot3
+  Format:
+    Specifier: "\e[34m"
+- Start: 4
+  End: 5
+  Name: Slot4
+  Format:
+    Specifier: "\e[35m"
+- Start: 5
+  End: 6
+  Name: Slot5
+  Format:
+    Specifier: "\e[36m"
 Points:
 - x: 2
   y: 1
   Format:
     Specifier: "\e[1m"
 - x: 4
+  y: 1
+  Format:
+    Specifier: "\e[1m"
+- x: 5
   y: 1
   Format:
     Specifier: "\e[1m"

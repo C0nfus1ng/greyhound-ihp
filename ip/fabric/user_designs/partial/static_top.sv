@@ -8,26 +8,19 @@ module top(
 );
     logic rst;
 
-    wire       lut0_o, lut1_o;
-    wire [3:0] lut0_i, lut1_i;
-
     static_slot slot_i(
-    .clk,
+        .clk,
 
-    .lut0_o(lut0_o),
-    .lut0_i(lut0_i),
-    .lut1_o(lut1_o),
-    .lut1_i(lut1_i),
+        .slot1_o (io_out[0]),
+        .slot1_i ({3'b0, rst}),
+        .slot2_o (io_out[1]),
+        .slot2_i ({3'b0, rst}),
+        .slot3_o (io_out[2]),
+        .slot3_i ({3'b0, rst}),
     );
 
     assign io_oeb = '0;
-    assign io_out[0]    = lut0_o;
-    assign io_out[1]    = lut1_o;
-    assign io_out[31:2] = '0;
-    assign lut0_i[3:1]  = '0;
-    assign lut0_i[0]    = rst;
-    assign lut1_i[3:1]  = '0;
-    assign lut1_i[0]    = rst;
+    assign io_out[31:3] = '0;
 
     WARMBOOT_wrapper WARMBOOT_wrapper (
         .SLOT   (4'd0),

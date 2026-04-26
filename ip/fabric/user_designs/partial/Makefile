@@ -29,6 +29,9 @@ all:
 	
 	$(MAKE) slot1-fasm-wrapper
 	$(MAKE) slot2-fasm-wrapper
+	$(MAKE) slot3-fasm-wrapper
+	$(MAKE) slot4-fasm-wrapper
+	$(MAKE) slot5-fasm-wrapper
 
 	@echo ''
 	@echo '---------------------------'
@@ -39,7 +42,7 @@ all:
 .PHONY: all
 
 # Slot sources
-static-fasm: RTL = ../top_wrapper.v .build/Static/Static_slot_con_X2Y1.v .build/Static/Static_slot_con_X4Y1.v  static_slot.sv static_top.sv ../primitive_wrappers.v
+static-fasm: RTL = ../top_wrapper.v .build/Static/Static_slot_con_X2Y1.v .build/Static/Static_slot_con_X4Y1.v .build/Static/Static_slot_con_X5Y1.v .build/Static/Static_slot_con_X4Y1.v  static_slot.sv static_top.sv ../primitive_wrappers.v
 static-fasm: TOP = top_wrapper
 static-fasm: SLOT_ROOT = Static
 static-fasm: synth pnr
@@ -56,6 +59,24 @@ slot2-fasm: TOP = slot2_wrapper
 slot2-fasm: SLOT_ROOT = Slot2
 slot2-fasm: synth pnr
 .PHONY: slot2-fasm
+
+slot3-fasm: RTL = .build/Slot3/Slot3_slot_con_X5Y1.v slot3_wrapper.v slot3.sv ../primitive_wrappers.v
+slot3-fasm: TOP = slot3_wrapper
+slot3-fasm: SLOT_ROOT = Slot3
+slot3-fasm: synth pnr
+.PHONY: slot3-fasm
+
+slot4-fasm: RTL = .build/Slot4/Slot4_slot_con_X4Y1.v .build/Slot4/Slot4_slot_con_X5Y1.v slot4_wrapper.v slot4.sv ../primitive_wrappers.v
+slot4-fasm: TOP = slot4_wrapper
+slot4-fasm: SLOT_ROOT = Slot4
+slot4-fasm: synth pnr
+.PHONY: slot4-fasm
+
+slot5-fasm: RTL = .build/Slot5/Slot5_slot_con_X5Y1.v slot5_wrapper.v slot5.sv ../primitive_wrappers.v
+slot5-fasm: TOP = slot5_wrapper
+slot5-fasm: SLOT_ROOT = Slot5
+slot5-fasm: synth pnr
+.PHONY: slot5-fasm
 
 slot%-fasm-wrapper:
 	@echo ''
