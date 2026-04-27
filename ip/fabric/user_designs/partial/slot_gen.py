@@ -313,7 +313,7 @@ def load_config(layout: FabricLayout, file_path = None):
         return
 
 def print_layout(layout: FabricLayout):
-    merged_slots = gen_merged_slots(layout)
+    merged_slots = gen_merged_slots(layout, False)
     print()
 
     # Point
@@ -505,7 +505,7 @@ def get_slot_match(layout, slot, other_slot):
 
     return True
 
-def gen_merged_slots(layout: FabricLayout):
+def gen_merged_slots(layout: FabricLayout, quiet=True):
     slots = {}
     merged = {}
 
@@ -520,7 +520,9 @@ def gen_merged_slots(layout: FabricLayout):
                 continue
 
             if get_slot_match(layout, base_slot, overlap_slot):
-                print(f"Slot: {base_slot.name} merged with Slot: {overlap_slot.name}")
+                if not quiet:
+                    print(f"Slot: {base_slot.name} merged with slot: {overlap_slot.name}")
+
                 overlapped_slots.append(overlap_slot)
                 merged[overlap_slot] = True
 
@@ -534,7 +536,9 @@ def gen_merged_slots(layout: FabricLayout):
             slot_nbr_str = [found.group() if (found := re.search('[0-9]+', slot.name)) else "" for slot in overlapped_slots[1:]]
             slot_name = overlapped_slots[0].name + "_" + "_".join(slot_nbr_str)
 
-            print(f"Slots merged into {slot_name}")
+            if not quiet:
+                print(f"Slots merged into {slot_name}")
+            
             slots[Slot(base_slot.start, base_slot.end, slot_name, base_slot.formatting)] = overlapped_slots
 
     return slots
@@ -606,15 +610,15 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
 
         if slot.name == "Static" and option_static:
             static_slot = True
-            print("Static Slot")
+            print("Static slot")
         elif slot.name != "Static" and not option_static and slot not in merged_slots:
             dynamic_slot = True
-            print(f"Dynamic Slot: {slot.name}")
+            print(f"Dynamic slot: {slot.name}")
         elif slot.name != "Static" and not option_static and slot in merged_slots:
             merged_slot = True
-            print(f"Merged Slot: {slot.name}")
+            print(f"Merged slot: {slot.name}")
         else:
-            print(f"Skip Slot: {slot.name}")
+            print(f"Skip slot: {slot.name}")
             continue
 
         tmp_fabric = copy.deepcopy(layout.fabric)
@@ -674,7 +678,7 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
                 overlapping_bridge_tiles = get_overlapping_tiles(layout, layout.bridges, merged_slots[slot])
                 overlapping_point_tiles = get_overlapping_tiles(layout, layout.points, merged_slots[slot])
             else:
-                print(f"Error Slot {slot.name} can not be categorized")
+                raise RuntimeError(f"Error slot {slot.name} can not be categorized")
                 continue
 
             # Add custom bel
@@ -710,61 +714,103 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
         with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
             pickle.dump(spec_object, f)
 
-def combine_fasm(layout: FabricLayout, base_dir):
+def combine_fasm(layout: FabricLayout, base_dir, progs):
+    if not progs or (progs and "Static" not in progs.keys()):
+        static_prog = "Static"
+    else:
+        static_prog = progs["Static"]
+
     # Parse fasm file
-    fasm_static_parsed = parse_fasm_filename(f"{base_dir}/Static/Static.fasm")
+    fasm_static_parsed = parse_fasm_filename(f"{base_dir}/Static/{static_prog}.fasm")
     fasm_static_str = fasm_tuple_to_string(fasm_static_parsed, True)
     fasm_static_list = list(parse_fasm_string(fasm_static_str))
     fasm_static_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_static_list]
 
-    for slot in layout.slots:
+    merged_slots = gen_merged_slots(layout)
+    all_slots = layout.slots + list(merged_slots.keys())
+
+    for slot in all_slots:
         if slot.name == "Static":
-            print("Skipped Static slot")
             continue
 
-        fasm_dynamic_parsed = parse_fasm_filename(f"{base_dir}/{slot.name}/{slot.name}.fasm")
-        fasm_dynamic_str = fasm_tuple_to_string(fasm_dynamic_parsed, True)
-        fasm_dynamic_list = list(parse_fasm_string(fasm_dynamic_str))
-        fasm_dynamic_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_dynamic_list]
+        # Slot has no prog to build
+        if progs and slot.name not in progs.keys():
+            print(f"No prog for slot: {slot.name}")
+            continue
 
-        # Get slot intersection
-        fasm_overlap_str = []
-        fasm_overlap_str.append("# Lines from Static slot")
-        for col in range(slot.start, slot.end+1):
-            search_line = f"X{col}.*"
+        tmp_progs = progs
+        if not progs:
+            tmp_progs = {slot.name: slot.name}
 
-            for fasm_static_line_str in fasm_static_list_str:
-                if re.match(search_line, fasm_static_line_str):
-                    if fasm_static_line_str in fasm_dynamic_list_str:
-                        raise RuntimeError("Dynamic slot uses same route as Static slot.")
-                    
-                    fasm_overlap_str.append(fasm_static_line_str)
+        for prog in tmp_progs[slot.name]:
+            fasm_dynamic_parsed = parse_fasm_filename(f"{base_dir}/{slot.name}/{prog}.fasm")
+            fasm_dynamic_str = fasm_tuple_to_string(fasm_dynamic_parsed, True)
+            fasm_dynamic_list = list(parse_fasm_string(fasm_dynamic_str))
+            fasm_dynamic_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_dynamic_list]
 
-        fasm_overlap_str.append("\n")
-        print(f"Appending to {slot.name}")
-        print("\n".join(fasm_overlap_str))
+            if slot in merged_slots:
+                merge_slots = merged_slots[slot]
+            else:
+                merge_slots = [slot]
 
-        makedirs(f"{base_dir}/{slot.name}", exist_ok=True)
-        with open(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", "w") as fasm_file:
-            fasm_file.write("\n".join(fasm_overlap_str))
-            fasm_file.write(fasm_dynamic_str)
+            # Get slot intersection
+            fasm_overlap_str = []
+            fasm_overlap_str.append("# Lines from Static slot")
+            for merge_slot in merge_slots:
+                for col in range(merge_slot.start, merge_slot.end+1):
+                    pos_in_slot = col - merge_slot.start
+                    search_line = f"X{col}.*"
 
-def gen_bitstream(layout: FabricLayout, base_dir):
-    for slot in layout.slots:
+                    for fasm_static_line_str in fasm_static_list_str:
+                        if re.match(search_line, fasm_static_line_str):
+                            if fasm_static_line_str in fasm_dynamic_list_str:
+                                raise RuntimeError("Dynamic slot uses same route as Static slot.")
+                            
+                            # Rewrite fasm line
+                            fasm_overlap_str.append(f"X{slot.start+pos_in_slot}"+fasm_static_line_str[len(str(col))+1:])
+
+            fasm_overlap_str.append("\n")
+            print(f"Appending to {slot.name}-{prog}")
+            print("\n".join(fasm_overlap_str))
+
+            makedirs(f"{base_dir}/{slot.name}", exist_ok=True)
+            with open(f"{base_dir}/{slot.name}/{prog}-slot.fasm", "w") as fasm_file:
+                fasm_file.write("\n".join(fasm_overlap_str))
+                fasm_file.write(fasm_dynamic_str)
+
+def gen_bitstream(layout: FabricLayout, base_dir, progs):
+    if not progs or (progs and "Static" not in progs.keys()):
+        static_prog = "Static"
+    else:
+        static_prog = progs["Static"]
+
+    # Create Static bitstream and hex file
+    genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
+    bit_to_hex(f"{base_dir}/Static/Static.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
+
+    merged_slots = gen_merged_slots(layout)
+    all_slots = layout.slots + list(merged_slots.keys())
+
+    for slot in all_slots:
         if slot.name == "Static":
-            # Create bitstream
-            genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/Static.bit")
+            continue
 
-            # Make hex files
-            bit_to_hex(f"{base_dir}/Static/Static.bit", f"{base_dir}/Static/Static.hex", bytes_per_word=1)
-        else:
-            genBitstream(f"{base_dir}/{slot.name}/{slot.name}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{slot.name}.bit")
+        # Slot has no prog to build
+        if progs and slot.name not in progs.keys():
+            continue
+        
+        tmp_progs = progs
 
-            bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}.bit", f"{base_dir}/{slot.name}/{slot.name}.hex", bytes_per_word=1)
+        if not progs:
+            tmp_progs = {slot.name: slot.name}
+
+        for prog in tmp_progs[slot.name]:
+            genBitstream(f"{base_dir}/{slot.name}/{prog}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{prog}.bit")
+            bit_to_hex(f"{base_dir}/{slot.name}/{prog}.bit", f"{base_dir}/{slot.name}/{prog}.hex", bytes_per_word=1)
 
             # Create the slot representation
-            with open(f"{base_dir}/{slot.name}/{slot.name}.bit", 'rb') as bitstream_file_in:
-                with open(f"{base_dir}/{slot.name}/{slot.name}-slot.bit", 'wb') as bitstream_file_out:
+            with open(f"{base_dir}/{slot.name}/{prog}.bit", 'rb') as bitstream_file_in:
+                with open(f"{base_dir}/{slot.name}/{prog}-slot.bit", 'wb') as bitstream_file_out:
                     # Add file header
                     bitstream_file_out.write(0xFAB0FAB1.to_bytes(4))
 
@@ -782,7 +828,7 @@ def gen_bitstream(layout: FabricLayout, base_dir):
                     # Add desync
                     bitstream_file_out.write(0x00100000.to_bytes(4))
 
-            bit_to_hex(f"{base_dir}/{slot.name}/{slot.name}-slot.bit", f"{base_dir}/{slot.name}/{slot.name}-slot.hex", bytes_per_word=1)
+            bit_to_hex(f"{base_dir}/{slot.name}/{prog}-slot.bit", f"{base_dir}/{slot.name}/{prog}-slot.hex", bytes_per_word=1)
 
 def print_help():
     print("Help:")
@@ -834,7 +880,7 @@ def init_config(layout: FabricLayout, config_path, fabric_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path):
+def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path, progs):
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
 
@@ -863,16 +909,37 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
             if generate_files:
                 npnr_file_gen(layout, option_static, base_dir)
             if option_combine:
-                combine_fasm(layout, base_dir)
+                combine_fasm(layout, base_dir, progs)
             if option_bitstream:
-                gen_bitstream(layout, base_dir)
+                gen_bitstream(layout, base_dir, progs)
         elif user_input == "h":
             print_help()
         else:
             print("Command not found")
             print_help()
 
-# TODO uncouple slot and bitstream names
+def parse_prog(progs: str):
+    if not progs:
+        return None
+
+    if not re.match(r"^([^=,\s]+=[^=,\s]+(,[^=,\s]+)*)(\s+[^=,\s]+=[^=,\s]+(,[^=,\s]+)*)*$", progs):
+        raise RuntimeError(f"Invalid format --prog \"{progs}\"")
+        return None
+
+    slot_progs_line = progs.split(" ")
+    slot_progs_dict = dict([slot_prog.split("=") for slot_prog in slot_progs_line])
+
+    for slot, prog in slot_progs_dict.items():
+        if slot == "Static":
+            static_progs = prog.split(",")
+            if len(static_progs) > 1:
+                print(f"Warning: static can only do 1 prog per run, using first prog in list: {static_progs[0]}")
+            
+            slot_progs_dict[slot] = static_progs[0]
+        else:
+            slot_progs_dict[slot] = prog.split(",")
+
+    return slot_progs_dict
 
 # Partial config flow: 
 # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
@@ -894,7 +961,7 @@ if __name__ == "__main__":
             "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
             "6) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
             "7) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
-            "--basedir, --fabric and --spec can be combined with all options and are used if applicable\n"\
+            "--basedir, --fabric, --spec and --progdir can be combined with all options and are used if applicable\n"\
             "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command"
 
     arg_parser = argparse.ArgumentParser(description=usage)
@@ -907,12 +974,15 @@ if __name__ == "__main__":
     arg_parser.add_argument("--basedir", help="Base build directory for the slot generation, defaults to .build")
     arg_parser.add_argument("--fabric", help="fabric.csv file path, defaults to fabric.csv")
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
+    arg_parser.add_argument("--prog", help="Program name to build for a slot, defaults to slot name=slot name. Use with specifiying the slot, like --prog \"Slot1=Prog1,Prog2,.. Slot2=...\"")
 
     args = arg_parser.parse_args()
     
     if not any(vars(args).values()):
         print(usage)
         exit
+
+    progs = parse_prog(args.prog)
 
     if not args.basedir:
         base_dir = ".build"
@@ -925,7 +995,7 @@ if __name__ == "__main__":
         fabric_path = args.fabric
 
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path, progs)
         exit
 
     fabric_layout = None
@@ -946,7 +1016,7 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            combine_fasm(fabric_layout, base_dir)
+            combine_fasm(fabric_layout, base_dir, progs)
         else:
             print("The -c parameter requires the -f parameter")
 
@@ -956,7 +1026,6 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            gen_bitstream(fabric_layout, base_dir)
+            gen_bitstream(fabric_layout, base_dir, progs)
         else:
             print("The -b parameter requires the -f parameter")
-        

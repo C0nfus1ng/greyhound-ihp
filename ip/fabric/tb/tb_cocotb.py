@@ -562,14 +562,17 @@ async def test_partial(dut):
     await ClockCycles(dut.clk_i, 100)
 
     # Interchange slots
-    await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot', 2)
+    await upload_bitstream(dut, 'partial/.build/Slot1_2_3', 'Slot_hopper-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot2', 'Slot2-slot', -2)
+    await upload_bitstream(dut, 'partial/.build/Slot1_2_3', 'Slot_hopper-slot', 2)
     await ClockCycles(dut.clk_i, 100)
 
     # Merged slots
     await upload_bitstream(dut, 'partial/.build/Slot4', 'Slot4-slot')
+    await ClockCycles(dut.clk_i, 100)
+
+    await upload_bitstream(dut, 'partial/.build/Slot2', 'Slot2-slot')
     await ClockCycles(dut.clk_i, 100)
     
     # Asym slots
