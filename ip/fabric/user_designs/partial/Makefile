@@ -93,7 +93,7 @@ static-gen:
 .PHONY: static-gen
 
 dynamic-gen:
-	python3 slot_gen.py -gmf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+	python3 slot_gen.py -gf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
 .PHONY: dynamic-gen
 
 bit-gen:

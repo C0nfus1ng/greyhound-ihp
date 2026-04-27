@@ -92,9 +92,6 @@ class Point:
         return dumper.represent_mapping("tag:yaml.org,2002:map",
                 {"x": data.x, "y": data.y, "Format": data.formatting})
 
-    def __lt__(self, other):
-        return self.x < other.x
-
 class FabricLayout:
     fabric = None
     length = 0
@@ -184,7 +181,7 @@ def create_connection(layout: FabricLayout, bridge=False):
     else:
         cell = input("Specify the slot connection point as X<x>Y<y> (Should be placed in a dynamic slot): ")
 
-    slot_connection = [int(re.findall('[0-9]', x)[0]) for x in re.findall('X[0-9]+|Y[0-9]+', cell)]
+    slot_connection = [int(x[1:]) for x in re.findall('X[0-9]+|Y[0-9]+', cell)]
     try:
         print(f"Added connection point at X{slot_connection[0]}Y{slot_connection[1]}")
     except:
@@ -316,6 +313,9 @@ def load_config(layout: FabricLayout, file_path = None):
         return
 
 def print_layout(layout: FabricLayout):
+    merged_slots = gen_merged_slots(layout)
+    print()
+
     # Point
     print(f"{Format.get_italic()}Italic{Format.get_default()} for non static bridging tiles")    
     print(f"{Format.get_bold()}Bold{Format.get_default()} for connection tiles between static and dynamic slots")    
@@ -325,7 +325,19 @@ def print_layout(layout: FabricLayout):
         first = 10 + slot.start*layout.tile_name_max_length
         last = first - 2 + (slot.end-slot.start+1)*layout.tile_name_max_length
         mid = first + int((last-first)/2)-4
-        print(f"{slot.formatting.format_string}{" "*(first)}|<{" "*(mid-first)}{slot.name}{" "*(last-mid-len(slot.name)-2)}>|{Format.get_default()}")
+        print(f"{slot.formatting.format_string}{" "*(first)}|<{" "*(mid-first)}{slot.name[:9]}{" "*(last-mid-len(slot.name[:9])-2)}>|{Format.get_default()}")
+
+    # Merged slot overview
+    for slot, sub_slots in merged_slots.items():
+        pre_length = 0
+        for sub_slot in sub_slots:
+            first = 10 + sub_slot.start*layout.tile_name_max_length
+            last = first - 2 + (sub_slot.end-sub_slot.start+1)*layout.tile_name_max_length
+            mid = first + int((last-first)/2)-4
+            print_str = f"{sub_slot.formatting.format_string}{" "*(first-pre_length)}|<{" "*(mid-first)}{slot.name[:9]}{" "*(last-mid-len(slot.name[:9])-2)}>|{Format.get_default()}"
+            pre_length += len(print_str) - (len(sub_slot.formatting.format_string) + len(Format.get_default()))
+            print(print_str, end="")
+        print()
 
     # Table
     print("Row/Col | ", end='')
@@ -435,89 +447,116 @@ def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool):
 
     return Bel(filename, bel_prefix, module_name, internal, external, config, shared, 0, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
 
-def get_slot_mismatch(layout, slot, other_slot):
+def get_slot_match(layout, slot, other_slot):
     # Static slot is exempt
     if other_slot.name == "Static":
-        return True
+        return False
 
     # Slot cannot overlap with itself
     if other_slot == slot:
-        return True
+        return False
 
     # Slot width is different
     if (other_slot.end-other_slot.start) != (slot.end-slot.start):
-        return True
+        return False
 
     # Slots partially overlap
     if (slot.start >= other_slot.start and slot.start <= other_slot.end) or (slot.end >= other_slot.start and slot.end <= other_slot.end):
-        return True
+        return False
 
     static_slots = []
     static_other_slots = []
     for bridge in layout.bridges:
         if slot.start <= bridge.x and bridge.x <= slot.end:
-            static_slots.append((bridge.x, bridge.y, 0))
+            static_slots.append((bridge, layout.fabric.tile[bridge.y][bridge.x], 0))
 
         if other_slot.start <= bridge.x and bridge.x <= other_slot.end:
-            static_other_slots.append((bridge.x, bridge.y, 0))
+            static_other_slots.append((bridge, layout.fabric.tile[bridge.y][bridge.x], 0))
 
     for point in layout.points:
         if slot.start <= point.x and point.x <= slot.end:
-            static_slots.append((point.x, point.y, 1))
+            static_slots.append((point, layout.fabric.tile[point.y][point.x], 1))
 
         if other_slot.start <= point.x and point.x <= other_slot.end:
-            static_other_slots.append((point.x, point.y, 1))
+            static_other_slots.append((point, layout.fabric.tile[point.y][point.x], 1))
 
     # Different amount of connectors
     if len(static_slots) != len(static_other_slots):
-        return True
+        return False
+
+    sort_match = lambda point: point[0].x
 
     # Sort for the slots
-    static_slots.sort()
-    static_other_slots.sort()
+    static_slots.sort(key=sort_match)
+    static_other_slots.sort(key=sort_match)
     
     for i in range(len(static_slots)):
         # Connector type mismatch
         if static_slots[i][2] != static_other_slots[i][2]:
-            return True
+            return False
 
-    return False
+        # Connector pos mismatch
+        if static_slots[i][0].y != static_other_slots[i][0].y:
+            return False
 
+        # Connector tile mismatch
+        if static_slots[i][1].name != static_other_slots[i][1].name:
+            return False
 
-def get_overlapping_tiles(layout: FabricLayout, point_list: [Point], slot: Slot, option_merge: bool):
+    return True
+
+def gen_merged_slots(layout: FabricLayout):
+    slots = {}
+    merged = {}
+
+    for base_slot in layout.slots:
+        if base_slot in merged.keys():
+                continue
+        
+        overlapped_slots = []
+        
+        for overlap_slot in layout.slots:
+            if overlap_slot in merged.keys():
+                continue
+
+            if get_slot_match(layout, base_slot, overlap_slot):
+                print(f"Slot: {base_slot.name} merged with Slot: {overlap_slot.name}")
+                overlapped_slots.append(overlap_slot)
+                merged[overlap_slot] = True
+
+        if len(overlapped_slots) > 0:
+            merged[base_slot] = True
+            overlapped_slots.append(base_slot)
+            # Sort by start col
+            sort_slots = lambda slot: slot.start
+            overlapped_slots.sort(key=sort_slots)
+
+            slot_nbr_str = [found.group() if (found := re.search('[0-9]+', slot.name)) else "" for slot in overlapped_slots[1:]]
+            slot_name = overlapped_slots[0].name + "_" + "_".join(slot_nbr_str)
+
+            print(f"Slots merged into {slot_name}")
+            slots[Slot(base_slot.start, base_slot.end, slot_name, base_slot.formatting)] = overlapped_slots
+
+    return slots
+
+def get_overlapping_tiles(layout: FabricLayout, point_list: [Point], slot_list: [Slot]):
     overlapping_tiles = {}
 
-    for point in point_list:
+    # Known that slots match exactly (Connectors, connector tiles, ...), and are sorted by col
+    base_slot = slot_list[0]
+    
+    for slot in slot_list:
+        for point in point_list:
+            if slot.start <= point.x and point.x <= slot.end:
+                if point not in overlapping_tiles.keys():
+                    overlapping_tiles[point] = {}
 
-        if slot.start <= point.x and point.x <= slot.end:
-            if point not in overlapping_tiles.keys():
-                overlapping_tiles[point] = {}
+                pos_in_slot = point.x - slot.start
 
-            overlapping_tiles[point][(point.x, point.y)] = layout.fabric.tile[point.y][point.x]
-
-        if option_merge:
-            slot_length = slot.end-slot.start
-
-            # Check if tile would overlap in other slots, and "make" it overlap this slot too then
-            for other_slot in layout.slots:
-                # Other slot does not overlap with point
-                if not (other_slot.start <= point.x and point.x <= other_slot.end):
+                if (base_slot.start + pos_in_slot, point.y) in overlapping_tiles[point].keys():
                     continue
 
-                # Slot can not be used to overlap
-                if get_slot_mismatch(layout, slot, other_slot):
-                    continue
-
-                pos_other_slot = (point.x - other_slot.start, point.y)
-
-                if pos_other_slot[0] <= slot_length:
-                    if point not in overlapping_tiles.keys():
-                        overlapping_tiles[point] = {}
-
-                    if (slot.start + pos_other_slot[0], pos_other_slot[1]) in overlapping_tiles[point].keys():
-                        continue
-
-                    overlapping_tiles[point][(slot.start + pos_other_slot[0], pos_other_slot[1])] = layout.fabric.tile[pos_other_slot[1]][slot.start + pos_other_slot[0]]
+                overlapping_tiles[point][(base_slot.start + pos_in_slot, point.y)] = layout.fabric.tile[point.y][base_slot.start  + pos_in_slot]
 
     return overlapping_tiles
 
@@ -537,10 +576,7 @@ def remove_pips_fasm(overlapping_tiles, fasm_wires, tmp_pips, removed_pips):
 
     return (tmp_pips, removed_pips)
 
-def npnr_file_gen(layout: FabricLayout, option_static, base_dir, option_merge):
-    if option_static and option_merge:
-        print("Warning static has priority over merge option, no merge will be done.")
-
+def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
     if not option_static:
         fasm_parsed = parse_fasm_filename(f"{base_dir}/Static/Static.fasm")
         fasm_canon_str = fasm_tuple_to_string(fasm_parsed, True)
@@ -557,16 +593,26 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir, option_merge):
             # tile:{(src_wire, dst_wire)}
             fasm_wires[fasm_tile_loc].append((fasm_tile_vals[1], fasm_tile_vals[2]))
 
+    # create merged slots
+    merged_slots = gen_merged_slots(layout)
+    all_slots = layout.slots + list(merged_slots.keys())
+
     # Build fabric per slot
-    for slot in layout.slots:
+    for slot in all_slots:
         static_slot = False
+        dynamic_slot = False
+        merged_slot = False
         makedirs(f"{base_dir}/{slot.name}/.FABulous", exist_ok=True)
 
         if slot.name == "Static" and option_static:
             static_slot = True
             print("Static Slot")
-        elif slot.name != "Static" and not option_static:
+        elif slot.name != "Static" and not option_static and slot not in merged_slots:
+            dynamic_slot = True
             print(f"Dynamic Slot: {slot.name}")
+        elif slot.name != "Static" and not option_static and slot in merged_slots:
+            merged_slot = True
+            print(f"Merged Slot: {slot.name}")
         else:
             print(f"Skip Slot: {slot.name}")
             continue
@@ -621,8 +667,15 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir, option_merge):
         # Dynamic slot gen
         else:
             # Check overlap of static with this slot
-            overlapping_bridge_tiles = get_overlapping_tiles(layout, layout.bridges, slot, option_merge)
-            overlapping_point_tiles = get_overlapping_tiles(layout, layout.points, slot, option_merge)
+            if dynamic_slot:
+                overlapping_bridge_tiles = get_overlapping_tiles(layout, layout.bridges, [slot])
+                overlapping_point_tiles = get_overlapping_tiles(layout, layout.points, [slot])
+            elif merged_slot:
+                overlapping_bridge_tiles = get_overlapping_tiles(layout, layout.bridges, merged_slots[slot])
+                overlapping_point_tiles = get_overlapping_tiles(layout, layout.points, merged_slots[slot])
+            else:
+                print(f"Error Slot {slot.name} can not be categorized")
+                continue
 
             # Add custom bel
             for pos, tile_list in overlapping_point_tiles.items():
@@ -697,7 +750,7 @@ def combine_fasm(layout: FabricLayout, base_dir):
             fasm_file.write(fasm_dynamic_str)
 
 def gen_bitstream(layout: FabricLayout, base_dir):
-    for slot in layout.slots:    
+    for slot in layout.slots:
         if slot.name == "Static":
             # Create bitstream
             genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/Static.bit")
@@ -781,7 +834,7 @@ def init_config(layout: FabricLayout, config_path, fabric_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path, option_merge):
+def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path):
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
 
@@ -808,7 +861,7 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
         elif user_input == "w":
             write_config(fabric_layout, config_path)
             if generate_files:
-                npnr_file_gen(layout, option_static, base_dir, option_merge)
+                npnr_file_gen(layout, option_static, base_dir)
             if option_combine:
                 combine_fasm(layout, base_dir)
             if option_bitstream:
@@ -818,6 +871,8 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
         else:
             print("Command not found")
             print_help()
+
+# TODO uncouple slot and bitstream names
 
 # Partial config flow: 
 # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
@@ -835,7 +890,7 @@ if __name__ == "__main__":
             "1) Run -i to create a config file\n"\
             "2) Run -gsf <conf_file> to generate the static slot config\n"\
             "3) Run yosys and nextpnr to generate the static slot fasm file\n"\
-            "4) Run -g[m]f <conf_file> to generate the dynamic slot configs\n"\
+            "4) Run -gf <conf_file> to generate the dynamic slot configs\n"\
             "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
             "6) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
             "7) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
@@ -849,7 +904,6 @@ if __name__ == "__main__":
     arg_parser.add_argument("-s", "--static", action="store_true", help="Generate the static slot")
     arg_parser.add_argument("-c", "--combine", action="store_true", help="Combine the static and dynamic fasm files")
     arg_parser.add_argument("-b", "--bitstream", action="store_true", help="Generate the bitstream from the slots")
-    arg_parser.add_argument("-m", "--merge", action="store_true", help="Merge used wires for  slot connection across all slots")
     arg_parser.add_argument("--basedir", help="Base build directory for the slot generation, defaults to .build")
     arg_parser.add_argument("--fabric", help="fabric.csv file path, defaults to fabric.csv")
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
@@ -871,7 +925,7 @@ if __name__ == "__main__":
         fabric_path = args.fabric
 
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path, args.merge)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path)
         exit
 
     fabric_layout = None
@@ -882,7 +936,7 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            npnr_file_gen(fabric_layout, args.static, base_dir, args.merge)
+            npnr_file_gen(fabric_layout, args.static, base_dir)
         else:
             print("The -g parameter requires the -f parameter")
     
