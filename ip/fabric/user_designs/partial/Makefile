@@ -4,7 +4,7 @@ BASE_FOLDER = .build
 SLOT_GEN = slot_gen.py
 SLOT_CONFIG = slot_config.yaml
 FABRIC = ../../fabric.csv
-PROG = "Static=Static Slot1=Slot1 Slot2=Slot2 Slot3=Slot3 Slot4=Slot4 Slot5=Slot5 Slot1_2_3=Slot_hopper"
+FASM_FILES = "Static=Static Slot1=Slot1 Slot2=Slot2 Slot3=Slot3 Slot4=Slot4 Slot5=Slot5 Slot1_2_3=Slot_hopper"
 
 # Make all slots
 all:
@@ -112,7 +112,7 @@ dynamic-gen:
 .PHONY: dynamic-gen
 
 bit-gen:
-	python3 slot_gen.py -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --prog $(PROG)
+	python3 slot_gen.py -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
 .PHONY: bit-gen
 
 synth:

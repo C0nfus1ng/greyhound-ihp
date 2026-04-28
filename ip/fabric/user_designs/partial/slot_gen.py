@@ -714,11 +714,11 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir):
         with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
             pickle.dump(spec_object, f)
 
-def combine_fasm(layout: FabricLayout, base_dir, progs):
-    if not progs or (progs and "Static" not in progs.keys()):
+def combine_fasm(layout: FabricLayout, base_dir, fasm_files):
+    if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
-        static_prog = progs["Static"]
+        static_prog = fasm_files["Static"]
 
     # Parse fasm file
     fasm_static_parsed = parse_fasm_filename(f"{base_dir}/Static/{static_prog}.fasm")
@@ -733,17 +733,17 @@ def combine_fasm(layout: FabricLayout, base_dir, progs):
         if slot.name == "Static":
             continue
 
-        # Slot has no prog to build
-        if progs and slot.name not in progs.keys():
-            print(f"No prog for slot: {slot.name}")
+        # Slot has no fasm_proj to build
+        if fasm_files and slot.name not in fasm_files.keys():
+            print(f"No fasm project for slot: {slot.name}")
             continue
 
-        tmp_progs = progs
-        if not progs:
-            tmp_progs = {slot.name: slot.name}
+        tmp_fasm_files = fasm_files
+        if not fasm_files:
+            tmp_fasm_files = {slot.name: slot.name}
 
-        for prog in tmp_progs[slot.name]:
-            fasm_dynamic_parsed = parse_fasm_filename(f"{base_dir}/{slot.name}/{prog}.fasm")
+        for fasm_file in tmp_fasm_files[slot.name]:
+            fasm_dynamic_parsed = parse_fasm_filename(f"{base_dir}/{slot.name}/{fasm_file}.fasm")
             fasm_dynamic_str = fasm_tuple_to_string(fasm_dynamic_parsed, True)
             fasm_dynamic_list = list(parse_fasm_string(fasm_dynamic_str))
             fasm_dynamic_list_str = [set_feature_to_str(fasm_line.set_feature) for fasm_line in fasm_dynamic_list]
@@ -770,19 +770,19 @@ def combine_fasm(layout: FabricLayout, base_dir, progs):
                             fasm_overlap_str.append(f"X{slot.start+pos_in_slot}"+fasm_static_line_str[len(str(col))+1:])
 
             fasm_overlap_str.append("\n")
-            print(f"Appending to {slot.name}-{prog}")
+            print(f"Appending to {slot.name}-{fasm_file}")
             print("\n".join(fasm_overlap_str))
 
             makedirs(f"{base_dir}/{slot.name}", exist_ok=True)
-            with open(f"{base_dir}/{slot.name}/{prog}-slot.fasm", "w") as fasm_file:
+            with open(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", "w") as fasm_file:
                 fasm_file.write("\n".join(fasm_overlap_str))
                 fasm_file.write(fasm_dynamic_str)
 
-def gen_bitstream(layout: FabricLayout, base_dir, progs):
-    if not progs or (progs and "Static" not in progs.keys()):
+def gen_bitstream(layout: FabricLayout, base_dir, fasm_files):
+    if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
-        static_prog = progs["Static"]
+        static_prog = fasm_files["Static"]
 
     # Create Static bitstream and hex file
     genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
@@ -795,22 +795,22 @@ def gen_bitstream(layout: FabricLayout, base_dir, progs):
         if slot.name == "Static":
             continue
 
-        # Slot has no prog to build
-        if progs and slot.name not in progs.keys():
+        # Slot has no fasm_file to build
+        if fasm_files and slot.name not in fasm_files.keys():
             continue
         
-        tmp_progs = progs
+        tmp_fasm_files = fasm_files
 
-        if not progs:
-            tmp_progs = {slot.name: slot.name}
+        if not fasm_files:
+            tmp_fasm_files = {slot.name: slot.name}
 
-        for prog in tmp_progs[slot.name]:
-            genBitstream(f"{base_dir}/{slot.name}/{prog}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{prog}.bit")
-            bit_to_hex(f"{base_dir}/{slot.name}/{prog}.bit", f"{base_dir}/{slot.name}/{prog}.hex", bytes_per_word=1)
+        for fasm_file in tmp_fasm_files[slot.name]:
+            genBitstream(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{fasm_file}.bit")
+            bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
 
             # Create the slot representation
-            with open(f"{base_dir}/{slot.name}/{prog}.bit", 'rb') as bitstream_file_in:
-                with open(f"{base_dir}/{slot.name}/{prog}-slot.bit", 'wb') as bitstream_file_out:
+            with open(f"{base_dir}/{slot.name}/{fasm_file}.bit", 'rb') as bitstream_file_in:
+                with open(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", 'wb') as bitstream_file_out:
                     # Add file header
                     bitstream_file_out.write(0xFAB0FAB1.to_bytes(4))
 
@@ -828,7 +828,7 @@ def gen_bitstream(layout: FabricLayout, base_dir, progs):
                     # Add desync
                     bitstream_file_out.write(0x00100000.to_bytes(4))
 
-            bit_to_hex(f"{base_dir}/{slot.name}/{prog}-slot.bit", f"{base_dir}/{slot.name}/{prog}-slot.hex", bytes_per_word=1)
+            bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
 
 def print_help():
     print("Help:")
@@ -880,7 +880,7 @@ def init_config(layout: FabricLayout, config_path, fabric_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path, progs):
+def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path, fasm_files):
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
 
@@ -909,38 +909,39 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
             if generate_files:
                 npnr_file_gen(layout, option_static, base_dir)
             if option_combine:
-                combine_fasm(layout, base_dir, progs)
+                combine_fasm(layout, base_dir, fasm_files)
             if option_bitstream:
-                gen_bitstream(layout, base_dir, progs)
+                gen_bitstream(layout, base_dir, fasm_files)
         elif user_input == "h":
             print_help()
         else:
             print("Command not found")
             print_help()
 
-def parse_prog(progs: str):
-    if not progs:
+def parse_prog(fasm_files: str):
+    if not fasm_files:
         return None
 
-    if not re.match(r"^([^=,\s]+=[^=,\s]+(,[^=,\s]+)*)(\s+[^=,\s]+=[^=,\s]+(,[^=,\s]+)*)*$", progs):
-        raise RuntimeError(f"Invalid format --prog \"{progs}\"")
+    if not re.match(r"^([^=,\s]+=[^=,\s]+(,[^=,\s]+)*)(\s+[^=,\s]+=[^=,\s]+(,[^=,\s]+)*)*$", fasm_files):
+        raise RuntimeError(f"Invalid format --fasm \"{fasm_files}\"")
         return None
 
-    slot_progs_line = progs.split(" ")
+    slot_progs_line = fasm_files.split(" ")
     slot_progs_dict = dict([slot_prog.split("=") for slot_prog in slot_progs_line])
 
-    for slot, prog in slot_progs_dict.items():
+    for slot, fasm_file in slot_progs_dict.items():
         if slot == "Static":
-            static_progs = prog.split(",")
+            static_progs = fasm_file.split(",")
             if len(static_progs) > 1:
-                print(f"Warning: static can only do 1 prog per run, using first prog in list: {static_progs[0]}")
+                print(f"Warning: static can only do 1 fasm file per run, using first fasm file in list: {static_progs[0]}")
             
             slot_progs_dict[slot] = static_progs[0]
         else:
-            slot_progs_dict[slot] = prog.split(",")
+            slot_progs_dict[slot] = fasm_file.split(",")
 
     return slot_progs_dict
 
+# TODO external wires
 # Partial config flow: 
 # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
 # 2) Partition by editing bel.v2.txt and note all used pips of static parts
@@ -974,7 +975,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--basedir", help="Base build directory for the slot generation, defaults to .build")
     arg_parser.add_argument("--fabric", help="fabric.csv file path, defaults to fabric.csv")
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
-    arg_parser.add_argument("--prog", help="Program name to build for a slot, defaults to slot name=slot name. Use with specifiying the slot, like --prog \"Slot1=Prog1,Prog2,.. Slot2=...\"")
+    arg_parser.add_argument("--fasm", help="FASM file to generate the bitstream for a slot, defaults to slot name=slot name. Use with specifiying the slot, like --fasm \"Slot1=Prog1,Prog2,.. Slot2=...\"")
 
     args = arg_parser.parse_args()
     
@@ -982,7 +983,7 @@ if __name__ == "__main__":
         print(usage)
         exit
 
-    progs = parse_prog(args.prog)
+    fasm_files = parse_prog(args.fasm)
 
     if not args.basedir:
         base_dir = ".build"
@@ -995,7 +996,7 @@ if __name__ == "__main__":
         fabric_path = args.fabric
 
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path, progs)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, base_dir, fabric_path, fasm_files)
         exit
 
     fabric_layout = None
@@ -1016,7 +1017,7 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            combine_fasm(fabric_layout, base_dir, progs)
+            combine_fasm(fabric_layout, base_dir, fasm_files)
         else:
             print("The -c parameter requires the -f parameter")
 
@@ -1026,6 +1027,6 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            gen_bitstream(fabric_layout, base_dir, progs)
+            gen_bitstream(fabric_layout, base_dir, fasm_files)
         else:
             print("The -b parameter requires the -f parameter")
