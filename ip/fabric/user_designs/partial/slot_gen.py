@@ -121,15 +121,15 @@ class FabricLayout:
     length:int = 0
     height:int = 0
     tile_name_max_length:int = 6
-    last_color:int = 1
+    last_color:int = 0
     slots:[Slot] = []
     points:[Point] = []
     bridges:[Point] = []
 
     def get_color(self) -> str: # Cycle colors 
         color = self.last_color+1
-        self.last_color = (color%5)+1 # First color is reserved for static slot
-        return f"\033[3{color}m"
+        self.last_color = (color%5) # First color is reserved for static slot
+        return f"\033[3{color+1}m"
 
     def create_slot(self, tiles:[Point], name:str, color:str=None) -> None:
         if color:
@@ -195,6 +195,14 @@ def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
                     else:
                         return None
 
+                if (slot_tiles[0][0] > slot_tiles[1][0] or slot_tiles[0][1] < slot_tiles[1][1]):
+                    print(f"Slot coordinates do not span a rectangular")
+                    
+                    if static_slot:
+                        continue
+                    else:
+                        return None
+
                 for col in range(slot_tiles[0][0], slot_tiles[1][0]+1):
                     for row in range(slot_tiles[1][1], slot_tiles[0][1]+1):
                         new_point = Point(col, row, Format(Format.get_default()))
@@ -220,7 +228,7 @@ def create_slot(layout:FabricLayout) -> None:
     while True:
         slot_type = input("Enter slot type static or dynamic (s/d): ")
         if slot_type == "d":
-            name = f"Slot{len(layout.slots) if len(layout.slots)>1 and layout.slots[0].name == "Static" else len(layout.slots)+1}"
+            name = f"Slot{len(layout.slots) if len(layout.slots)>0 and layout.slots[0].name == "Static" else len(layout.slots)+1}"
             break
         elif slot_type == "s":
             name = f"Static"
@@ -438,9 +446,8 @@ def print_layout(layout:FabricLayout) -> None:
     print()
 
     # Point
-    print(f"{Format.get_italic()}Italic{Format.get_default()} for non static bridging tiles")    
-    print(f"{Format.get_bold()}Bold{Format.get_default()} for connection tiles between static and dynamic slots")    
-
+    print(f"{Format.get_italic()}Italic{Format.get_default()} for non static bridging tiles")
+    print(f"{Format.get_bold()}Bold{Format.get_default()} for connection tiles between static and dynamic slots")
     # Slot overview
     for slot in layout.slots:
         print_layout_overview(slot, layout.tile_name_max_length)
@@ -458,10 +465,16 @@ def print_layout(layout:FabricLayout) -> None:
         for col in range(layout.length):
             # Coloring
             for slot in layout.slots:
+                colored_tile = False
                 for tile in slot.tiles:
                     if tile.x == col and tile.y == row:
                         print(slot.formatting.format_string, end='')
+                        colored_tile = True
+                        break
             
+                if colored_tile:
+                    break
+
             # Connection
             for connection_point in layout.points:
                 if col == connection_point.x and row == connection_point.y:
@@ -618,8 +631,12 @@ def gen_merged_slots(layout:FabricLayout, quiet:bool=True) -> {Slot:[Slot]}:
     merged = {}
 
     for base_slot in layout.slots:
+        if base_slot.name == "Static":
+            merged[base_slot] = True
+            continue
+
         if base_slot in merged.keys():
-                continue
+            continue
         
         overlapped_slots = []
         
