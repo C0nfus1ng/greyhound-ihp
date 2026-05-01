@@ -141,7 +141,6 @@ class FabricLayout:
 
         tiles.sort(key=self.tile_sort)
         self.slots.append(Slot(tiles, name, Format(tmp_color)))
-        self.slots.sort(key=Slot.sort_by_name)     
 
     def tile_sort(self, point:Point) -> int:
         return Slot.sort_x_then_y(point, self.height)
@@ -245,6 +244,7 @@ def create_slot(layout:FabricLayout) -> None:
         return
 
     layout.create_slot(tiles, name)
+    layout.slots.sort(key=Slot.sort_by_name)
 
 def edit_slot(layout:FabricLayout, delete:bool) -> None:
     while True:
@@ -275,6 +275,7 @@ def edit_slot(layout:FabricLayout, delete:bool) -> None:
 
     layout.slots.remove(edit_slot)
     layout.create_slot(tiles, edit_slot.name, edit_slot.formatting.format_string)
+    layout.slots.sort(key=Slot.sort_by_name)
 
 def create_connection(layout:FabricLayout, bridge:bool=False) -> None:
     if bridge:
@@ -402,6 +403,8 @@ def load_config(layout:FabricLayout, file_path:str=None) -> str:
                 tiles.append(Point(tile["x"], tile["y"], Format(tile["Format"]["Specifier"] if "Format" in tile.keys() and "Specifier" in tile["Format"].keys() else Format.get_default())))
 
             layout.create_slot(tiles, slot_dict["Name"], slot_dict["Format"]["Specifier"] if "Format" in slot_dict.keys() and "Specifier" in slot_dict["Format"].keys() else Format.get_default())
+        
+        layout.slots.sort(key=Slot.sort_by_name)
 
         # Load Points
         layout.points.clear()
@@ -577,82 +580,83 @@ def get_slot_match(layout:FabricLayout, slot:Slot, other_slot:Slot) -> bool:
     if other_slot == slot:
         return False
 
-    # Slot width is different
-    if (other_slot.upper_right.x-other_slot.lower_left.x) != (slot.upper_right.x-slot.lower_left.x):
+    # Slot size is different
+    if (other_slot.upper_right.x-other_slot.lower_left.x) != (slot.upper_right.x-slot.lower_left.x) or (other_slot.upper_right.y-other_slot.lower_left.y) != (slot.upper_right.y-slot.lower_left.y):
         return False
 
     # Slots partially overlap
-    if (slot.lower_left.x >= other_slot.lower_left.x and slot.lower_left.x <= other_slot.upper_right.x) or (slot.upper_right.x >= other_slot.lower_left.x and slot.upper_right.x <= other_slot.upper_right.x):
+    if (slot.lower_left.x <= other_slot.upper_right.x or slot.upper_right.x >= other_slot.lower_left.x) and (slot.lower_left.y >= other_slot.upper_right.y or slot.upper_right.y <= other_slot.lower_left.y):
         return False
 
-    static_slots = []
-    static_other_slots = []
+    slot_cons = []
+    other_slot_cons = []
     for bridge in layout.bridges:
         if slot.lower_left.x <= bridge.x and bridge.x <= slot.upper_right.x:
-            static_slots.append((bridge, layout.fabric.tile[bridge.y][bridge.x], 0))
+            slot_cons.append((bridge, layout.fabric.tile[bridge.y][bridge.x], 0))
 
         if other_slot.lower_left.x <= bridge.x and bridge.x <= other_slot.upper_right.x:
-            static_other_slots.append((bridge, layout.fabric.tile[bridge.y][bridge.x], 0))
+            other_slot_cons.append((bridge, layout.fabric.tile[bridge.y][bridge.x], 0))
 
     for point in layout.points:
         if slot.lower_left.x <= point.x and point.x <= slot.upper_right.x:
-            static_slots.append((point, layout.fabric.tile[point.y][point.x], 1))
+            slot_cons.append((point, layout.fabric.tile[point.y][point.x], 1))
 
         if other_slot.lower_left.x <= point.x and point.x <= other_slot.upper_right.x:
-            static_other_slots.append((point, layout.fabric.tile[point.y][point.x], 1))
+            other_slot_cons.append((point, layout.fabric.tile[point.y][point.x], 1))
 
     # Different amount of connectors
-    if len(static_slots) != len(static_other_slots):
+    if len(slot_cons) != len(other_slot_cons):
         return False
 
+    # Sort for the slot cons
     sort_match = lambda point: (point[0].x*layout.height)+point[0].y
-
-    # Sort for the slots
-    static_slots.sort(key=sort_match)
-    static_other_slots.sort(key=sort_match)
+    slot_cons.sort(key=sort_match)
+    other_slot_cons.sort(key=sort_match)
     
-    for i in range(len(static_slots)):
-        # Connector type mismatch
-        if static_slots[i][2] != static_other_slots[i][2]:
+    for i in range(len(slot_cons)):
+        if slot_cons[i][2] != other_slot_cons[i][2]: # Connector type mismatch
             return False
 
-        # Connector pos mismatch
-        if static_slots[i][0].y != static_other_slots[i][0].y:
+        if (slot_cons[i][0].x-slot.lower_left.x) != (other_slot_cons[i][0].x-other_slot.lower_left.x) or slot_cons[i][0].y != other_slot_cons[i][0].y: # Connector pos mismatch
             return False
 
-        # Connector tile mismatch
-        if static_slots[i][1].name != static_other_slots[i][1].name:
+        if slot_cons[i][1].name != other_slot_cons[i][1].name: # Connector tile mismatch
+            return False
+
+    # Clot connections are sorted now check the slot itself
+    for i in range(len(slot.tiles)):
+        if layout.fabric.tile[slot.tiles[i].y][slot.tiles[i].x].name != layout.fabric.tile[other_slot.tiles[i].y][other_slot.tiles[i].x].name:
             return False
 
     return True
 
 def gen_merged_slots(layout:FabricLayout, quiet:bool=True) -> {Slot:[Slot]}:
     slots = {}
-    merged = {}
+    checked = {}
 
     for base_slot in layout.slots:
         if base_slot.name == "Static":
-            merged[base_slot] = True
+            checked[base_slot] = True
             continue
 
-        if base_slot in merged.keys():
+        if base_slot in checked.keys():
             continue
         
         overlapped_slots = []
         
         for slot in layout.slots:
-            if slot in merged.keys():
+            if slot in checked.keys():
                 continue
 
             if get_slot_match(layout, base_slot, slot):
                 if not quiet:
-                    print(f"Slot: {base_slot.name} merged with slot: {slot.name}")
+                    print(f"{base_slot.name} merged with {slot.name}")
 
                 overlapped_slots.append(slot)
-                merged[slot] = True
+                checked[slot] = True
 
+        checked[base_slot] = True
         if len(overlapped_slots) > 0:
-            merged[base_slot] = True
             overlapped_slots.append(base_slot)
             # Sort by start col
             sort_slots = lambda slot: slot.lower_left.x
