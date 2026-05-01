@@ -38,89 +38,100 @@ from fasm import (
 )
 
 class Format:
-    format_string = ""
+    format_string:str = ""
 
-    def __init__(self, formatting):
-        self.format_string = formatting
+    def __init__(self, format_string:str) -> None:
+        self.format_string = format_string
 
     @classmethod
-    def get_bold(cls):
+    def get_bold(cls) -> str:
         return "\033[1m"
     
     @classmethod
-    def get_italic(cls):
+    def get_italic(cls) -> str:
         return "\033[3m"
     
     @classmethod
-    def get_default(cls):
+    def get_default(cls) -> str:
         return "\033[0m"
     
     @classmethod
-    def get_static(cls):
+    def get_static(cls) -> str:
         return "\033[31m"
 
     @classmethod
-    def to_yaml(cls, dumper, data):
+    def to_yaml(cls, dumper, data) -> {}:
         return dumper.represent_mapping("tag:yaml.org,2002:map",
-                {"Specifier": data.format_string})
+                {"Specifier": data.format_string} if data.format_string != Format.get_default() else {})
+
+class Point:
+    x:int = 0
+    y:int = 0
+    formatting:Format = None
+
+    def __init__(self, x:int, y:int, formatting:Format) -> None: 
+        self.x = x
+        self.y = y
+        self.formatting = formatting
+    
+    @classmethod
+    def to_yaml(cls, dumper, data) -> {}:
+        return dumper.represent_mapping("tag:yaml.org,2002:map",
+                {"x": data.x, "y": data.y, "Format": data.formatting} if data.formatting.format_string != Format.get_default() else {"x": data.x, "y": data.y})
 
 class Slot:
-    name = ""
-    formatting = None
-    tiles = []
-    lower_left = None
-    upper_right = None
+    name:str = ""
+    formatting:Format = None
+    tiles:[Point] = []
+    lower_left:Point = None
+    upper_right:Point = None
 
-    def __init__(self, tiles_sorted, name, formatting):
+    def __init__(self, tiles_sorted:[Point], name:str, formatting:Format) -> None:
         self.name        = name
         self.formatting  = formatting
         self.tiles       = tiles_sorted
 
         sort_by_x = lambda point: point.x
         sort_by_y = lambda point: point.y
-        self.lower_left  = Point(min(tiles_sorted, key=sort_by_x).x , min(tiles_sorted, key=sort_by_y).y, Format.get_default())
-        self.upper_right = Point(max(tiles_sorted, key=sort_by_x).x , max(tiles_sorted, key=sort_by_y).y, Format.get_default())
+        self.lower_left  = Point(min(tiles_sorted, key=sort_by_x).x , min(tiles_sorted, key=sort_by_y).y, Format(Format.get_default()))
+        self.upper_right = Point(max(tiles_sorted, key=sort_by_x).x , max(tiles_sorted, key=sort_by_y).y, Format(Format.get_default()))
 
     @classmethod
-    def sort_x_then_y(self, point, layout_height):
+    def sort_x_then_y(cls, point:Point, layout_height:int) -> int:
         return (point.x*layout_height)+point.y
-
-    @classmethod
-    def to_yaml(cls, dumper, data):
-        return dumper.represent_mapping("tag:yaml.org,2002:map",
-                {"Name": data.name, "Format": data.formatting, "Tiles": data.tiles})
-
-class Point:
-    x = 0
-    y = 0
-    formatting = None
-
-    def __init__(self, x, y, formatting): 
-        self.x = x
-        self.y = y
-        self.formatting = formatting
     
     @classmethod
-    def to_yaml(cls, dumper, data):
+    def sort_by_name(cls, slot) -> int:
+        if slot.name == "Static":
+            return 0
+        
+        slot_nbr = re.search('[0-9]+', slot.name)
+        if slot_nbr.group():
+            return int(slot_nbr.group())
+
+        return 1000   
+
+    @classmethod
+    def to_yaml(cls, dumper, data) -> {}:
         return dumper.represent_mapping("tag:yaml.org,2002:map",
-                {"x": data.x, "y": data.y, "Format": data.formatting})
+                {"Name": data.name, "Format": data.formatting, "Tiles": data.tiles} if data.formatting.format_string != Format.get_default() else {"Name": data.name, "Tiles": data.tiles})
 
 class FabricLayout:
-    fabric = None
-    length = 0
-    height = 0
-    tile_name_max_length = 6
-    last_color = 1
-    slots = []
-    points = []
-    bridges = []
+    fabric:Fabric = None
+    length:int = 0
+    height:int = 0
+    tile_name_max_length:int = 6
+    last_color:int = 1
+    slots:[Slot] = []
+    points:[Point] = []
+    bridges:[Point] = []
 
-    def get_color(self): # Cycle colors 
+    def get_color(self) -> str: # Cycle colors 
         color = self.last_color+1
         self.last_color = (color%5)+1 # First color is reserved for static slot
         return f"\033[3{color}m"
 
-    def create_slot(self, tiles, name, color=None):
+    def create_slot(self, tiles:[Point], name:str, color:str=None) -> None:
         if color:
             tmp_color = color
         elif name == "Static":
@@ -130,17 +141,18 @@ class FabricLayout:
 
         tiles.sort(key=self.tile_sort)
         self.slots.append(Slot(tiles, name, Format(tmp_color)))
+        self.slots.sort(key=Slot.sort_by_name)     
 
-    def tile_sort(self, point):
+    def tile_sort(self, point:Point) -> int:
         return Slot.sort_x_then_y(point, self.height)
 
     @classmethod
-    def to_yaml(cls, dumper, data):
+    def to_yaml(cls, dumper, data) -> {}:
         return dumper.represent_mapping("tag:yaml.org,2002:map",
                 {"Length": data.length, "Height": data.height, "Column length": data.tile_name_max_length, 
                  "Last color": data.last_color, "Slots": data.slots, "Points": data.points, "Bridges": data.bridges})
 
-def create_slot_tiles(layout: FabricLayout, static_slot:bool):
+def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
     tiles = []
     
     while True:
@@ -170,7 +182,7 @@ def create_slot_tiles(layout: FabricLayout, static_slot:bool):
                     print(f"Slot tile has to be in the fabric coordinates")
                     continue
                 
-                new_point = Point(slot_tiles[0][0], slot_tiles[0][1], Format.get_default())
+                new_point = Point(slot_tiles[0][0], slot_tiles[0][1], Format(Format.get_default()))
                 if new_point not in tiles:
                     tiles.append(new_point)
 
@@ -185,7 +197,7 @@ def create_slot_tiles(layout: FabricLayout, static_slot:bool):
 
                 for col in range(slot_tiles[0][0], slot_tiles[1][0]+1):
                     for row in range(slot_tiles[1][1], slot_tiles[0][1]+1):
-                        new_point = Point(col, row, Format.get_default())
+                        new_point = Point(col, row, Format(Format.get_default()))
 
                         if new_point not in tiles:
                             tiles.append(new_point)
@@ -202,13 +214,13 @@ def create_slot_tiles(layout: FabricLayout, static_slot:bool):
 
     return None
 
-def create_slot(layout: FabricLayout):
+def create_slot(layout:FabricLayout) -> None:
     print("Dynamic slots can only be vertical")
     print("There can only be 1 static slot")
     while True:
         slot_type = input("Enter slot type static or dynamic (s/d): ")
         if slot_type == "d":
-            name = f"Slot{len(layout.slots)}"
+            name = f"Slot{len(layout.slots) if len(layout.slots)>1 and layout.slots[0].name == "Static" else len(layout.slots)+1}"
             break
         elif slot_type == "s":
             name = f"Static"
@@ -226,7 +238,7 @@ def create_slot(layout: FabricLayout):
 
     layout.create_slot(tiles, name)
 
-def edit_slot(layout: FabricLayout, delete):
+def edit_slot(layout:FabricLayout, delete:bool) -> None:
     while True:
         edit_slot = None
         user_input = input(f"Enter slot name to {"delete" if delete else "edit"}/Use x to leave: ")
@@ -256,7 +268,7 @@ def edit_slot(layout: FabricLayout, delete):
     layout.slots.remove(edit_slot)
     layout.create_slot(tiles, edit_slot.name, edit_slot.formatting.format_string)
 
-def create_connection(layout: FabricLayout, bridge=False):
+def create_connection(layout:FabricLayout, bridge:bool=False) -> None:
     if bridge:
         cell = input("Specify the bridge point as X<x>Y<y> (Should be placed between slots for connectivity): ")
     else:
@@ -279,7 +291,7 @@ def create_connection(layout: FabricLayout, bridge=False):
         layout.points.append(Point(slot_connection[0], slot_connection[1], Format(Format.get_bold())))
     print()
    
-def edit_connection(layout: FabricLayout, delete, bridge=False):
+def edit_connection(layout:FabricLayout, delete:bool, bridge:bool=False) -> None:
     while True:
         edit_point = None
         user_input = input(f"Enter {"bridge" if bridge else "connection"} point to {"delete" if delete else "edit"} as XxYy/Use x to leave: ")
@@ -308,7 +320,7 @@ def edit_connection(layout: FabricLayout, delete, bridge=False):
 
     create_connection(layout, bridge)
 
-def write_config(layout: FabricLayout, file_path = None):
+def write_config(layout:FabricLayout,file_path:str=None) -> None:
     yaml.add_representer(FabricLayout, FabricLayout.to_yaml)
     yaml.add_representer(Slot, Slot.to_yaml)
     yaml.add_representer(Point, Point.to_yaml)
@@ -333,7 +345,7 @@ def write_config(layout: FabricLayout, file_path = None):
 
     print("Wrote config successfully")
 
-def load_config(layout: FabricLayout, file_path = None):
+def load_config(layout:FabricLayout, file_path:str=None) -> str:
     if file_path == None:
         file_path = input("Enter config file to load: ")
 
@@ -346,30 +358,30 @@ def load_config(layout: FabricLayout, file_path = None):
             if user_input == "y":
                 break
             elif user_input == "n":
-                return
+                return None
 
     try:
         with open(file_path, 'r') as file:
             layout_config = yaml.safe_load(file)
     except FileNotFoundError:
         print("File to load not found")
-        return
+        return None
     except yaml.parser.ParserError:
         print("File cannot be parsed")
-        return
+        return None
 
     if layout_config == None:
         print("File to load is empty")
-        return
+        return None
 
     if not isinstance(layout_config, dict):
         print("File format is not supported")
-        return
+        return None
 
     try:
         if layout.height != layout_config["Height"] or layout.length != layout_config["Length"] or layout.tile_name_max_length != layout_config["Column length"]:
             print("Loading file failed. Fabric size Mismatch")
-            return
+            return None
 
         # Load color
         layout.last_color = layout_config["Last color"]
@@ -379,25 +391,27 @@ def load_config(layout: FabricLayout, file_path = None):
         for slot_dict in layout_config["Slots"]:
             tiles = []
             for tile in slot_dict["Tiles"]:
-                tiles.append(Point(tile["x"], tile["y"], Format(tile["Format"])))
+                tiles.append(Point(tile["x"], tile["y"], Format(tile["Format"]["Specifier"] if "Format" in tile.keys() and "Specifier" in tile["Format"].keys() else Format.get_default())))
 
-            layout.create_slot(tiles, slot_dict["Name"], slot_dict["Format"]["Specifier"])
+            layout.create_slot(tiles, slot_dict["Name"], slot_dict["Format"]["Specifier"] if "Format" in slot_dict.keys() and "Specifier" in slot_dict["Format"].keys() else Format.get_default())
 
         # Load Points
         layout.points.clear()
         for point in layout_config["Points"]:
-            layout.points.append(Point(point["x"], point["y"], Format(point["Format"]["Specifier"])))
+            layout.points.append(Point(point["x"], point["y"], Format(point["Format"]["Specifier"] if "Format" in point.keys() and "Specifier" in point["Format"].keys() else Format.get_default())))
 
         # Load Bridges
         layout.bridges.clear()
         for bridge in layout_config["Bridges"]:
-            layout.bridges.append(Point(bridge["x"], bridge["y"], Format(bridge["Format"]["Specifier"])))
+            layout.bridges.append(Point(bridge["x"], bridge["y"], Format(bridge["Format"]["Specifier"] if "Format" in bridge.keys() and "Specifier" in bridge["Format"].keys() else Format.get_default())))
 
     except KeyError:
         print("File has missing keys")
-        return
+        return None
 
-def print_layout_overview(base_slot: Slot, tile_name_max_length: int, sub_slots: [Slot] = None):
+    return file_path
+
+def print_layout_overview(base_slot:Slot, tile_name_max_length:int, sub_slots:[Slot]=None) -> None:
     if not sub_slots:
         sub_slots = [base_slot]
 
@@ -413,13 +427,13 @@ def print_layout_overview(base_slot: Slot, tile_name_max_length: int, sub_slots:
         print(print_str, end="")
     print()
 
-def pad_str_right(string: str, max_len: int):
+def pad_str_right(string:str, max_len:int) -> str:
     return pad_str(string, max_len, 0, max(max_len-len(string), 0))
 
-def pad_str(string: str, max_len:int, before: int, after: int):
+def pad_str(string:str, max_len:int, before:int, after:int) -> str:
     return f"{" "*before}{string if len(string)<=max_len else string[:max_len-3]+"..."}{" "*after}"
 
-def print_layout(layout: FabricLayout):
+def print_layout(layout:FabricLayout) -> None:
     merged_slots = gen_merged_slots(layout, False)
     print()
 
@@ -465,7 +479,7 @@ def print_layout(layout: FabricLayout):
             print(Format.get_default(), end='')
         print()
 
-def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool):
+def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool) -> None:
     # Add special bels from connections
     io_ports = [p for p in tile.portsInfo if p.sourceName != "NULL" and p.wireDirection != Direction.JUMP]
     filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
@@ -495,7 +509,7 @@ def verilog_gen(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], s
     with open(filename, "w") as f:
         f.write(verilog_module)
 
-def strip_bel_pips(bels:list[Bel]):
+def strip_bel_pips(bels:list[Bel]) -> [str]:
     remove_pips = []
     for bel in bels:
         remove_pips += bel.inputs
@@ -503,12 +517,12 @@ def strip_bel_pips(bels:list[Bel]):
 
     return remove_pips
 
-def bel_gen_from_slot(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool, filename:Path = None, module_name:str = None):
+def bel_gen_from_slot(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool, filename:Path=None, module_name:str=None) -> Bel:
     filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
     module_name = f"{slot.name}_slot_con_X{con_point.x}Y{con_point.y}"
     return bel_gen(tile, filename, module_name, static_slot)
 
-def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool):
+def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool) -> Bel:
     bel_prefix = ""
     internal: list[tuple[str, IO]] = []
     external: list[tuple[str, IO]] = []
@@ -541,7 +555,7 @@ def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool):
 
     return Bel(filename, bel_prefix, module_name, internal, external, config, shared, 0, bel_map_dic, user_clk, ports_vectors, carry, local_shared_ports)
 
-def get_slot_match(layout, slot, other_slot):
+def get_slot_match(layout:FabricLayout, slot:Slot, other_slot:Slot) -> bool:
     # Static slot is exempt
     if other_slot.name == "Static":
         return False
@@ -599,7 +613,7 @@ def get_slot_match(layout, slot, other_slot):
 
     return True
 
-def gen_merged_slots(layout: FabricLayout, quiet=True):
+def gen_merged_slots(layout:FabricLayout, quiet:bool=True) -> {Slot:[Slot]}:
     slots = {}
     merged = {}
 
@@ -637,7 +651,7 @@ def gen_merged_slots(layout: FabricLayout, quiet=True):
 
     return slots
 
-def get_overlapping_tiles(layout: FabricLayout, point_list: [Point], slot_list: [Slot]):
+def get_overlapping_tiles(layout:FabricLayout, point_list:[Point], slot_list:[Slot]) -> {Point:{(int,int):Tile}}:
     overlapping_tiles = {}
 
     # Known that slots match exactly (Connectors, connector tiles, ...), and are sorted by col
@@ -658,7 +672,7 @@ def get_overlapping_tiles(layout: FabricLayout, point_list: [Point], slot_list: 
 
     return overlapping_tiles
 
-def remove_pips_fasm(overlapping_tiles, fasm_wires, tmp_pips, removed_pips):
+def remove_pips_fasm(overlapping_tiles:{Point:{(int,int):Tile}}, fasm_wires:{str:(str,str)}, tmp_pips:[str], removed_pips:[str]) -> ([str],[str]):
     for pos, tile_list in overlapping_tiles.items():
         for (x, y), tile in tile_list.items():
             if tile == None:
@@ -674,7 +688,7 @@ def remove_pips_fasm(overlapping_tiles, fasm_wires, tmp_pips, removed_pips):
 
     return (tmp_pips, removed_pips)
 
-def npnr_file_gen(layout: FabricLayout, option_static, base_dir, fasm_files):
+def npnr_file_gen(layout:FabricLayout, option_static:bool, base_dir:str, fasm_files:{str:[str]}) -> None:
     if not option_static:
         if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
             static_prog = "Static"
@@ -813,7 +827,7 @@ def npnr_file_gen(layout: FabricLayout, option_static, base_dir, fasm_files):
         with open(f"{base_dir}/{slot.name}/bitStreamSpec.bin", "wb") as f:
             pickle.dump(spec_object, f)
 
-def combine_fasm(layout: FabricLayout, base_dir, fasm_files):
+def combine_fasm(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> None:
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
@@ -877,7 +891,7 @@ def combine_fasm(layout: FabricLayout, base_dir, fasm_files):
                 fasm_file.write("\n".join(fasm_overlap_str))
                 fasm_file.write(fasm_dynamic_str)
 
-def gen_bitstream(layout: FabricLayout, base_dir, fasm_files):
+def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> None:
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
@@ -929,7 +943,7 @@ def gen_bitstream(layout: FabricLayout, base_dir, fasm_files):
 
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
 
-def print_help():
+def print_help() -> None:
     print("Help:")
     print("n for new slot or connection/bridge point")
     print("e to edit an existing slot or connection/bridge point")
@@ -940,7 +954,7 @@ def print_help():
     print("w to write the config and generate the nextpnr, combine the fasm files, generate the bitstream depending on the set flags")
     print("h for this help text")
 
-def select_slot_connection(layout: FabricLayout, part_function, con_function, delete = None):
+def select_slot_connection(layout:FabricLayout, part_function, con_function, delete:bool=None) -> None:
     print("s for slot")
     print("c for connection point")
     print("b for bridge point")
@@ -966,7 +980,7 @@ def select_slot_connection(layout: FabricLayout, part_function, con_function, de
             break
 
 # Initialize the config structure
-def init_config(layout: FabricLayout, config_path, fabric_path):
+def init_config(layout:FabricLayout, config_path:str, fabric_path:str) -> None:
     logger.disable("FABulous")
     fabric = parse_csv.parseFabricCSV(fabric_path)
 
@@ -979,7 +993,7 @@ def init_config(layout: FabricLayout, config_path, fabric_path):
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files, config_path, option_static, option_combine, option_bitstream, base_dir, fabric_path, fasm_files):
+def slot_part(generate_files:bool, config_path:str, option_static:bool, option_combine:bool, option_bitstream:bool, base_dir:str, fabric_path:str, fasm_files:{str:[str]}) -> None:
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
 
@@ -1002,7 +1016,10 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
         elif user_input == "p":
             print_layout(fabric_layout)
         elif user_input == "l":
-            config_path = load_config(fabric_layout)
+            new_config_path = load_config(fabric_layout)
+
+            if new_config_path and new_config_path != config_path:
+                config_path = new_config_path
         elif user_input == "w":
             write_config(fabric_layout, config_path)
             if generate_files:
@@ -1017,7 +1034,7 @@ def slot_part(generate_files, config_path, option_static, option_combine, option
             print("Command not found")
             print_help()
 
-def parse_prog(fasm_files: str):
+def parse_prog(fasm_files:str) -> {str:[str]}:
     if not fasm_files:
         return None
 
@@ -1034,7 +1051,7 @@ def parse_prog(fasm_files: str):
             if len(static_progs) > 1:
                 print(f"Warning: static can only do 1 fasm file per run, using first fasm file in list: {static_progs[0]}")
             
-            slot_progs_dict[slot] = static_progs[0]
+            slot_progs_dict[slot] = [static_progs[0]]
         else:
             slot_progs_dict[slot] = fasm_file.split(",")
 
@@ -1042,6 +1059,7 @@ def parse_prog(fasm_files: str):
 
 # TODO allow bridges to keep their bels(can make static slot in X axis, with IOs)
 # TODO limit slot in x dir too, so terminations and edge pieces can be left out (configured to be auto included or something...)
+# TODO check refactor and all formats
 # TODO check all slot tiles
 # TODO reduce prints
 # TODO cpu instr. for slots
