@@ -1,0 +1,136 @@
+Length: 12
+Height: 18
+Column length: 15
+Last color: 5
+Slots:
+- Name: Static
+  Format:
+    Specifier: "\e[31m"
+  Tiles:
+  - x: 0
+    y: 17
+    Format: "\e[0m"
+  - x: 1
+    y: 17
+    Format: "\e[0m"
+  - x: 2
+    y: 17
+    Format: "\e[0m"
+  - x: 3
+    y: 17
+    Format: "\e[0m"
+  - x: 4
+    y: 17
+    Format: "\e[0m"
+  - x: 5
+    y: 17
+    Format: "\e[0m"
+  - x: 6
+    y: 17
+    Format: "\e[0m"
+- Name: Slot1
+  Format:
+    Specifier: "\e[32m"
+  Tiles:
+  - x: 4
+    y: 1
+    Format: "\e[0m"
+  - x: 4
+    y: 2
+    Format: "\e[0m"
+  - x: 4
+    y: 3
+    Format: "\e[0m"
+  - x: 4
+    y: 4
+    Format: "\e[0m"
+  - x: 4
+    y: 5
+    Format: "\e[0m"
+  - x: 4
+    y: 6
+    Format: "\e[0m"
+  - x: 4
+    y: 7
+    Format: "\e[0m"
+  - x: 4
+    y: 8
+    Format: "\e[0m"
+  - x: 4
+    y: 9
+    Format: "\e[0m"
+  - x: 4
+    y: 10
+    Format: "\e[0m"
+  - x: 4
+    y: 11
+    Format: "\e[0m"
+  - x: 4
+    y: 12
+    Format: "\e[0m"
+  - x: 4
+    y: 13
+    Format: "\e[0m"
+  - x: 4
+    y: 14
+    Format: "\e[0m"
+  - x: 4
+    y: 15
+    Format: "\e[0m"
+  - x: 4
+    y: 16
+    Format: "\e[0m"
+- Name: Slot2
+  Format:
+    Specifier: "\e[34m"
+  Tiles:
+  - x: 6
+    y: 1
+    Format: "\e[0m"
+  - x: 6
+    y: 2
+    Format: "\e[0m"
+  - x: 6
+    y: 3
+    Format: "\e[0m"
+  - x: 6
+    y: 4
+    Format: "\e[0m"
+  - x: 6
+    y: 5
+    Format: "\e[0m"
+  - x: 6
+    y: 6
+    Format: "\e[0m"
+  - x: 6
+    y: 7
+    Format: "\e[0m"
+  - x: 6
+    y: 8
+    Format: "\e[0m"
+  - x: 6
+    y: 9
+    Format: "\e[0m"
+  - x: 6
+    y: 10
+    Format: "\e[0m"
+  - x: 6
+    y: 11
+    Format: "\e[0m"
+  - x: 6
+    y: 12
+    Format: "\e[0m"
+  - x: 6
+    y: 13
+    Format: "\e[0m"
+  - x: 6
+    y: 14
+    Format: "\e[0m"
+  - x: 6
+    y: 15
+    Format: "\e[0m"
+  - x: 6
+    y: 16
+    Format: "\e[0m"
+Points: []
+Bridges: []
