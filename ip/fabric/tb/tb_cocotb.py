@@ -546,37 +546,37 @@ async def test_partial(dut):
     dut._log.info("Reset done")
     
     # Upload static part and slots
-    await upload_bitstream(dut, 'partial/.build/Static', 'Static')
+    await upload_bitstream(dut, 'partial/function_test/.build/Static', 'Static')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot1', 'Slot1-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot2', 'Slot2-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot2', 'Slot2-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot1', 'Slot1-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot1', 'Slot1-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot3', 'Slot3-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot3', 'Slot3-slot')
     await ClockCycles(dut.clk_i, 100)
 
     # Interchange slots
-    await upload_bitstream(dut, 'partial/.build/Slot1_2_3', 'Slot_hopper-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot1_2_3', 'Slot_hopper-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot1_2_3', 'Slot_hopper-slot', 2)
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot1_2_3', 'Slot_hopper-slot', 2)
     await ClockCycles(dut.clk_i, 100)
 
     # Merged slots
-    await upload_bitstream(dut, 'partial/.build/Slot4', 'Slot4-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot4', 'Slot4-slot')
     await ClockCycles(dut.clk_i, 100)
 
-    await upload_bitstream(dut, 'partial/.build/Slot2', 'Slot2-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot2', 'Slot2-slot')
     await ClockCycles(dut.clk_i, 100)
     
     # Asym slots
-    await upload_bitstream(dut, 'partial/.build/Slot5', 'Slot5-slot')
+    await upload_bitstream(dut, 'partial/function_test/.build/Slot5', 'Slot5-slot')
     await ClockCycles(dut.clk_i, 100)
 
 if __name__ == "__main__":

@@ -222,7 +222,7 @@ def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
     return None
 
 def create_slot(layout:FabricLayout) -> None:
-    print("Dynamic slots can only be vertical")
+    print("Dynamic slots can only be vertical and should not overlap each other horizontally")
     print("There can only be 1 static slot")
     while True:
         slot_type = input("Enter slot type static or dynamic (s/d): ")
@@ -533,12 +533,10 @@ def strip_bel_pips(bels:list[Bel]) -> [str]:
 
     return remove_pips
 
-def bel_gen_from_slot(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool, filename:Path=None, module_name:str=None) -> Bel:
+def bel_gen_from_slot(tile:Tile, slot:Slot, base_dir:str, con_point:tuple[int, int], static_slot:bool) -> Bel:
     filename = Path(f"{base_dir}/{slot.name}/{slot.name}_slot_con_X{con_point.x}Y{con_point.y}.v")
     module_name = f"{slot.name}_slot_con_X{con_point.x}Y{con_point.y}"
-    return bel_gen(tile, filename, module_name, static_slot)
 
-def bel_gen(tile:Tile, filename:Path, module_name:str, static_slot:bool) -> Bel:
     bel_prefix = ""
     internal: list[tuple[str, IO]] = []
     external: list[tuple[str, IO]] = []
@@ -679,17 +677,18 @@ def get_overlapping_tiles(layout:FabricLayout, point_list:[Point], slot_list:[Sl
     base_slot = slot_list[0]
     
     for slot in slot_list:
-        for point in point_list:
-            if slot.lower_left.x <= point.x and point.x <= slot.upper_right.x:
-                if point not in overlapping_tiles.keys():
-                    overlapping_tiles[point] = {}
+        for tile in slot.tiles:
+            for point in point_list:
+                if tile.x == point.x and tile.y == point.y:
+                    if point not in overlapping_tiles.keys():
+                        overlapping_tiles[point] = {}
 
-                pos_in_slot = point.x - slot.lower_left.x
+                    pos_in_slot = point.x - slot.lower_left.x
 
-                if (base_slot.lower_left.x + pos_in_slot, point.y) in overlapping_tiles[point].keys():
-                    continue
+                    if (base_slot.lower_left.x + pos_in_slot, point.y) in overlapping_tiles[point].keys():
+                        continue
 
-                overlapping_tiles[point][(base_slot.lower_left.x + pos_in_slot, point.y)] = layout.fabric.tile[point.y][base_slot.lower_left.x  + pos_in_slot]
+                    overlapping_tiles[point][(base_slot.lower_left.x + pos_in_slot, point.y)] = layout.fabric.tile[point.y][base_slot.lower_left.x  + pos_in_slot]
 
     return overlapping_tiles
 
@@ -714,7 +713,7 @@ def npnr_file_gen(layout:FabricLayout, option_static:bool, base_dir:str, fasm_fi
         if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
             static_prog = "Static"
         else:
-            static_prog = fasm_files["Static"]
+            static_prog = fasm_files["Static"][0]
 
         fasm_parsed = parse_fasm_filename(f"{base_dir}/Static/{static_prog}.fasm")
         fasm_canon_str = fasm_tuple_to_string(fasm_parsed, True)
@@ -759,9 +758,8 @@ def npnr_file_gen(layout:FabricLayout, option_static:bool, base_dir:str, fasm_fi
         tmp_fabric.tile = [[None for x in range(layout.length)] for x in range(layout.height)]
 
         # Only use tiles and pips from slot
-        for row in range(layout.height):
-            for col in range(slot.lower_left.x, slot.upper_right.x+1):
-                tmp_fabric.tile[row][col] = layout.fabric.tile[row][col]
+        for tile_point in slot.tiles:
+            tmp_fabric.tile[tile_point.y][tile_point.x] = layout.fabric.tile[tile_point.y][tile_point.x]
 
         # Static slot gen
         if static_slot:
@@ -852,7 +850,7 @@ def combine_fasm(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> N
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
-        static_prog = fasm_files["Static"]
+        static_prog = fasm_files["Static"][0]
 
     # Parse fasm file
     fasm_static_parsed = parse_fasm_filename(f"{base_dir}/Static/{static_prog}.fasm")
@@ -887,7 +885,7 @@ def combine_fasm(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> N
             else:
                 merge_slots = [slot]
 
-            # Get slot intersection
+            # Get slot intersection, dynamic slots are rectangular everything in a col overlaps
             fasm_overlap_str = []
             fasm_overlap_str.append("# Lines from Static slot")
             for merge_slot in merge_slots:
@@ -916,7 +914,7 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
-        static_prog = fasm_files["Static"]
+        static_prog = fasm_files["Static"][0]
 
     # Create Static bitstream and hex file
     genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
@@ -1080,8 +1078,7 @@ def parse_prog(fasm_files:str) -> {str:[str]}:
 
 # TODO allow bridges to keep their bels(can make static slot in X axis, with IOs)
 # TODO limit slot in x dir too, so terminations and edge pieces can be left out (configured to be auto included or something...)
-# TODO check refactor and all formats
-# TODO check all slot tiles
+# TODO when combining fasm also include static slot if below dynamic slot
 # TODO reduce prints
 # TODO cpu instr. for slots
 # TODO florian angermaier bitstream over spi
