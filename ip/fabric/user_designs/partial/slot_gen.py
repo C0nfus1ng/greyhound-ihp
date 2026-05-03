@@ -151,10 +151,31 @@ class FabricLayout:
                 {"Length": data.length, "Height": data.height, "Column length": data.tile_name_max_length, 
                  "Last color": data.last_color, "Slots": data.slots, "Points": data.points, "Bridges": data.bridges})
 
+def check_slot_static_overlap(layout:FabricLayout, static_slot:bool, tiles:[Point]) -> bool:
+    check_overlap_slots = []
+    if len(layout.slots) > 0:
+        if static_slot and layout.slots[0].name == "Static": # Check if static slot overlaps with dynamic slot
+            check_overlap_slots = layout.slots[1:]
+        elif static_slot: # Check if static slot overlaps with dynamic slot
+            check_overlap_slots = layout.slots
+        else: # Check if dynamic slot overlaps with static slot
+            check_overlap_slots = [layout.slots[0]]
+
+    overlapped_flag = False
+    for slot in check_overlap_slots:
+        for slot_tile in slot.tiles:
+            for tile in tiles:
+                if tile.x == slot_tile.x and tile.y == slot_tile.y:
+                    print(f"Entered slot overlaps with {slot.name} on Tile X{slot_tile.x}Y{slot_tile.y}")
+                    overlapped_flag = True
+
+    return overlapped_flag
+
 def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
     tiles = []
     
     while True:
+        tiles_to_check = []
         if static_slot:
             select = input(f"Add a single tile(s), a rectangle(r), leave(x) or quit and do nothing(q) (s/r/x/q): ")
         else:
@@ -167,7 +188,7 @@ def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
             for corner_str in ["lower left", "upper right"]:
                 cells.append(input(f"Specify the {corner_str} slot corner as X<x>Y<y>: "))
         elif select == "x":
-            return tiles
+            return tiles if len(tiles) > 0 else None
         elif select == "q":
             return None
 
@@ -183,7 +204,7 @@ def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
                 
                 new_point = Point(slot_tiles[0][0], slot_tiles[0][1], Format(Format.get_default()))
                 if new_point not in tiles:
-                    tiles.append(new_point)
+                    tiles_to_check.append(new_point)
 
             elif len(slot_tiles) == 2: #rectangle
                 if (slot_tiles[0][0] >= layout.length or slot_tiles[0][1] >= layout.height or slot_tiles[1][0] >= layout.length or slot_tiles[1][1] >= layout.height):
@@ -207,17 +228,28 @@ def create_slot_tiles(layout:FabricLayout, static_slot:bool) -> [Point]:
                         new_point = Point(col, row, Format(Format.get_default()))
 
                         if new_point not in tiles:
-                            tiles.append(new_point)
-            print()
+                            tiles_to_check.append(new_point)
 
-            if not static_slot:
-                return tiles
+            print()
         except:
             print("Wrong Point format")
             if static_slot:
                 continue
             else:
                 return None
+
+        if check_slot_static_overlap(layout, static_slot, tiles_to_check):
+            print(f"Tiles overlapped with {"dynamic" if static_slot else "static"} slot, no tiles added")
+            
+            if static_slot:
+                continue
+            else:
+                return None
+
+        tiles += tiles_to_check
+
+        if not static_slot:
+            return tiles if len(tiles) > 0 else None
 
     return None
 
@@ -1076,9 +1108,8 @@ def parse_prog(fasm_files:str) -> {str:[str]}:
 
     return slot_progs_dict
 
-# TODO allow bridges to keep their bels(can make static slot in X axis, with IOs)
-# TODO limit slot in x dir too, so terminations and edge pieces can be left out (configured to be auto included or something...)
-# TODO when combining fasm also include static slot if below dynamic slot
+# TODO Merge static tile cons below merged dynamic slots -> need to to this on the bitstream level(static tiles may not be the same)? -> reduce those static tiles to their base connection list only route with this connections
+# TODO when combining fasm also include static slot if below dynamic slot and merge used wires into all slots
 # TODO reduce prints
 # TODO cpu instr. for slots
 # TODO florian angermaier bitstream over spi
