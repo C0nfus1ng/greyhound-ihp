@@ -1,0 +1,471 @@
+Length: 12
+Height: 18
+Column length: 15
+Last color: 3
+Slots:
+- Name: Static
+  Format:
+    Specifier: "\e[31m"
+  Tiles:
+  - x: 0
+    y: 17
+  - x: 1
+    y: 17
+  - x: 2
+    y: 17
+  - x: 3
+    y: 0
+  - x: 3
+    y: 1
+  - x: 3
+    y: 2
+  - x: 3
+    y: 3
+  - x: 3
+    y: 4
+  - x: 3
+    y: 5
+  - x: 3
+    y: 6
+  - x: 3
+    y: 7
+  - x: 3
+    y: 8
+  - x: 3
+    y: 9
+  - x: 3
+    y: 10
+  - x: 3
+    y: 11
+  - x: 3
+    y: 12
+  - x: 3
+    y: 13
+  - x: 3
+    y: 14
+  - x: 3
+    y: 15
+  - x: 3
+    y: 16
+  - x: 3
+    y: 17
+- Name: Slot1
+  Format:
+    Specifier: "\e[32m"
+  Tiles:
+  - x: 4
+    y: 0
+  - x: 4
+    y: 1
+  - x: 4
+    y: 2
+  - x: 4
+    y: 3
+  - x: 4
+    y: 4
+  - x: 4
+    y: 5
+  - x: 4
+    y: 6
+  - x: 4
+    y: 7
+  - x: 4
+    y: 8
+  - x: 4
+    y: 9
+  - x: 4
+    y: 10
+  - x: 4
+    y: 11
+  - x: 4
+    y: 12
+  - x: 4
+    y: 13
+  - x: 4
+    y: 14
+  - x: 4
+    y: 15
+  - x: 4
+    y: 16
+  - x: 4
+    y: 17
+  - x: 5
+    y: 0
+  - x: 5
+    y: 1
+  - x: 5
+    y: 2
+  - x: 5
+    y: 3
+  - x: 5
+    y: 4
+  - x: 5
+    y: 5
+  - x: 5
+    y: 6
+  - x: 5
+    y: 7
+  - x: 5
+    y: 8
+  - x: 5
+    y: 9
+  - x: 5
+    y: 10
+  - x: 5
+    y: 11
+  - x: 5
+    y: 12
+  - x: 5
+    y: 13
+  - x: 5
+    y: 14
+  - x: 5
+    y: 15
+  - x: 5
+    y: 16
+  - x: 5
+    y: 17
+  - x: 6
+    y: 0
+  - x: 6
+    y: 1
+  - x: 6
+    y: 2
+  - x: 6
+    y: 3
+  - x: 6
+    y: 4
+  - x: 6
+    y: 5
+  - x: 6
+    y: 6
+  - x: 6
+    y: 7
+  - x: 6
+    y: 8
+  - x: 6
+    y: 9
+  - x: 6
+    y: 10
+  - x: 6
+    y: 11
+  - x: 6
+    y: 12
+  - x: 6
+    y: 13
+  - x: 6
+    y: 14
+  - x: 6
+    y: 15
+  - x: 6
+    y: 16
+  - x: 6
+    y: 17
+- Name: Slot2
+  Format:
+    Specifier: "\e[33m"
+  Tiles:
+  - x: 8
+    y: 0
+  - x: 8
+    y: 1
+  - x: 8
+    y: 2
+  - x: 8
+    y: 3
+  - x: 8
+    y: 4
+  - x: 8
+    y: 5
+  - x: 8
+    y: 6
+  - x: 8
+    y: 7
+  - x: 8
+    y: 8
+  - x: 8
+    y: 9
+  - x: 8
+    y: 10
+  - x: 8
+    y: 11
+  - x: 8
+    y: 12
+  - x: 8
+    y: 13
+  - x: 8
+    y: 14
+  - x: 8
+    y: 15
+  - x: 8
+    y: 16
+  - x: 8
+    y: 17
+  - x: 9
+    y: 0
+  - x: 9
+    y: 1
+  - x: 9
+    y: 2
+  - x: 9
+    y: 3
+  - x: 9
+    y: 4
+  - x: 9
+    y: 5
+  - x: 9
+    y: 6
+  - x: 9
+    y: 7
+  - x: 9
+    y: 8
+  - x: 9
+    y: 9
+  - x: 9
+    y: 10
+  - x: 9
+    y: 11
+  - x: 9
+    y: 12
+  - x: 9
+    y: 13
+  - x: 9
+    y: 14
+  - x: 9
+    y: 15
+  - x: 9
+    y: 16
+  - x: 9
+    y: 17
+  - x: 10
+    y: 0
+  - x: 10
+    y: 1
+  - x: 10
+    y: 2
+  - x: 10
+    y: 3
+  - x: 10
+    y: 4
+  - x: 10
+    y: 5
+  - x: 10
+    y: 6
+  - x: 10
+    y: 7
+  - x: 10
+    y: 8
+  - x: 10
+    y: 9
+  - x: 10
+    y: 10
+  - x: 10
+    y: 11
+  - x: 10
+    y: 12
+  - x: 10
+    y: 13
+  - x: 10
+    y: 14
+  - x: 10
+    y: 15
+  - x: 10
+    y: 16
+  - x: 10
+    y: 17
+- Name: Slot3
+  Format:
+    Specifier: "\e[34m"
+  Tiles:
+  - x: 0
+    y: 0
+  - x: 0
+    y: 1
+  - x: 0
+    y: 2
+  - x: 0
+    y: 3
+  - x: 0
+    y: 4
+  - x: 0
+    y: 5
+  - x: 0
+    y: 6
+  - x: 0
+    y: 7
+  - x: 0
+    y: 8
+  - x: 0
+    y: 9
+  - x: 0
+    y: 10
+  - x: 0
+    y: 11
+  - x: 0
+    y: 12
+  - x: 0
+    y: 13
+  - x: 0
+    y: 14
+  - x: 0
+    y: 15
+  - x: 0
+    y: 16
+  - x: 1
+    y: 0
+  - x: 1
+    y: 1
+  - x: 1
+    y: 2
+  - x: 1
+    y: 3
+  - x: 1
+    y: 4
+  - x: 1
+    y: 5
+  - x: 1
+    y: 6
+  - x: 1
+    y: 7
+  - x: 1
+    y: 8
+  - x: 1
+    y: 9
+  - x: 1
+    y: 10
+  - x: 1
+    y: 11
+  - x: 1
+    y: 12
+  - x: 1
+    y: 13
+  - x: 1
+    y: 14
+  - x: 1
+    y: 15
+  - x: 1
+    y: 16
+  - x: 2
+    y: 0
+  - x: 2
+    y: 1
+  - x: 2
+    y: 2
+  - x: 2
+    y: 3
+  - x: 2
+    y: 4
+  - x: 2
+    y: 5
+  - x: 2
+    y: 6
+  - x: 2
+    y: 7
+  - x: 2
+    y: 8
+  - x: 2
+    y: 9
+  - x: 2
+    y: 10
+  - x: 2
+    y: 11
+  - x: 2
+    y: 12
+  - x: 2
+    y: 13
+  - x: 2
+    y: 14
+  - x: 2
+    y: 15
+  - x: 2
+    y: 16
+Points:
+- x: 4
+  y: 2
+  Format:
+    Specifier: "\e[1m"
+- x: 8
+  y: 1
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 4
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 5
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 3
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 1
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 6
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 7
+  Format:
+    Specifier: "\e[1m"
+- x: 4
+  y: 8
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 8
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 7
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 6
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 5
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 4
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 3
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 2
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 1
+  Format:
+    Specifier: "\e[1m"
+Bridges:
+- x: 5
+  y: 1
+  Format:
+    Specifier: "\e[3m"
+- x: 6
+  y: 1
+  Format:
+    Specifier: "\e[3m"
+- x: 7
+  y: 1
+  Format:
+    Specifier: "\e[3m"
+- x: 2
+  y: 16
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 16
+  Format:
+    Specifier: "\e[3m"

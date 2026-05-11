@@ -727,7 +727,7 @@ def get_overlapping_tiles(layout:FabricLayout, point_list:[Point], slot_list:[Sl
 def remove_pips_fasm(overlapping_tiles:{Point:{(int,int):Tile}}, fasm_wires:{str:(str,str)}, tmp_pips:[str], removed_pips:[str]) -> ([str],[str]):
     for pos, tile_list in overlapping_tiles.items():
         for (x, y), tile in tile_list.items():
-            if tile == None:
+            if tile == None or f"X{pos.x}Y{pos.y}" not in fasm_wires.keys():
                 continue
 
             # Search and remove wires
@@ -983,9 +983,14 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
                     
                     while data:
                         col = int.from_bytes(data[:1], "big")>>3
-                        
                         if (col >= slot.lower_left.x) and (col <= slot.upper_right.x):
-                            bitstream_file_out.write(data)
+                            slot_enabled_tiles = 0x5E7<<20
+                            for tile in slot.tiles:
+                                for i in range(layout.height):
+                                    if i == tile.y:
+                                        slot_enabled_tiles |= 1<<(layout.height-i-1)
+                            
+                            bitstream_file_out.write(slot_enabled_tiles.to_bytes(4)+data)
 
                         data = bitstream_file_in.read(76)
                     
@@ -1047,7 +1052,6 @@ def init_config(layout:FabricLayout, config_path:str, fabric_path:str) -> None:
 def slot_part(generate_files:bool, config_path:str, option_static:bool, option_combine:bool, option_bitstream:bool, base_dir:str, fabric_path:str, fasm_files:{str:[str]}) -> None:
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
-
     print_layout(fabric_layout)
     print()
     print_help()
@@ -1108,11 +1112,12 @@ def parse_prog(fasm_files:str) -> {str:[str]}:
 
     return slot_progs_dict
 
-# TODO Merge static tile cons below merged dynamic slots -> need to to this on the bitstream level(static tiles may not be the same)? -> reduce those static tiles to their base connection list only route with this connections
-# TODO when combining fasm also include static slot if below dynamic slot and merge used wires into all slots
-# TODO reduce prints
+# TODO dedup bitstream frames with its header bits
+# TODO Merge static tile cons below merged dynamic slots -> need to do this dynamically on the bitstream level (static tiles may not be the same)
+# TODO keep a map of the efpga to reference later on
 # TODO cpu instr. for slots
 # TODO florian angermaier bitstream over spi
+# TODO allow slot to merge if size and tiles match but y coords don't
 # Partial config flow: 
 # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
 # 2) Partition by editing bel.v2.txt and note all used pips of static parts
