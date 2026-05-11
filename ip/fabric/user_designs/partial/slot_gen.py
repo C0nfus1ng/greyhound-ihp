@@ -1112,12 +1112,9 @@ def parse_prog(fasm_files:str) -> {str:[str]}:
 
     return slot_progs_dict
 
+# TODO fix producing empty tiles in bitstream spec
 # TODO dedup bitstream frames with its header bits
-# TODO Merge static tile cons below merged dynamic slots -> need to do this dynamically on the bitstream level (static tiles may not be the same)
-# TODO keep a map of the efpga to reference later on
-# TODO cpu instr. for slots
-# TODO florian angermaier bitstream over spi
-# TODO allow slot to merge if size and tiles match but y coords don't
+# TODO allow slots to merge if size and tiles match but y coords don't
 # Partial config flow: 
 # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
 # 2) Partition by editing bel.v2.txt and note all used pips of static parts
