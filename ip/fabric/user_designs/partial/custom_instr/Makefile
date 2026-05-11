@@ -4,7 +4,7 @@ BASE_FOLDER = .build
 SLOT_GEN = ../slot_gen.py
 SLOT_CONFIG = slot_config.yaml
 FABRIC = ../../../fabric.csv
-FASM_FILES = ""
+FASM_FILES = "Static=Static Slot1=Graycode,DirectOut Slot2=LeftShift,RightShift Slot3=StraightThrough,Crossover"
 
 # Make all slots
 all:
@@ -27,6 +27,34 @@ all:
 	@echo '------------------------------------------------------'
 	@echo ''
 	@$(MAKE) dynamic-gen
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate Slot1 graycode fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot1-graycode-fasm
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate Slot1 direct out fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot1-direct-out
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate Slot2 left shift fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot2-left-shift
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate Slot2 right shift fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot2-right-shift
 
 	@echo ''
 	@echo '------------------------------------------------------'
@@ -61,6 +89,38 @@ static-fasm: PROG_ROOT = Static
 static-fasm: synth pnr
 .PHONY: static-fasm
 
+slot1-graycode-fasm: RTL = slot1_wrapper.sv slot1_graycode.sv ../../primitive_wrappers.v \
+							.build/Slot1/Slot1_slot_con_X4Y1.v .build/Slot1/Slot1_slot_con_X4Y2.v .build/Slot1/Slot1_slot_con_X4Y3.v .build/Slot1/Slot1_slot_con_X4Y4.v .build/Slot1/Slot1_slot_con_X4Y5.v .build/Slot1/Slot1_slot_con_X4Y6.v .build/Slot1/Slot1_slot_con_X4Y7.v .build/Slot1/Slot1_slot_con_X4Y8.v
+slot1-graycode-fasm: TOP = slot1_graycode
+slot1-graycode-fasm: SLOT_ROOT = Slot1
+slot1-graycode-fasm: PROG_ROOT = Graycode
+slot1-graycode-fasm: synth pnr
+.PHONY: slot1-graycode-fasm
+
+slot1-direct-out: RTL = slot1_wrapper.sv slot1_direct_out.sv ../../primitive_wrappers.v \
+							.build/Slot1/Slot1_slot_con_X4Y1.v .build/Slot1/Slot1_slot_con_X4Y2.v .build/Slot1/Slot1_slot_con_X4Y3.v .build/Slot1/Slot1_slot_con_X4Y4.v .build/Slot1/Slot1_slot_con_X4Y5.v .build/Slot1/Slot1_slot_con_X4Y6.v .build/Slot1/Slot1_slot_con_X4Y7.v .build/Slot1/Slot1_slot_con_X4Y8.v
+slot1-direct-out: TOP = slot1_direct_out
+slot1-direct-out: SLOT_ROOT = Slot1
+slot1-direct-out: PROG_ROOT = DirectOut
+slot1-direct-out: synth pnr
+.PHONY: slot1_direct_out
+
+slot2-left-shift: RTL = slot2_wrapper.sv slot2_left_shift.sv ../../primitive_wrappers.v \
+							.build/Slot2/Slot2_slot_con_X8Y1.v
+slot2-left-shift: TOP = slot2_left_shift
+slot2-left-shift: SLOT_ROOT = Slot2
+slot2-left-shift: PROG_ROOT = LeftShift
+slot2-left-shift: synth pnr
+.PHONY: slot2-left-shift
+
+slot2-right-shift: RTL = slot2_wrapper.sv slot2_right_shift.sv ../../primitive_wrappers.v \
+							.build/Slot2/Slot2_slot_con_X8Y1.v
+slot2-right-shift: TOP = slot2_right_shift
+slot2-right-shift: SLOT_ROOT = Slot2
+slot2-right-shift: PROG_ROOT = RightShift
+slot2-right-shift: synth pnr
+.PHONY: slot2-right-shift
+
 slot3-straight-through-fasm: RTL = slot3_wrapper.sv io_wrapper.sv slot3_straight_through.sv \
 									.build/Slot3/Slot3_slot_con_X2Y1.v .build/Slot3/Slot3_slot_con_X2Y2.v .build/Slot3/Slot3_slot_con_X2Y3.v .build/Slot3/Slot3_slot_con_X2Y4.v .build/Slot3/Slot3_slot_con_X2Y5.v .build/Slot3/Slot3_slot_con_X2Y6.v .build/Slot3/Slot3_slot_con_X2Y7.v .build/Slot3/Slot3_slot_con_X2Y8.v
 slot3-straight-through-fasm: TOP = slot3_straight_through
@@ -71,7 +131,7 @@ slot3-straight-through-fasm: synth pnr
 
 slot3-crossover-fasm: RTL = slot3_wrapper.sv io_wrapper.sv slot3_crossover.sv \
 								.build/Slot3/Slot3_slot_con_X2Y1.v .build/Slot3/Slot3_slot_con_X2Y2.v .build/Slot3/Slot3_slot_con_X2Y3.v .build/Slot3/Slot3_slot_con_X2Y4.v .build/Slot3/Slot3_slot_con_X2Y5.v .build/Slot3/Slot3_slot_con_X2Y6.v .build/Slot3/Slot3_slot_con_X2Y7.v .build/Slot3/Slot3_slot_con_X2Y8.v
-slot3-crossover-fasm: TOP = slot3_straight_through
+slot3-crossover-fasm: TOP = slot3_crossover
 slot3-crossover-fasm: SLOT_ROOT = Slot3
 slot3-crossover-fasm: PROG_ROOT = Crossover
 slot3-crossover-fasm: synth pnr

@@ -9,11 +9,12 @@ module slot3_straight_through();
         .io_o     (io_o),
     );
 
+    assign io_oeb = '1;
+
     // Slot IOs
     (* keep *) slot3_wrapper wrapper (
         .rst_o          (rst),
         .slot_io_i      (io_i),
         .slot_io_o      (io_o),
-        .slot_io_oeb_o  (io_oeb),
     );
 endmodule
