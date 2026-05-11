@@ -55,6 +55,9 @@ def genBitstream(fasmFile: str, specFile: str, bitstreamFile: str):
                 raise Exception
             # Set the necessary bits high
             tileType = specDict["TileMap"][tileLoc]
+            if tileLoc not in specDict["TileSpecs"].keys():
+                continue
+
             if featureName in specDict["TileSpecs"][tileLoc].keys():
                 if specDict["TileSpecs"][tileLoc][featureName]:
                     for bitIndex in specDict["TileSpecs"][tileLoc][featureName]:
