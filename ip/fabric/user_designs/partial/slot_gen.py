@@ -972,15 +972,17 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
             genBitstream(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{fasm_file}.bit")
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
 
-            # Create the slot representation
+            # Create the slot only representation
             with open(f"{base_dir}/{slot.name}/{fasm_file}.bit", 'rb') as bitstream_file_in:
                 with open(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", 'wb') as bitstream_file_out:
+                    slot_bitstream = []
                     # Add file header
-                    bitstream_file_out.write(0xFAB0FAB1.to_bytes(4))
+                    slot_bitstream.append(0xFAB0FAB1.to_bytes(4))
 
                     bitstream_file_in.seek(20)
                     data = bitstream_file_in.read(76)
-                    
+
+                    slot_enabled_tiles_bitstream = []
                     while data:
                         col = int.from_bytes(data[:1], "big")>>3
                         if (col >= slot.lower_left.x) and (col <= slot.upper_right.x):
@@ -990,12 +992,18 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
                                     if i == tile.y:
                                         slot_enabled_tiles |= 1<<(layout.height-i-1)
                             
-                            bitstream_file_out.write(slot_enabled_tiles.to_bytes(4)+data)
+                            slot_enabled_tiles_bitstream.append(slot_enabled_tiles.to_bytes(4))
+
+                            slot_bitstream.append(data)
 
                         data = bitstream_file_in.read(76)
                     
                     # Add desync
-                    bitstream_file_out.write(0x00100000.to_bytes(4))
+                    slot_bitstream.append(0x00100000.to_bytes(4))
+
+                    # Write to file
+                    slot_enabled_tiles_bitstream.reverse()
+                    bitstream_file_out.write(b''.join(slot_enabled_tiles_bitstream+slot_bitstream))
 
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
 
