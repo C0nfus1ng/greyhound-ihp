@@ -126,6 +126,12 @@ class FabricLayout:
     points:[Point] = []
     bridges:[Point] = []
 
+    # Fabric constants
+    bit_start = 0xFAB0FAB1
+    desync = 0x00100000
+    tile_use_header = 0x5E7<<20
+    stream_start = 0x00AAFF01
+
     def get_color(self) -> str: # Cycle colors 
         color = self.last_color+1
         self.last_color = (color%5) # First color is reserved for static slot
@@ -942,6 +948,87 @@ def combine_fasm(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> N
                 fasm_file.write("\n".join(fasm_overlap_str))
                 fasm_file.write(fasm_dynamic_str)
 
+def reduce_enabled_tiles(enabled_tiles_bitstream:[bytes]):
+    for i, enabled_tiles in enumerate(enabled_tiles_bitstream):
+        if int.from_bytes(enabled_tiles, "big") != (FabricLayout.tile_use_header | 0x3FFFF):
+            enabled_tiles_bitstream_reduced = enabled_tiles_bitstream[i:]
+            
+            if i != 0:
+                enabled_tiles_bitstream_reduced.append(0x0.to_bytes(4))    
+            
+            enabled_tiles_bitstream_reduced.reverse()
+            return enabled_tiles_bitstream_reduced
+    
+    return []
+
+def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str):
+    with open(filename_in, 'rb') as bitstream_file_in:
+        with open(filename_out, 'wb') as bitstream_file_out:
+            enabled_tiles = []
+            seek_word = int.from_bytes(bitstream_file_in.read(4), "big")
+            usercode = 1
+            seek_stream_start = -1
+            seek_byte_counter = 4
+
+            while FabricLayout.bit_start != seek_word:
+                if seek_word & 0xFFF00000 == FabricLayout.tile_use_header:
+                    enabled_tiles.append(seek_word)
+
+                if seek_word == FabricLayout.stream_start:
+                    seek_stream_start = seek_byte_counter + 4
+
+                if seek_stream_start == seek_byte_counter:
+                    usercode = seek_word
+
+                seek_byte_counter += 1
+                seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(bitstream_file_in.read(1), "big")
+
+            bytes_per_frame = (layout_height+1)*4
+            data = bitstream_file_in.read(bytes_per_frame)
+
+            # Create data struct
+            loaded_bitstream = {}
+            enabled_tiles_index = len(enabled_tiles)-1
+            while data:
+                if (len(data) != bytes_per_frame):
+                    break
+
+                col = int.from_bytes(data[:1], "big")>>3
+
+                if col not in loaded_bitstream.keys():
+                    loaded_bitstream[col] = {}
+
+                frame_data = data[4:]
+                frame_strobe = int.from_bytes(data[1:4], "big") & 0xFFFFF
+
+                if frame_data in loaded_bitstream[col].keys():
+                    loaded_bitstream[col][frame_data] = (loaded_bitstream[col][frame_data][0] | frame_strobe, loaded_bitstream[col][frame_data][1])
+                else:
+                    loaded_bitstream[col][frame_data] = (frame_strobe, enabled_tiles[enabled_tiles_index] if enabled_tiles_index >= 0 else FabricLayout.tile_use_header | 0x3FFFF)
+
+                enabled_tiles_index -= 1
+                data = bitstream_file_in.read(bytes_per_frame)
+
+            # Create dedup bitstream
+            bitstream = []
+            enabled_tiles_bitstream = [] # enabled tiles are the same for all frames
+            bitstream.append(FabricLayout.stream_start.to_bytes(4))
+            bitstream.append(usercode.to_bytes(4))
+            bitstream.append(FabricLayout.bit_start.to_bytes(4))
+
+            for col, data_dict in loaded_bitstream.items():
+                for frame_data, (frame_strobe, enabled_tiles) in data_dict.items():
+                    enabled_tiles_bitstream.append(enabled_tiles.to_bytes(4))
+                    frame_header = col<<27 | frame_strobe
+                    bitstream.append(frame_header.to_bytes(4) + frame_data)
+
+            # Add desync
+            bitstream.append(FabricLayout.desync.to_bytes(4))
+
+            # Write out new structure
+            enabled_tiles_bitstream = reduce_enabled_tiles(enabled_tiles_bitstream)
+            bitstream_file_out.write(b''.join(enabled_tiles_bitstream + bitstream))
+
 def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> None:
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
@@ -949,13 +1036,19 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
         static_prog = fasm_files["Static"][0]
 
     # Create Static bitstream and hex file
-    genBitstream(f"{base_dir}/Static/Static.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
-    bit_to_hex(f"{base_dir}/Static/Static.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
+    genBitstream(f"{base_dir}/Static/{static_prog}.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
+    bit_to_hex(f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
+
+    gen_dedup_bitstream(layout.height, f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}-dedup.bit")
+    bit_to_hex(f"{base_dir}/Static/{static_prog}-dedup.bit", f"{base_dir}/Static/{static_prog}-dedup.hex", bytes_per_word=1)
 
     merged_slots = gen_merged_slots(layout)
     all_slots = layout.slots + list(merged_slots.keys())
 
-    for slot in all_slots:
+    usercode_bitsize = int(28/(len(all_slots)-1))
+    print(f"There are up to 15 usercodes for the Static slot and up to {(1<<usercode_bitsize)-1} usercodes per dynamic slot available (Usercodes start at 1)")
+
+    for i_slot, slot in enumerate(all_slots):
         if slot.name == "Static":
             continue
 
@@ -968,44 +1061,63 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
         if not fasm_files:
             tmp_fasm_files = {slot.name: slot.name}
 
-        for fasm_file in tmp_fasm_files[slot.name]:
+        for i_fasm_file, fasm_file in enumerate(tmp_fasm_files[slot.name]):
             genBitstream(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{fasm_file}.bit")
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
+
+            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit")
+            bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.hex", bytes_per_word=1)
+            
+            usercode = ((i_fasm_file+1)<<(4+(usercode_bitsize*(i_slot-1)))) & 0xFFFFFFFF
+            print(f"{slot.name}/{fasm_file} has usercode: {usercode:08x}")
 
             # Create the slot only representation
             with open(f"{base_dir}/{slot.name}/{fasm_file}.bit", 'rb') as bitstream_file_in:
                 with open(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", 'wb') as bitstream_file_out:
                     slot_bitstream = []
                     # Add file header
-                    slot_bitstream.append(0xFAB0FAB1.to_bytes(4))
+                    slot_bitstream.append(FabricLayout.stream_start.to_bytes(4))
 
-                    bitstream_file_in.seek(20)
-                    data = bitstream_file_in.read(76)
+                    slot_bitstream.append(usercode.to_bytes(4))
+                    slot_bitstream.append(FabricLayout.bit_start.to_bytes(4))
+
+                    seek_word = int.from_bytes(bitstream_file_in.read(4), "big")
+                    while(FabricLayout.bit_start != seek_word):
+                        seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(bitstream_file_in.read(1), "big")
+
+                    bytes_per_frame = (layout.height+1)*4
+                    data = bitstream_file_in.read(bytes_per_frame)
 
                     slot_enabled_tiles_bitstream = []
                     while data:
+                        if (len(data) != bytes_per_frame):
+                            break
+
                         col = int.from_bytes(data[:1], "big")>>3
                         if (col >= slot.lower_left.x) and (col <= slot.upper_right.x):
-                            slot_enabled_tiles = 0x5E7<<20
+                            slot_enabled_tiles = FabricLayout.tile_use_header
                             for tile in slot.tiles:
-                                for i in range(layout.height):
-                                    if i == tile.y:
-                                        slot_enabled_tiles |= 1<<(layout.height-i-1)
+                                for i_height in range(layout.height):
+                                    if i_height == tile.y:
+                                        slot_enabled_tiles |= 1<<(layout.height-i_height-1)
                             
                             slot_enabled_tiles_bitstream.append(slot_enabled_tiles.to_bytes(4))
 
                             slot_bitstream.append(data)
 
-                        data = bitstream_file_in.read(76)
-                    
+                        data = bitstream_file_in.read(bytes_per_frame)
+
                     # Add desync
-                    slot_bitstream.append(0x00100000.to_bytes(4))
+                    slot_bitstream.append(FabricLayout.desync.to_bytes(4))
 
                     # Write to file
-                    slot_enabled_tiles_bitstream.reverse()
+                    slot_enabled_tiles_bitstream = reduce_enabled_tiles(slot_enabled_tiles_bitstream)
                     bitstream_file_out.write(b''.join(slot_enabled_tiles_bitstream+slot_bitstream))
 
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
+
+            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit")
+            bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.hex", bytes_per_word=1)
 
 def print_help() -> None:
     print("Help:")
@@ -1120,8 +1232,7 @@ def parse_prog(fasm_files:str) -> {str:[str]}:
 
     return slot_progs_dict
 
-# TODO fix producing empty tiles in bitstream spec
-# TODO dedup bitstream frames with its header bits
+# TODO fix producing empty tiles in bitstream spec (Workaround applied in bit_gen.py)
 # TODO allow slots to merge if size and tiles match but y coords don't
 # Partial config flow: 
 # 1) Create static parts and slots with defined handover point (Can handover happen at routing level? pips file?)
