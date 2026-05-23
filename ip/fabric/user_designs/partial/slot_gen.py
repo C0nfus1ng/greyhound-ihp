@@ -948,13 +948,13 @@ def combine_fasm(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> N
                 fasm_file.write("\n".join(fasm_overlap_str))
                 fasm_file.write(fasm_dynamic_str)
 
-def reduce_enabled_tiles(enabled_tiles_bitstream:[bytes]):
+def reduce_enabled_tiles(enabled_tiles_bitstream:[bytes], usercode:int):
     for i, enabled_tiles in enumerate(enabled_tiles_bitstream):
         if int.from_bytes(enabled_tiles, "big") != (FabricLayout.tile_use_header | 0x3FFFF):
             enabled_tiles_bitstream_reduced = enabled_tiles_bitstream[i:]
             
-            if i != 0:
-                enabled_tiles_bitstream_reduced.append(0x0.to_bytes(4))    
+            if (i != 0) and ((usercode & 0xFFF00000) == FabricLayout.tile_use_header):
+                enabled_tiles_bitstream_reduced.append(0x0.to_bytes(4)) # Add break header, since thge usercode is the tile use canary
             
             enabled_tiles_bitstream_reduced.reverse()
             return enabled_tiles_bitstream_reduced
@@ -1026,8 +1026,8 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str):
             bitstream.append(FabricLayout.desync.to_bytes(4))
 
             # Write out new structure
-            enabled_tiles_bitstream = reduce_enabled_tiles(enabled_tiles_bitstream)
-            bitstream_file_out.write(b''.join(enabled_tiles_bitstream + bitstream))
+            enabled_tiles_bitstream = reduce_enabled_tiles(enabled_tiles_bitstream, usercode)
+            bitstream_file_out.write(b''.join(bitstream[:2] + enabled_tiles_bitstream + bitstream[2:]))
 
 def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> None:
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
@@ -1077,7 +1077,6 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
                     slot_bitstream = []
                     # Add file header
                     slot_bitstream.append(FabricLayout.stream_start.to_bytes(4))
-
                     slot_bitstream.append(usercode.to_bytes(4))
                     slot_bitstream.append(FabricLayout.bit_start.to_bytes(4))
 
@@ -1111,8 +1110,8 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
                     slot_bitstream.append(FabricLayout.desync.to_bytes(4))
 
                     # Write to file
-                    slot_enabled_tiles_bitstream = reduce_enabled_tiles(slot_enabled_tiles_bitstream)
-                    bitstream_file_out.write(b''.join(slot_enabled_tiles_bitstream+slot_bitstream))
+                    slot_enabled_tiles_bitstream = reduce_enabled_tiles(slot_enabled_tiles_bitstream, usercode)
+                    bitstream_file_out.write(b''.join(slot_bitstream[:2]+slot_enabled_tiles_bitstream+slot_bitstream[2:]))
 
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
 
