@@ -1098,7 +1098,7 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
                             for tile in slot.tiles:
                                 for i_height in range(layout.height):
                                     if i_height == tile.y:
-                                        slot_enabled_tiles |= 1<<(layout.height-i_height-1)
+                                        slot_enabled_tiles |= 1<<i_height
                             
                             slot_enabled_tiles_bitstream.append(slot_enabled_tiles.to_bytes(4))
 
