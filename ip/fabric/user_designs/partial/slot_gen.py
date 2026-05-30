@@ -159,13 +159,15 @@ class FabricLayout:
 
 def check_slot_static_overlap(layout:FabricLayout, static_slot:bool, tiles:[Point]) -> bool:
     check_overlap_slots = []
-    if len(layout.slots) > 0:
+    if len(layout.slots) > 0 and layout.slots[0].name == "Static":
         if static_slot and layout.slots[0].name == "Static": # Check if static slot overlaps with dynamic slot
             check_overlap_slots = layout.slots[1:]
         elif static_slot: # Check if static slot overlaps with dynamic slot
             check_overlap_slots = layout.slots
         else: # Check if dynamic slot overlaps with static slot
             check_overlap_slots = [layout.slots[0]]
+    else:
+        print(f"No static slot to check for overlaps exists yet")
 
     overlapped_flag = False
     for slot in check_overlap_slots:
@@ -929,15 +931,19 @@ def combine_fasm(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> N
             for merge_slot in merge_slots:
                 for col in range(merge_slot.lower_left.x, merge_slot.upper_right.x+1):
                     pos_in_slot = col - merge_slot.lower_left.x
-                    search_line = f"X{col}.*"
+                    search_line = f"X{col}Y.*"
 
                     for fasm_static_line_str in fasm_static_list_str:
                         if re.match(search_line, fasm_static_line_str):
                             if fasm_static_line_str in fasm_dynamic_list_str:
                                 raise RuntimeError("Dynamic slot uses same route as Static slot.")
-                            
+
                             # Rewrite fasm line
-                            fasm_overlap_str.append(f"X{slot.lower_left.x+pos_in_slot}"+fasm_static_line_str[len(str(col))+1:])
+                            fasm_static_start_pos = fasm_static_line_str.find("Y",0,4)
+                            if fasm_static_start_pos == -1:
+                                raise RuntimeError("Static slot fasm line Y pos not found.")
+
+                            fasm_overlap_str.append(f"X{slot.lower_left.x+pos_in_slot}"+fasm_static_line_str[fasm_static_start_pos:])
 
             fasm_overlap_str.append("\n")
             print(f"Appending to {slot.name}-{fasm_file}")
@@ -962,6 +968,8 @@ def reduce_enabled_tiles(enabled_tiles_bitstream:[bytes], usercode:int) -> [byte
     return []
 
 def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, static_filename:str, slot_x_offsets:[int]) -> None:
+    print(f"Deduplicate {filename_in} into {filename_out}")
+    
     with open(filename_in, 'rb') as bitstream_file_in:
         with open(filename_out, 'wb') as bitstream_file_out:
             with open(static_filename, 'rb') as static_bitstream_file:
@@ -1006,7 +1014,6 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
                         break
 
                     cols = [int.from_bytes(data[:1], "big")>>3 + slot_x_offset for slot_x_offset in slot_x_offsets]
-
                     for col in cols:
                         frame_strobe = int.from_bytes(data[1:4], "big") & 0xFFFFF
                         enabled_tiles_word = enabled_tiles[enabled_tiles_index] if enabled_tiles_index >= 0 else FabricLayout.tile_use_header | 0x3FFFF
@@ -1018,7 +1025,6 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
                             # Frame data from slot itself
                             frame_data_key = data[4:] # Split key and data so slot can be used in all merged slots independetly of the static slot
                         else: 
-                            # static_frame_data = static_bitstream_file.read(bytes_per_frame)
                             frame_header = (col<<27 | frame_strobe).to_bytes(4)
                             static_frame_data = static_slot_data[frame_header]
 
@@ -1058,11 +1064,6 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
                     frame_strobes = []
                     for frame_data_key, (frame_strobe, enabled_tiles, frame_data) in loaded_bitstream[frame_cols[0]].items():
                         frame_strobes.append((frame_strobe, frame_data))
-
-                    for i_frame_col in range(1, len(frame_cols)):
-                        tmp_strobe = []
-                        for frame_data_key, (frame_strobe, enabled_tiles, frame_data) in loaded_bitstream[frame_cols[i_frame_col]].items():
-                            tmp_strobe.append(frame_strobe)
 
                     for i_frame_col in range(1, len(frame_cols)):
                         for frame_data_key, (frame_strobe, enabled_tiles, frame_data) in loaded_bitstream[frame_cols[i_frame_col]].items():
@@ -1142,7 +1143,6 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
             if slot in merged_slots.keys():
                 for i_merged_slot in range(1, len(merged_slots[slot])):
                     slot_offset.append(merged_slots[slot][i_merged_slot].lower_left.x - merged_slots[slot][0].lower_left.x)
-
 
             gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", slot_offset)
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.hex", bytes_per_word=1)
