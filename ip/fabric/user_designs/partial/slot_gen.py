@@ -131,6 +131,7 @@ class FabricLayout:
     desync = 0x00100000
     tile_use_header = 0x5E7<<20
     stream_start = 0x00AAFF01
+    frames_per_tile = 20
 
     def get_color(self) -> str: # Cycle colors 
         color = self.last_color+1
@@ -696,9 +697,7 @@ def gen_merged_slots(layout:FabricLayout, quiet:bool=True) -> {Slot:[Slot]}:
         checked[base_slot] = True
         if len(overlapped_slots) > 0:
             overlapped_slots.append(base_slot)
-            # Sort by start col
-            sort_slots = lambda slot: slot.lower_left.x
-            overlapped_slots.sort(key=sort_slots)
+            overlapped_slots.sort(key=Slot.sort_by_name)
 
             slot_nbr_str = [found.group() if (found := re.search('[0-9]+', slot.name)) else "" for slot in overlapped_slots[1:]]
             slot_name = overlapped_slots[0].name + "_" + "_".join(slot_nbr_str)
@@ -967,9 +966,9 @@ def reduce_enabled_tiles(enabled_tiles_bitstream:[bytes], usercode:int) -> [byte
     
     return []
 
-def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, static_filename:str, slot_x_offsets:[int]) -> None:
+def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, static_filename:str, slots:[Slot]) -> None:
     print(f"Deduplicate {filename_in} into {filename_out}")
-    
+
     with open(filename_in, 'rb') as bitstream_file_in:
         with open(filename_out, 'wb') as bitstream_file_out:
             with open(static_filename, 'rb') as static_bitstream_file:
@@ -1002,18 +1001,20 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
                 while static_data:
                     if (len(static_data) != bytes_per_frame):
                         break
-                    
+
                     static_slot_data[static_data[:4]] = static_data
                     static_data = static_bitstream_file.read(bytes_per_frame)
 
                 # Create data struct
                 loaded_bitstream = {}
                 enabled_tiles_index = len(enabled_tiles)-1
+
+                slot_x_offsets = [slot.lower_left.x - slots[0].lower_left.x for slot in slots]
                 while data:
                     if (len(data) != bytes_per_frame):
                         break
 
-                    cols = [int.from_bytes(data[:1], "big")>>3 + slot_x_offset for slot_x_offset in slot_x_offsets]
+                    cols = [(int.from_bytes(data[:1], "big")>>3) + slot_x_offset for slot_x_offset in slot_x_offsets]
                     for col in cols:
                         frame_strobe = int.from_bytes(data[1:4], "big") & 0xFFFFF
                         enabled_tiles_word = enabled_tiles[enabled_tiles_index] if enabled_tiles_index >= 0 else FabricLayout.tile_use_header | 0x3FFFF
@@ -1040,59 +1041,68 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
                                     frame_data_key += static_frame_data[tile_start:tile_start+4]
 
                         if frame_data_key in loaded_bitstream[col].keys():
-                            loaded_bitstream[col][frame_data_key] = (loaded_bitstream[col][frame_data_key][0] | frame_strobe, loaded_bitstream[col][frame_data_key][1], loaded_bitstream[col][frame_data_key][2])
+                            loaded_bitstream[col][frame_data_key]["strobe"] |= frame_strobe
                         else:
-                            loaded_bitstream[col][frame_data_key] = (frame_strobe, enabled_tiles_word, data[4:])
+                            loaded_bitstream[col][frame_data_key] = {"strobe": frame_strobe, "tiles": enabled_tiles_word, "data": data[4:]}
 
                     enabled_tiles_index -= 1
                     data = bitstream_file_in.read(bytes_per_frame)
 
-                # Create dedup bitstream
+                # Split data struct
                 bitstream = []
                 enabled_tiles_bitstream = [] # enabled tiles are the same for all frames
                 bitstream.append(FabricLayout.stream_start.to_bytes(4))
                 bitstream.append(usercode.to_bytes(4))
                 bitstream.append(FabricLayout.bit_start.to_bytes(4))
 
-                base_col = min(loaded_bitstream.keys())
-                base_cols = [base_col + slot_x_offset for slot_x_offset in slot_x_offsets]
-                for col in loaded_bitstream.keys():
-                    if len(base_cols) > 1 and col >= base_cols[1]:
-                        continue
-
+                for col in range(slots[0].lower_left.x, slots[0].upper_right.x):
                     frame_cols = [col + slot_x_offset for slot_x_offset in slot_x_offsets]
                     frame_strobes = []
-                    for frame_data_key, (frame_strobe, enabled_tiles, frame_data) in loaded_bitstream[frame_cols[0]].items():
-                        frame_strobes.append((frame_strobe, frame_data))
 
-                    for i_frame_col in range(1, len(frame_cols)):
-                        for frame_data_key, (frame_strobe, enabled_tiles, frame_data) in loaded_bitstream[frame_cols[i_frame_col]].items():
-                            for base_frame in frame_strobes:
-                                base_frame_strobe = base_frame[0]
-                                base_frame_data = base_frame[1]
-                                split_frame_strobe = base_frame_strobe ^ frame_strobe
-                                split_bit_mask = 0
-                                for i_bit in range(20):
-                                    split_bit = (split_frame_strobe >> i_bit) & 0x1
+                    # Split strobes for this col
+                    for frame_data_key, frame_data_dict in loaded_bitstream[frame_cols[0]].items():
+                        frame_strobes.append(frame_data_dict)
 
-                                    if split_bit: # Safe all before mismatch
-                                        tmp_frame_strobe = split_frame_strobe & split_bit_mask
-                                        if tmp_frame_strobe:
-                                            frame_strobes.append((tmp_frame_strobe, base_frame_data))
+                    for frame_col in frame_cols[1:] if len(frame_cols) > 0 else []:
+                        for frame_data_key, frame_data_dict in loaded_bitstream[frame_col].items():
+                            strobe = frame_data_dict["strobe"]
 
-                                        frame_strobes.append((1 << i_bit, base_frame_data))
+                            # Dedup multiple slots
+                            new_frame_strobes = []
+                            for frame_strobe_dict in frame_strobes:
+                                frame_strobe = frame_strobe_dict["strobe"]
+                                frame_data   = frame_strobe_dict["data"]
+                                frame_tiles  = frame_strobe_dict["tiles"]
+                                split_strobe = strobe ^ frame_strobe
+                                overlap_strobe = strobe & frame_strobe
+
+                                if split_strobe and overlap_strobe: # Strobes split each other and overlap, and are no subset of requested
+                                    if overlap_strobe != frame_strobe: # Saved is no subset of requested
+                                        # Split at predefined pos
                                         split_bit_mask = 0
-                                    else:
-                                        split_bit_mask |= 1 << i_bit
+                                        for i_bit in range(FabricLayout.frames_per_tile):
+                                            split_bit = (split_strobe >> i_bit) & 0x1
 
-                                tmp_frame_strobe = split_frame_strobe & split_bit_mask
-                                if tmp_frame_strobe:
-                                    frame_strobes.append((tmp_frame_strobe, base_frame_data))
-                            
-                                frame_strobes.remove(base_frame)
+                                            if split_bit: # Safe all before mismatch
+                                                tmp_frame_strobe = frame_strobe & split_bit_mask
+                                                if tmp_frame_strobe:
+                                                    new_frame_strobes.append({"strobe": tmp_frame_strobe, "tiles": frame_tiles, "data": frame_data})
 
-                    for (frame_strobe, frame_data) in frame_strobes:
-                        enabled_tiles_bitstream.append(enabled_tiles.to_bytes(4))
+                                                split_bit_mask = 0
+                                            split_bit_mask |= 1 << i_bit
+                                        tmp_frame_strobe = frame_strobe & split_bit_mask
+
+                                        if tmp_frame_strobe:
+                                            new_frame_strobes.append({"strobe": tmp_frame_strobe, "tiles": frame_tiles, "data": frame_data})
+
+                                        frame_strobes.remove(frame_strobe_dict)
+                            frame_strobes += new_frame_strobes
+
+                    for frame_strobe_dict in frame_strobes:
+                        frame_strobe = frame_strobe_dict["strobe"]
+                        frame_data = frame_strobe_dict["data"]
+                        frame_tiles = frame_strobe_dict["tiles"]
+                        enabled_tiles_bitstream.append(frame_tiles.to_bytes(4))
                         frame_header = col<<27 | frame_strobe
                         bitstream.append(frame_header.to_bytes(4) + frame_data)
 
@@ -1113,7 +1123,7 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
     genBitstream(f"{base_dir}/Static/{static_prog}.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
     bit_to_hex(f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
 
-    gen_dedup_bitstream(layout.height, f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [0])
+    gen_dedup_bitstream(layout.height, f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [layout.slots[0]])
     bit_to_hex(f"{base_dir}/Static/{static_prog}-dedup.bit", f"{base_dir}/Static/{static_prog}-dedup.hex", bytes_per_word=1)
 
     merged_slots = gen_merged_slots(layout)
@@ -1138,15 +1148,8 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
         for i_fasm_file, fasm_file in enumerate(tmp_fasm_files[slot.name]):
             genBitstream(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{fasm_file}.bit")
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
-
-            slot_offset = [0]
-            if slot in merged_slots.keys():
-                for i_merged_slot in range(1, len(merged_slots[slot])):
-                    slot_offset.append(merged_slots[slot][i_merged_slot].lower_left.x - merged_slots[slot][0].lower_left.x)
-
-            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", slot_offset)
+            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [slot])
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.hex", bytes_per_word=1)
-            
             usercode = ((i_fasm_file+1)<<(4+(usercode_bitsize*(i_slot-1)))) & 0xFFFFFFFF
             print(f"{slot.name}/{fasm_file} has usercode: {usercode:08x}")
 
@@ -1193,8 +1196,7 @@ def gen_bitstream(layout:FabricLayout, base_dir:str, fasm_files:{str:[str]}) -> 
                     bitstream_file_out.write(b''.join(slot_bitstream[:2]+slot_enabled_tiles_bitstream+slot_bitstream[2:]))
 
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
-
-            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", slot_offset)
+            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", merged_slots[slot] if slot in merged_slots.keys() else [slot])
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.hex", bytes_per_word=1)
 
 def print_help() -> None:
