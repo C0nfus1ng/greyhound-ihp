@@ -100,10 +100,13 @@ async def test_partial_extension_cpu(dut):
     await ClockCycles(dut.io_clock_PAD, int(50000*2.5))
 
     # Wait for all messages
-    await ClockCycles(dut.io_clock_PAD, int(50000*100.0))
+    data = bytearray()
+    for i in range(1, 31):
+        await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
+        data += uart_sink.read_nowait(-1)
+        print(f"Data thus far: {data}")
 
-    data = uart_sink.read_nowait(-1)
-    print(data)
+    print(f"All data: {data}")
 
     print("\nFinished program")
 

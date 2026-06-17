@@ -4,11 +4,10 @@ module slot1_wrapper (
     input  logic [31:0] io_i,
 );
     (* keep, BEL="X4Y1.A" *) Slot1_slot_con_X4Y1 slot1_x4y1 (
-        .E1END0(rst_o),
-        .E2END0(io_o[31]),
-        .E2END1(io_o[30]),
-        .E2END2(io_o[29]),
-        .E2END3(io_o[28]),
+        .E1END0(io_o[31]),
+        .E1END1(io_o[30]),
+        .E1END2(io_o[29]),
+        .E1END3(io_o[28]),
 
         .W1BEG0(io_i[31]),
         .W1BEG1(io_i[30]),
@@ -16,10 +15,10 @@ module slot1_wrapper (
         .W1BEG3(io_i[28]),
     );
     (* keep, BEL="X4Y2.A" *) Slot1_slot_con_X4Y2 slot1_x4y2 (
-        .E2END0(io_o[27]),
-        .E2END1(io_o[26]),
-        .E2END2(io_o[25]),
-        .E2END3(io_o[24]),
+        .E1END0(io_o[27]),
+        .E1END1(io_o[26]),
+        .E1END2(io_o[25]),
+        .E1END3(io_o[24]),
 
         .W1BEG0(io_i[27]),
         .W1BEG1(io_i[26]),
@@ -27,10 +26,10 @@ module slot1_wrapper (
         .W1BEG3(io_i[24]),
     );
     (* keep, BEL="X4Y3.A" *) Slot1_slot_con_X4Y3 slot1_x4y3 (
-        .E2END4(io_o[23]),
-        .E2END5(io_o[22]),
-        .E2END6(io_o[21]),
-        .E2END7(io_o[20]),
+        .E1END0(io_o[23]),
+        .E1END1(io_o[22]),
+        .E1END2(io_o[21]),
+        .E1END3(io_o[20]),
 
         .W1BEG0(io_i[23]),
         .W1BEG1(io_i[22]),
@@ -82,14 +81,15 @@ module slot1_wrapper (
         .W1BEG3(io_i[4]),
     );
     (* keep, BEL="X4Y8.A" *) Slot1_slot_con_X4Y8 slot1_x4y8 (
-        .E2END0(io_o[3]),
-        .E2END1(io_o[2]),
-        .E2END2(io_o[1]),
-        .E2END3(io_o[0]),
+        .E1END0(io_o[3]),
+        .E1END1(io_o[2]),
+        .E1END2(io_o[1]),
+        .E1END3(io_o[0]),
 
         .W1BEG0(io_i[3]),
         .W1BEG1(io_i[2]),
         .W1BEG2(io_i[1]),
         .W1BEG3(io_i[0]),
+        .S1END0(rst_o),
     );
 endmodule
