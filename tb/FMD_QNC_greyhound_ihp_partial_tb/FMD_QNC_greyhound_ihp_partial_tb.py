@@ -25,7 +25,7 @@ partial_extension_cpu = {
 }
 
 partial_extension_jtag = {
-    'flash0_slot0': '', # TODO change create real
+    'flash0_slot0': '../../../firmware/partial_jtag/partial_jtag.hex',
     'flash0_slot1': '',
     'flash1_slot0': '',
     'flash1_slot1': '',
@@ -33,7 +33,16 @@ partial_extension_jtag = {
     'dump_waveforms': True,
 }
 
-enabled = partial_extension_cpu
+partial_2slots_jtag = {
+    'flash0_slot0': '../../../firmware/partial_2slots/partial_2slots.hex',
+    'flash0_slot1': '',
+    'flash1_slot0': '',
+    'flash1_slot1': '',
+    'connect_flash1': False,
+    'dump_waveforms': True,
+}
+
+enabled = partial_2slots_jtag
 
 async def start_clock(clock, freq=50):
     """ Start the clock @ freq MHz """
@@ -179,49 +188,292 @@ async def setup_for_jtag(dut):
     jtag.devices[1].idle_delay = 0
     return jtag
 
-async def write_bitstream_jtag(file:Path, jtag):
-    with file.open(mode='br') as f:
-        data_words = file.stat().st_size/4
-        data = f.read(4)
-        nbr = 0
+async def load_bitstream(file:Path, tile_x_offset:int=0):
+    with file.open("rb") as bitstream:
+        # Find bitstream start
+        loaded_bitstream = {"tiles":[], "usercode":1, "data":{"pre_frame":bytes(), "frame":{}, "post_frame":bytes()}}
+
+        seek_word_raw = bitstream.read(4)
+        loaded_bitstream["data"]["pre_frame"] += seek_word_raw
+        seek_word = int.from_bytes(seek_word_raw, "big")
+        seek_stream_start = -1
+        seek_byte_counter = 4
+        while 0xFAB0FAB1 != seek_word:
+            if seek_word & 0xFFF00000 == 0x5E7<<20:
+                loaded_bitstream["tiles"].append(seek_word)
+
+            if seek_word == 0x00AAFF01:
+                seek_stream_start = seek_byte_counter + 4
+
+            if seek_stream_start == seek_byte_counter:
+                loaded_bitstream["usercode"] = seek_word
+
+            seek_byte_counter += 1
+            seek_word_raw = bitstream.read(1)
+            loaded_bitstream["data"]["pre_frame"] += seek_word_raw
+            seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_word_raw, "big")
+
+        loaded_bitstream["tiles"].reverse()
+
+        # Load frame data
+        bytes_per_frame = 76
+        data = bitstream.read(bytes_per_frame)
         while data:
-            number = int.from_bytes(data, "big")
-            cocotb.log.info("Program word %d of %d" % (nbr, data_words))
-            await jtag.write("ISC_PROGRAM", number, device=1)
-            data = f.read(4)
-            nbr = nbr + 1
+            if (len(data) != bytes_per_frame):
+                break
+            
+            col = (int.from_bytes(data[:1], "big")>>3) + tile_x_offset
+            strobe = int.from_bytes(data[1:4], "big") & 0xFFFFF
+            frame_header = (col<<27) | strobe
+            loaded_bitstream["data"]["frame"][frame_header] = frame_header.to_bytes(4)+data[4:]
+            data = bitstream.read(bytes_per_frame)
+
+        # Load bitstream end
+        loaded_bitstream["data"]["post_frame"] += data
+        
+        post_data = bitstream.read(1)
+        loaded_bitstream["data"]["post_frame"] += post_data
+        while post_data:
+            post_data = bitstream.read(1)
+            loaded_bitstream["data"]["post_frame"] += post_data
+
+        return loaded_bitstream
+
+async def write_bitstream_jtag(file:Path, jtag, static_file:Path=None, tile_x_offset:int=0): # TODO allow to add col offset to slot
+    # Load static bitstream
+    loaded_static_bitstream = None
+    if static_file:
+        loaded_static_bitstream = await load_bitstream(static_file)
+
+    # Load bitstream
+    loaded_bitstream = await load_bitstream(file, tile_x_offset)
+
+    # Write bitstream to jtag
+    len_pre_bitstream = int(len(loaded_bitstream["data"]["pre_frame"])/4)
+    for i_word in range(len_pre_bitstream):
+        bitstream_word = int.from_bytes(loaded_bitstream["data"]["pre_frame"][i_word*4:(i_word+1)*4], "big")
+        cocotb.log.info("Bitstream pre word %d of %d" % (i_word, len_pre_bitstream-1))
+        await jtag.write("ISC_PROGRAM", bitstream_word, device=1)
+
+    len_bitstream = len(loaded_bitstream["data"]["frame"])*19
+    for i_frame, (frame_header, frame_data) in enumerate(loaded_bitstream["data"]["frame"].items()):
+        col = frame_header>>27
+        use_frame_tile = loaded_bitstream["tiles"][i_frame] if (i_frame < len(loaded_bitstream["tiles"])) else 0x3ffff
+
+        len_frame_data = int(len(frame_data)/4)
+        for i_frame_word in range(len_frame_data):
+            use_bitstream_tile = 1 if (i_frame_word == 0) else ((use_frame_tile >> (len_frame_data-i_frame_word-1)) & 0x1)
+
+            if use_bitstream_tile:
+                bitstream_word = int.from_bytes(frame_data[i_frame_word*4:(i_frame_word+1)*4], "big")
+            elif loaded_static_bitstream:
+                static_frame_header = (col<<27)
+                for frame_bit in range(20):
+                    if (frame_header >> frame_bit) & 0x1:
+                        static_frame_header |= (1 << frame_bit)
+                        break
+
+                bitstream_word = int.from_bytes(loaded_static_bitstream["data"]["frame"][static_frame_header][i_frame_word*4:(i_frame_word+1)*4], "big")
+            else:
+                Exception("Couldn't find bitstream word, no static bitstream loaded")
+
+            cocotb.log.info("Bitstream word %d of %d" % ((i_frame*19)+i_frame_word, len_bitstream-1))
+            await jtag.write("ISC_PROGRAM", bitstream_word, device=1)
+
+    len_post_bitstream = int(len(loaded_bitstream["data"]["post_frame"])/4)
+    for i_word in range(len_post_bitstream):
+        bitstream_word = int.from_bytes(loaded_bitstream["data"]["post_frame"][i_word*4:(i_word+1)*4], "big")
+        cocotb.log.info("Bitstream post word %d of %d" % (i_word, len_post_bitstream-1))
+        await jtag.write("ISC_PROGRAM", bitstream_word, device=1)
+
+    cocotb.log.info("Finished bitstream upload")
+
+async def wait_jtag(jtag, noops:int):
+    # 1 NOOP takes ~0.7µs
+    for i in range(noops):
+        await jtag.write("ISC_NOOP", 0x1, device=1)
 
 @cocotb.test(skip=enabled!=partial_extension_jtag)
 async def test_partial_extension_jtag(dut):
     """Run the "Partial Extension over JTAG" program"""
-    # TODO Merge static tile cons below merged dynamic slots -> need to do this dynamically on the bitstream level (static tiles may not be the same)
-    # TODO keep a map of the efpga to reference later on (keep in spi flash later?)
+    jtag = await setup_for_jtag(dut)
+    gl   = os.getenv("GL", False)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Static Slot.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static-dedup.bit'), jtag)
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 1 DirectOut.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot1/DirectOut-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'))
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 3 StraightThrough.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot3/StraightThrough-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'))
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await wait_jtag(jtag, 2) # +2.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x7CAFE700")
+    assert(dut.io_gpio_PAD.value == 0x7CAFE700)
+    await wait_jtag(jtag, 14) # +9.8µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x07CAFE70")
+    assert(dut.io_gpio_PAD.value == 0x07CAFE70)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x007CAFE7")
+    assert(dut.io_gpio_PAD.value == 0x007CAFE7)
+    await wait_jtag(jtag, 9) # +6.3µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x7007CAFE")
+    assert(dut.io_gpio_PAD.value == 0x7007CAFE)
+    await wait_jtag(jtag, 9) # +6.3µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xE7007CAF")
+    assert(dut.io_gpio_PAD.value == 0xE7007CAF)
+    await wait_jtag(jtag, 9) # +6.3µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xFE7007CA")
+    assert(dut.io_gpio_PAD.value == 0xFE7007CA)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xAFE7007C")
+    assert(dut.io_gpio_PAD.value == 0xAFE7007C)
+    await wait_jtag(jtag, 9) # +6.3µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xCAFE7007")
+    assert(dut.io_gpio_PAD.value == 0xCAFE7007)
+    
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 3 Crossover.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot3/Crossover-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'))
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await wait_jtag(jtag, 2) # +2.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x0E07F53E")
+    assert(dut.io_gpio_PAD.value == 0x0E07F53E)
+    await wait_jtag(jtag, 16) # +11.2µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xE07F53E0")
+    assert(dut.io_gpio_PAD.value == 0xE07F53E0)
+    await wait_jtag(jtag, 16) # +11.2µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x07F53E0E")
+    assert(dut.io_gpio_PAD.value == 0x07F53E0E)
+    await wait_jtag(jtag, 16) # +11.2µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x7F53E0E0")
+    assert(dut.io_gpio_PAD.value == 0x7F53E0E0)
+    await wait_jtag(jtag, 21) # +14.7µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF53E0E07")
+    assert(dut.io_gpio_PAD.value == 0xF53E0E07)
+    await wait_jtag(jtag, 16) # +11.2µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x53E0E07F")
+    assert(dut.io_gpio_PAD.value == 0x53E0E07F)
+    await wait_jtag(jtag, 16) # +11.2µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x3E0E07F5")
+    assert(dut.io_gpio_PAD.value == 0x3E0E07F5)
+    await wait_jtag(jtag, 17) # +11.8µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xE0E07F53")
+    assert(dut.io_gpio_PAD.value == 0xE0E07F53)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 1 Graycode.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot1/Graycode-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'))
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await wait_jtag(jtag, 14) # +11.3µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x21281F50")
+    assert(dut.io_gpio_PAD.value == 0x21281F50)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x1281F512")
+    assert(dut.io_gpio_PAD.value == 0x1281F512)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x281F5120")
+    assert(dut.io_gpio_PAD.value == 0x281F5120)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x81F51212")
+    assert(dut.io_gpio_PAD.value == 0x81F51212)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x1F512129")
+    assert(dut.io_gpio_PAD.value == 0x1F512129)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF5121281")
+    assert(dut.io_gpio_PAD.value == 0xF5121281)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x5121281F")
+    assert(dut.io_gpio_PAD.value == 0x5121281F)
+    await wait_jtag(jtag, 27) # +18.9µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x121281F5")
+    assert(dut.io_gpio_PAD.value == 0x121281F5)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 3 StraightThrough.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot3/StraightThrough-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'))
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await wait_jtag(jtag, 9) # +7.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x0AF8104C")
+    assert(dut.io_gpio_PAD.value == 0x0AF8104C)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x48AF8104")
+    assert(dut.io_gpio_PAD.value == 0x48AF8104)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x4C8AF810")
+    assert(dut.io_gpio_PAD.value == 0x4C8AF810)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x04C8AF81")
+    assert(dut.io_gpio_PAD.value == 0x04C8AF81)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x904C8AF8")
+    assert(dut.io_gpio_PAD.value == 0x904C8AF8)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x8104C8AF")
+    assert(dut.io_gpio_PAD.value == 0x8104C8AF)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF8104C8A")
+    assert(dut.io_gpio_PAD.value == 0xF8104C8A)
+    await wait_jtag(jtag, 8) # +5.6µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xAF8104C8")
+    assert(dut.io_gpio_PAD.value == 0xAF8104C8)
+
+    await wait_jtag(jtag, 16)
+
+    cocotb.log.info("Uploaded all.")
+
+@cocotb.test(skip=enabled!=partial_2slots_jtag)
+async def test_partial_2slots_jtag(dut):
+    """Run the "Partial 2slots over JTAG" program"""
+    # Setup UART
+    uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
+    uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
 
     jtag = await setup_for_jtag(dut)
     gl   = os.getenv("GL", False)
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
     cocotb.log.info("Upload Static Slot.")
-    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'), jtag)
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static-dedup.bit'), jtag)
     await jtag.write("ISC_DISABLE", 0x1, device=1)
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
-    cocotb.log.info("Upload Slot 1 DirectOut.")
-    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot1/DirectOut-slot.bit'), jtag)
+    cocotb.log.info("Upload Slot 1_2 Combine in Slot 1.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Combine-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'))
     await jtag.write("ISC_DISABLE", 0x1, device=1)
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
-    cocotb.log.info("Upload Slot 2 LeftShift.")
-    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot2/LeftShift-slot.bit'), jtag)
+    cocotb.log.info("Upload Slot 1_2 Interleave in Slot 2.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Interleave-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'), -4)
     await jtag.write("ISC_DISABLE", 0x1, device=1)
 
-    await jtag.write("ISC_ENABLE", 0x1, device=1)
-    cocotb.log.info("Upload Slot 3 StraightThrough.")
-    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot3/StraightThrough-slot.bit'), jtag)
-    await jtag.write("ISC_DISABLE", 0x1, device=1)
+    # TODO read UART and check values
+
+    # Wait for all messages
+    await wait_jtag(jtag, int(2.5*1000/0.7)) # Wait 2.5ms
+    data = uart_sink.read_nowait(-1)
+
+    # data = bytearray()
+    # for i in range(1, 31):
+    #     await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
+    #     data += uart_sink.read_nowait(-1)
+    #     print(f"Data thus far: {data}")
+
+    print(f"All data raw: {data}")
+    print(f"All data as str: {data.decode()}")
 
     cocotb.log.info("Uploaded all.")
-
 
 if __name__ == "__main__":
     testbench_path = Path(__file__).resolve().parent

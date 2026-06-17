@@ -167,7 +167,6 @@ int main() {
   
   printf("Start\n");
 
-  // TODO read back USERCODE
   // Write static bitstream
   write_bitstream(static_bitstream, sizeof(static_bitstream)/sizeof(uint32_t));
   printf("Loaded Static\n");
