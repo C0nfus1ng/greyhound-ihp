@@ -24,6 +24,15 @@ partial_extension_cpu = {
     'dump_waveforms': True,
 }
 
+partial_extension_jtag = {
+    'flash0_slot0': '', # TODO change create real
+    'flash0_slot1': '',
+    'flash1_slot0': '',
+    'flash1_slot1': '',
+    'connect_flash1': False,
+    'dump_waveforms': True,
+}
+
 enabled = partial_extension_cpu
 
 async def start_clock(clock, freq=50):
@@ -73,8 +82,7 @@ async def write_bitstream_spi(filename, spi_master):
 
 @cocotb.test(skip=enabled!=partial_extension_cpu)
 async def test_partial_extension_cpu(dut):
-    """Run the "Partial Extension CPU" program"""
-
+    """Run the "Partial Extension CPU" program (~4h)"""
     # Setup UART
     uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
     uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
@@ -92,12 +100,124 @@ async def test_partial_extension_cpu(dut):
     await ClockCycles(dut.io_clock_PAD, int(50000*2.5))
 
     # Wait for all messages
-    await ClockCycles(dut.io_clock_PAD, int(50000*30.0))
+    await ClockCycles(dut.io_clock_PAD, int(50000*100.0))
 
     data = uart_sink.read_nowait(-1)
     print(data)
 
     print("\nFinished program")
+
+# Define JTAG devices
+class JTAGCore(JTAGDevice):
+    def __init__(self, name="jtagcore", idcode=0x2_5256_001, ir_len=5):
+        super().__init__(name, idcode, ir_len)
+        self.add_jtag_reg("IDCODE", 32, 0x1)
+        self.idle_delay = 10
+
+class JTAGFPGA(JTAGDevice):
+    def __init__(self, name="jtagfpga", idcode=0x2_4646_001, ir_len=5):
+        super().__init__(name, idcode, ir_len)
+        self.add_jtag_reg("IDCODE", 32, 0x1)
+        self.add_jtag_reg("USERCODE", 32,0x2)
+        bsr_length = 1
+
+        if 'bsr_length' in enabled:
+            bsr_length = enabled['bsr_length']
+        
+        self.add_jtag_reg("SAMPLE", bsr_length, 0x3)
+        self.add_jtag_reg("PRELOAD", bsr_length, 0x3, write=True)
+        self.add_jtag_reg("EXTEST", bsr_length, 0x4, write=True)
+        self.add_jtag_reg("INTEST", bsr_length, 0x5, write=True)
+
+        self.add_jtag_reg("EJTAG", 1, 0x10, write=True)
+        self.add_jtag_reg("ISC_ENABLE", 1, 0x14)
+        self.add_jtag_reg("ISC_DISABLE", 1,0x15)
+        self.add_jtag_reg("ISC_PROGRAM", 32,0x16, write=True)
+        self.add_jtag_reg("ISC_NOOP", 1, 0x17)
+
+        self.idle_delay = 10
+
+async def setup_for_jtag(dut):
+    """Setup soc for jtag"""
+    # Setup JTAG
+    jtag_signals:dict = {"tck" :"io_fpga_sclk_PAD",
+                         "tms" :"io_fpga_cs_n_PAD",
+                         "tdi" :"io_fpga_mosi_PAD",
+                         "tdo" :"io_fpga_miso_PAD",
+                         "trst":"io_fpga_mode_PAD"}
+
+    bus = JTAGBus(dut, signals=jtag_signals)
+    jtag = JTAGDriver(bus)
+    jtag.add_device(JTAGCore())
+    jtag.add_device(JTAGFPGA())
+    jtag.devices[0].print_regs()
+    jtag.devices[1].print_regs()
+
+    # Static setup
+    dut.io_fetch_enable_PAD.value = 1
+
+    # Start up
+    await start_up(dut, False)
+
+    # Enable JTAG mode of FPGA
+    await ClockCycles(dut.io_clock_PAD, 10)
+    cocotb.log.info("Enable JTAG interface.")
+    dut.io_reset_PAD.value = 0
+    await ClockCycles(dut.io_clock_PAD, 10)
+
+    # All jtag operations have to be one after the other, else jtag lib runs into issues
+    # Test perm enable of JTAG interface
+    await jtag.write("EJTAG", 0x1, device=1)
+    await jtag.write("BYPASS", 0x1, device=1)
+    await jtag.write("BYPASS", 0x1, device=1)
+    dut.io_reset_PAD.value = 1
+    cocotb.log.info("JTAG interface enabled.")
+    jtag.devices[0].idle_delay = 0
+    jtag.devices[1].idle_delay = 0
+    return jtag
+
+async def write_bitstream_jtag(file:Path, jtag):
+    with file.open(mode='br') as f:
+        data_words = file.stat().st_size/4
+        data = f.read(4)
+        nbr = 0
+        while data:
+            number = int.from_bytes(data, "big")
+            cocotb.log.info("Program word %d of %d" % (nbr, data_words))
+            await jtag.write("ISC_PROGRAM", number, device=1)
+            data = f.read(4)
+            nbr = nbr + 1
+
+@cocotb.test(skip=enabled!=partial_extension_jtag)
+async def test_partial_extension_jtag(dut):
+    """Run the "Partial Extension over JTAG" program"""
+    # TODO Merge static tile cons below merged dynamic slots -> need to do this dynamically on the bitstream level (static tiles may not be the same)
+    # TODO keep a map of the efpga to reference later on (keep in spi flash later?)
+
+    jtag = await setup_for_jtag(dut)
+    gl   = os.getenv("GL", False)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Static Slot.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Static/Static.bit'), jtag)
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 1 DirectOut.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot1/DirectOut-slot.bit'), jtag)
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 2 LeftShift.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot2/LeftShift-slot.bit'), jtag)
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 3 StraightThrough.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr/.build/Slot3/StraightThrough-slot.bit'), jtag)
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    cocotb.log.info("Uploaded all.")
 
 
 if __name__ == "__main__":
