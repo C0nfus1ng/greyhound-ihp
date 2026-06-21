@@ -1,0 +1,52 @@
+diff --git a/tiles/IHP_SRAM/IHP_SRAM_bot/IHP_SRAM_1024x32.v b/tiles/IHP_SRAM/IHP_SRAM_bot/IHP_SRAM_1024x32.v
+index 25e0c87..272cd88 100644
+--- a/tiles/IHP_SRAM/IHP_SRAM_bot/IHP_SRAM_1024x32.v
++++ b/tiles/IHP_SRAM/IHP_SRAM_bot/IHP_SRAM_1024x32.v
+@@ -43,7 +43,7 @@ module IHP_SRAM_1024x32 #(parameter NoConfigBits = 0)(
+     // External and shared clock
+     (* FABulous, EXTERNAL, SHARED_PORT *) input UserCLK,
+     
+-    	(* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
++    	// (* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
+ );
+     
+ 	assign ADDR_SRAM    = ADDR;
+diff --git a/tiles/S_CPU_IF/CPU_IF.v b/tiles/S_CPU_IF/CPU_IF.v
+index 2053b59..ca231b6 100644
+--- a/tiles/S_CPU_IF/CPU_IF.v
++++ b/tiles/S_CPU_IF/CPU_IF.v
+@@ -24,7 +24,7 @@ module CPU_IF #(parameter NoConfigBits = 0)(
+     (* FABulous, EXTERNAL *) output [(16 - 1) : 0] I_top,
+     (* FABulous, EXTERNAL *) input  [(16 - 1) : 0] O_top,
+ 
+-    	(* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
++    	// (* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
+ );
+ 
+ 	assign I_top  = I;
+diff --git a/tiles/S_CPU_IRQ/CPU_IRQ.v b/tiles/S_CPU_IRQ/CPU_IRQ.v
+index 09ba016..d98696d 100644
+--- a/tiles/S_CPU_IRQ/CPU_IRQ.v
++++ b/tiles/S_CPU_IRQ/CPU_IRQ.v
+@@ -27,7 +27,7 @@ module CPU_IRQ #(
+     
+     (* FABulous, EXTERNAL *) input                        CONFIGURED_top,
+ 
+-    	(* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
++    	// (* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
+ );
+ 
+ 	// Only trigger IRQs if the fabric is configured
+diff --git a/tiles/S_WARMBOOT/WARMBOOT.v b/tiles/S_WARMBOOT/WARMBOOT.v
+index b9da060..e737694 100644
+--- a/tiles/S_WARMBOOT/WARMBOOT.v
++++ b/tiles/S_WARMBOOT/WARMBOOT.v
+@@ -31,7 +31,7 @@ module WARMBOOT #(
+     
+     (* FABulous, EXTERNAL *) input                        CONFIGURED_top,
+ 
+-    	(* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
++    	// (* FABulous, GLOBAL *) input [NoConfigBits-1:0] ConfigBits
+ );
+ 
+ 	assign SLOT_top = SLOT;
