@@ -21,39 +21,9 @@
 
 // Tiles below the dynamic slot
 uint32_t pseudo_bitstream(uint32_t bitstream_word, bool use_new_tile, int8_t fpga_y_coord, int8_t fpga_x_coord, uint32_t fpga_frame_strobe) {
-  static uint32_t loaded_bitstream[3*FPGA_FRAMES_PER_TILE] = {0};
   bool use_frame = false;
   uint32_t loaded_bitstream_word = 0;
-  uint32_t prev_loaded_bitstream_word = 0;
   uint32_t frame_strobe = fpga_frame_strobe;
-
-  // Frame is in the tile array
-  if ((fpga_y_coord == 17) && (fpga_x_coord < 3)) { // Use tile frame from array
-    if (use_new_tile) { // Save new tile frame into array
-      for (uint8_t fpga_frame = 0; fpga_frame < FPGA_FRAMES_PER_TILE; fpga_frame++) {
-        use_frame = (frame_strobe >> fpga_frame) & 0x1;
-
-        if (use_frame) {
-          loaded_bitstream[fpga_frame+(fpga_x_coord*FPGA_FRAMES_PER_TILE)] = bitstream_word;
-        }
-      }
-
-      return bitstream_word;
-    } else { // Use old tile frame from array
-      for (uint8_t fpga_frame = 0; fpga_frame < FPGA_FRAMES_PER_TILE; fpga_frame++) {
-        use_frame = (frame_strobe >> fpga_frame) & 0x1;
-
-        if (use_frame) {
-          // Strobe must only have bits set were static frames are the same, otherwise static config may be changed
-          prev_loaded_bitstream_word = loaded_bitstream_word;
-          loaded_bitstream_word = loaded_bitstream[fpga_frame+(fpga_x_coord*FPGA_FRAMES_PER_TILE)];
-        }
-      }
-      
-      return loaded_bitstream_word;
-    }
-  }
-
   uint32_t i_word = 0;
   int8_t header_x_coord = 0;
   uint32_t header_strobe = 0;
@@ -86,7 +56,6 @@ uint32_t pseudo_bitstream(uint32_t bitstream_word, bool use_new_tile, int8_t fpg
           
           if (use_frame) {
             // Strobe must only have bits set were static frames are the same, otherwise static config may be changed
-            prev_loaded_bitstream_word = loaded_bitstream_word;
             loaded_bitstream_word = static_bitstream[i_word+FPGA_HEIGHT-fpga_y_coord];
             break;
           }
