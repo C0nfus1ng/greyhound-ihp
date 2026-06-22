@@ -6,12 +6,12 @@
 #define F_CPU 50000000
 #define BAUDRATE 115200
 
-uint32_t custom_instr(uint32_t op1, uint32_t op2) {
+uint32_t custom_instr(uint32_t op0, uint32_t op1) {
   uint32_t ret;
   
-  __asm__ volatile (".insn r 0x0b, 0, 13, %0, %1, %2" : "=r" (ret)
-                                                      : "r"  (op1),
-                                                        "r"  (op2));
+  __asm__ volatile (".insn r 0x5b, 0, 13, %0, %1, %2" : "=r" (ret)
+                                                      : "r"  (op0),
+                                                        "r"  (op1));
 
   return ret;
 }
@@ -34,6 +34,8 @@ void wait_for_config() {
 }
 
 int main() {
+  uint32_t ret = 0;
+
   EF_UART_setGclkEnable(UART0_BASE, 1);
   EF_UART_enable(UART0_BASE);
   EF_UART_enableRx(UART0_BASE);
@@ -62,11 +64,33 @@ int main() {
   wait_for_config();
   printf("Slot2\n");
 
-  uint32_t ret = custom_instr(0x01234567, 0x89abcdef);
+  ret = custom_instr(0x3, 0x1);
   printf("Ret: %04lx\n", ret);
-  
   wait_nop(0x10);
-  ret = custom_instr(0x89abcdef, 0x01234567);
+  ret = custom_instr(0x1, 0x3);
+  printf("Ret: %04lx\n", ret);
+
+  // Wait for Slot 1
+  wait_for_config();
+  printf("Slot1\n");
+
+  // Wait for Slot 2
+  wait_for_config();
+  printf("Slot2\n");
+
+  ret = custom_instr(0x3, 0x1);
+  printf("Ret: %04lx\n", ret);
+  wait_nop(0x10);
+  ret = custom_instr(0x1, 0x3);
+  printf("Ret: %04lx\n", ret);
+  wait_nop(0x10);
+  ret = custom_instr(0x2, 0x7);
+  printf("Ret: %04lx\n", ret);
+  wait_nop(0x10);
+  ret = custom_instr(0x2, 0x6);
+  printf("Ret: %04lx\n", ret);
+  wait_nop(0x10);
+  ret = custom_instr(0xb, 0x4);
   printf("Ret: %04lx\n", ret);
 
   printf("End\n");
