@@ -20,32 +20,98 @@
 #define FPGA_FRAMES_PER_TILE 24
 
 // Tiles below the dynamic slot
-uint32_t pseudo_bitstream(uint32_t bitstream_word, bool write, int8_t fpga_height, int8_t fpga_length, int8_t fpga_frame) {
+uint32_t pseudo_bitstream(uint32_t bitstream_word, bool use_new_tile, int8_t fpga_y_coord, int8_t fpga_x_coord, uint32_t fpga_frame_strobe) {
   static uint32_t loaded_bitstream[3*FPGA_FRAMES_PER_TILE] = {0};
+  bool use_frame = false;
+  uint32_t loaded_bitstream_word = 0;
+  uint32_t prev_loaded_bitstream_word = 0;
+  uint32_t frame_strobe = fpga_frame_strobe;
 
-  if ((fpga_height > 16) && (fpga_length < 3)) {
+  // Frame is in the tile array
+  if ((fpga_y_coord == 17) && (fpga_x_coord < 3)) { // Use tile frame from array
+    if (use_new_tile) { // Save new tile frame into array
+      for (uint8_t fpga_frame = 0; fpga_frame < FPGA_FRAMES_PER_TILE; fpga_frame++) {
+        use_frame = (frame_strobe >> fpga_frame) & 0x1;
 
-    if (write) {
-      loaded_bitstream[fpga_frame+(fpga_length*FPGA_FRAMES_PER_TILE)] = bitstream_word;
-      return 0;
+        if (use_frame) {
+          loaded_bitstream[fpga_frame+(fpga_x_coord*FPGA_FRAMES_PER_TILE)] = bitstream_word;
+        }
+      }
+
+      return bitstream_word;
+    } else { // Use old tile frame from array
+      for (uint8_t fpga_frame = 0; fpga_frame < FPGA_FRAMES_PER_TILE; fpga_frame++) {
+        use_frame = (frame_strobe >> fpga_frame) & 0x1;
+
+        if (use_frame) {
+          // Strobe must only have bits set were static frames are the same, otherwise static config may be changed
+          prev_loaded_bitstream_word = loaded_bitstream_word;
+          loaded_bitstream_word = loaded_bitstream[fpga_frame+(fpga_x_coord*FPGA_FRAMES_PER_TILE)];
+        }
+      }
+      
+      return loaded_bitstream_word;
     }
-
-    return loaded_bitstream[fpga_frame*(FPGA_HEIGHT+1)+(fpga_length*(FPGA_HEIGHT+1)*FPGA_FRAMES_PER_TILE)];
   }
 
-  return static_bitstream[5+(fpga_height+1)+fpga_frame*(FPGA_HEIGHT+1)+(fpga_length*(FPGA_HEIGHT+1)*FPGA_FRAMES_PER_TILE)];
+  uint32_t i_word = 0;
+  int8_t header_x_coord = 0;
+  uint32_t header_strobe = 0;
+
+  // Frame is not in the tile array
+  if (use_new_tile) { // Use new tile frame from bitstream
+    return bitstream_word;
+  } else { // Use old tile frame from bitstream
+    for (; i_word < sizeof(static_bitstream)/sizeof(uint32_t); i_word++) {
+      if (static_bitstream[i_word] == SLOT_START) {
+        i_word++;
+        break;
+      }
+    }
+
+    // Found slot start, iterate over the headers now
+    for (; i_word < sizeof(static_bitstream)/sizeof(uint32_t); i_word += (FPGA_HEIGHT+1)) {
+      // Check if X matches, then check for strobing and data
+      // Can break if X is larger than requested
+      header_x_coord = static_bitstream[i_word]>>27;
+      header_strobe = static_bitstream[i_word] & 0xfffff;
+
+      if (header_x_coord > fpga_x_coord) {
+        break;
+      }
+      
+      if (header_x_coord == fpga_x_coord) {
+        for (uint8_t fpga_frame = 0; fpga_frame < FPGA_FRAMES_PER_TILE; fpga_frame++) {
+          use_frame = ((frame_strobe&header_strobe) >> fpga_frame) & 0x1;
+          
+          if (use_frame) {
+            // Strobe must only have bits set were static frames are the same, otherwise static config may be changed
+            prev_loaded_bitstream_word = loaded_bitstream_word;
+            loaded_bitstream_word = static_bitstream[i_word+FPGA_HEIGHT-fpga_y_coord];
+            break;
+          }
+        }
+
+        frame_strobe &= ~header_strobe;
+      }
+    }
+
+    return loaded_bitstream_word;
+  }
+
+  return 0;
 }
 
 void write_bitstream(const uint32_t *bitstream, uint32_t length) {
   uint32_t tile_lookup = 0x3ffff;
   uint32_t bitstream_word = 0;
   int32_t slot_bitstream_word = 0;
-  uint8_t frame_length = FPGA_HEIGHT;
+  uint8_t frame_height = FPGA_HEIGHT;
   int8_t frame_x_coord = 0;
   int8_t frame_y_coord = 0;
-  int8_t frame_strobe[FPGA_FRAMES_PER_TILE] = {0};
+  uint32_t frame_strobe = 0;
   bool slot_started = false;
-  bool use_tile = false;
+  bool use_new_tile = false;
   bool use_frame_tiles = true;
 
   for (uint32_t i = 0; i < length; i++) {
@@ -55,7 +121,7 @@ void write_bitstream(const uint32_t *bitstream, uint32_t length) {
         use_frame_tiles = true;  
         slot_bitstream_word = i-1;
         tile_lookup = 0x3ffff;
-        frame_length = FPGA_HEIGHT+1;
+        frame_height = FPGA_HEIGHT+1;
       }
 
       *REG_BITSTREAM = bitstream[i];
@@ -63,47 +129,32 @@ void write_bitstream(const uint32_t *bitstream, uint32_t length) {
     }
 
     // Slot started
-    if (use_frame_tiles) {
-      tile_lookup = bitstream[slot_bitstream_word--];
+    frame_height--;
 
-      if ((slot_bitstream_word < 0) || (tile_lookup & 0xfff00000) != FRAME_PRE_HEADER) {
-        tile_lookup = 0x3ffff;
-        use_frame_tiles = false;
-      }
-    }
-
-    if (frame_length-- == FPGA_HEIGHT) {
+    if (frame_height == FPGA_HEIGHT) { // Frame header
       *REG_BITSTREAM = bitstream[i];
       frame_x_coord = bitstream[i] >> 27;
-      frame_y_coord = i+1;
+      frame_y_coord = i+FPGA_HEIGHT; // i+1
 
-      for (int8_t j = FPGA_FRAMES_PER_TILE-1; j >= 0; j--) {
-        frame_strobe[j] = ((bitstream[i] >> j)&0x1);
+      frame_strobe = bitstream[i]&0xfffff;
+
+      if (use_frame_tiles) { // Cnt down to another tile usage
+        tile_lookup = bitstream[slot_bitstream_word--];
+
+        if ((slot_bitstream_word < 0) || (tile_lookup & 0xfff00000) != FRAME_PRE_HEADER) {
+          tile_lookup = 0x3ffff;
+          use_frame_tiles = false;
+        }
       }
+
       continue;
     }
 
-    use_tile = (tile_lookup >> frame_length) & 0x1;
-    bitstream_word = bitstream[i];
+    use_new_tile = (tile_lookup >> frame_height) & 0x1;     //    i-frame_y_coord
+    bitstream_word = pseudo_bitstream(bitstream[i], use_new_tile, frame_y_coord-i, frame_x_coord, frame_strobe);
 
-    if (use_tile) {
-      for (int8_t j = FPGA_FRAMES_PER_TILE-1; j >= 0; j--) {
-        if (frame_strobe[j]) {
-          pseudo_bitstream(bitstream[i], true, i-frame_y_coord, frame_x_coord, j);
-        }
-      }
-    } else {
-      for (int8_t j = FPGA_FRAMES_PER_TILE-1; j >= 0; j--) {
-        if (frame_strobe[j]) {
-          bitstream_word = pseudo_bitstream(0, false, i-frame_y_coord, frame_x_coord, j);
-        }
-      }
-    }
-
-    if (frame_length == 0) {
-      frame_length = FPGA_HEIGHT+1;
-      tile_lookup = 0x3ffff;
-      use_frame_tiles = true;
+    if (frame_height == 0) {
+      frame_height = FPGA_HEIGHT+1;
     }
 
     *REG_BITSTREAM = bitstream_word;
