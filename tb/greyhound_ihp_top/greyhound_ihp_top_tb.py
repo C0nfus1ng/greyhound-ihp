@@ -9,8 +9,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 from cocotb.triggers import Timer, Edge, RisingEdge, FallingEdge
 from cocotb.regression import TestFactory
-from cocotb.runner import get_runner
-#from cocotb_tools.runner import get_runner
+from cocotb_tools.runner import get_runner
 from cocotbext.uart import UartSource, UartSink
 
 from cocotbext.spi import SpiBus, SpiConfig, SpiMaster
@@ -96,7 +95,16 @@ fpga_blinky = {
     'dump_waveforms': False,
 }
 
-enabled = hello_world
+partial = {
+    'flash0_slot0': '../../../firmware/partial/partial.hex',
+    'flash0_slot1': '',
+    'flash1_slot0': '',
+    'flash1_slot1': '',
+    'connect_flash1': False,
+    'dump_waveforms': True,
+}
+
+enabled = partial
 
 async def start_clock(clock, freq=50):
     """ Start the clock @ freq MHz """
@@ -405,10 +413,37 @@ async def test_fpga_blinky(dut):
     await ClockCycles(dut.io_clock_PAD, 10)
     assert(dut.io_gpio_PAD.value == 0x00000000)
 
+@cocotb.test(skip=enabled!=partial)
+async def test_partial(dut):
+    """Run the "Partial" program"""
+
+    # Setup UART
+    uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
+    uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
+
+    # Static setup
+    dut.io_fetch_enable_PAD.value = 1
+    dut.io_fpga_mode_PAD.value = 1 # Configure FPGA as receiver
+
+    # Start up
+    await start_up(dut)
+    
+    # Wait for UART to get clocked
+    await ClockCycles(dut.io_clock_PAD, int(50000*1))
+    
+    # Wait for all messages
+    data = bytearray()
+    await ClockCycles(dut.io_clock_PAD, int(50000*35.0))
+    data += uart_sink.read_nowait(-1)
+
+    print(f"All data: {data}")
+
+    print("\nFinished program")
+
 if __name__ == "__main__":
 
     sim         = os.getenv("SIM", "icarus")
-    pdk_root    = os.getenv("PDK_ROOT", "~/.volare")
+    pdk_root    = os.getenv("PDK_ROOT", "../../../greyhound-ihp/IHP-Open-PDK/")
     pdk         = os.getenv("PDK", "ihp-sg13g2")
     scl         = os.getenv("SCL", "sg13g2_stdcell")
     gl          = os.getenv("GL", False)
