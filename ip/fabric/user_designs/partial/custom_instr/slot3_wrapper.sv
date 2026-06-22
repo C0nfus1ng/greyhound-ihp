@@ -9,10 +9,10 @@ module slot3_wrapper (
         .E1BEG2(slot_io_i[29]),
         .E1BEG3(slot_io_i[28]),
 
-        .W2END0(slot_io_o[31]),
-        .W2END1(slot_io_o[30]),
-        .W2END2(slot_io_o[29]),
-        .W2END3(slot_io_o[28]),
+        .W1END0(slot_io_o[31]),
+        .W1END1(slot_io_o[30]),
+        .W1END2(slot_io_o[29]),
+        .W1END3(slot_io_o[28]),
     );
     (* keep, BEL="X2Y2.A" *) Slot3_slot_con_X2Y2 slot3_x2y2 (
         .E1BEG0(slot_io_i[27]),
@@ -90,5 +90,6 @@ module slot3_wrapper (
         .W1END1(slot_io_o[2]),
         .W1END2(slot_io_o[1]),
         .W1END3(slot_io_o[0]),
+        .S1END0(rst_o),
     );
 endmodule
