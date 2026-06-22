@@ -185,12 +185,70 @@ int main() {
   printf("Loaded Slot3 straight through\n");
 
   // Test instr. and OBI
+  printf("IO out 1\n");
+  uint32_t word = 0xcafecafe;
+  uint8_t overflow = 0;
+  for (uint8_t i = 0; i < sizeof(uint32_t)*2; i++) {
+    overflow = word & 0xf;
+    word = (word>>4)|(overflow<<28);
+    *((int*)FABRIC_BASE) = word;
+  }
+  printf("IO reg %x\n", *((int*)FABRIC_BASE));
+
   uint32_t test_left_shift = left_shift(0xdeadbeef, 0x10);
-  *((int*)FABRIC_BASE) = 0xcafecafe;
+  printf("Left shift 1: %lx\n", test_left_shift);
 
-  printf("Left shift: %lx\n", test_left_shift);
+  test_left_shift = left_shift(0xbeefdead, 0x5);
+  printf("Left shift 2: %lx\n", test_left_shift);
 
-  // uint32_t test_right_shift = right_shift(0xdeadbeef, 0x4);
+  // Write Slot2 bitstream
+  write_bitstream(slot2_right_shift_bitstream, sizeof(slot2_right_shift_bitstream)/sizeof(uint32_t));
+  printf("Loaded Slot2 right shift\n");
+
+  uint32_t test_right_shift = right_shift(0xdeadbeef, 0x3);
+  printf("Right shift 1: %lx\n", test_right_shift);
+
+  test_right_shift = right_shift(0xdeadbeef, 0x10);
+  printf("Right shift 2: %lx\n", test_right_shift);
+
+  // Write Slot3 bitstream
+  write_bitstream(slot3_crossover_bitstream, sizeof(slot3_crossover_bitstream)/sizeof(uint32_t));
+  printf("Loaded Slot3 crossover\n");
+
+  word = 0xcafecafe;
+  overflow = 0;
+  for (uint8_t i = 0; i < sizeof(uint32_t)*2; i++) {
+    overflow = word & 0xf;
+    word = (word>>4)|(overflow<<28);
+    *((int*)FABRIC_BASE) = word;
+  }
+  printf("IO reg %x\n", *((int*)FABRIC_BASE));
+
+  // Write Slot1 bitstream
+  write_bitstream(slot1_graycode_bitstream, sizeof(slot1_graycode_bitstream)/sizeof(uint32_t));
+  printf("Loaded Slot1 graycode\n");
+  
+  word = 0xcafecafe;
+  overflow = 0;
+  for (uint8_t i = 0; i < sizeof(uint32_t)*2; i++) {
+    overflow = word & 0xf;
+    word = (word>>4)|(overflow<<28);
+    *((int*)FABRIC_BASE) = word;
+  }
+  printf("IO reg %x\n", *((int*)FABRIC_BASE));
+
+  // Write Slot3 bitstream
+  write_bitstream(slot3_straight_through_bitstream, sizeof(slot3_straight_through_bitstream)/sizeof(uint32_t));
+  printf("Loaded Slot3 straight through\n");
+  
+  word = 0xcafecafe;
+  overflow = 0;
+  for (uint8_t i = 0; i < sizeof(uint32_t)*2; i++) {
+    overflow = word & 0xf;
+    word = (word>>4)|(overflow<<28);
+    *((int*)FABRIC_BASE) = word;
+  }
+  printf("IO reg %x\n", *((int*)FABRIC_BASE));
 
   return 0;
 }
