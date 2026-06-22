@@ -1,0 +1,116 @@
+# Paths
+EXTRA_PRIMITIVES_PATH = ../../extra_primitives.v
+BASE_FOLDER = .build
+SLOT_GEN = ../slot_gen.py
+SLOT_CONFIG = slot_config.yaml
+FABRIC = ../../../fabric.csv
+FASM_FILES = "Static=Static Slot2_1=Interleave,Combine"
+
+# Make all slots
+all:
+	@echo '------------------------------------------------------'
+	@echo 'Generate static slot'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) static-gen
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate static fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) static-fasm
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate dynamic slot'
+	@echo '------------------------------------------------------'
+	@echo ''
+	@$(MAKE) dynamic-gen
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate Slot2_1 interleave fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot2_1-interleave-fasm
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate Slot2_1 combine out fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot2_1-combine-out
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Generate bitstreams'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) bit-gen
+.PHONY: all
+
+# Slot sources
+static-fasm: RTL = static_slot.sv ../../primitive_wrappers.v \
+					.build/Static/Static_slot_con_X2Y1.v .build/Static/Static_slot_con_X2Y2.v .build/Static/Static_slot_con_X2Y3.v .build/Static/Static_slot_con_X2Y4.v .build/Static/Static_slot_con_X2Y5.v .build/Static/Static_slot_con_X2Y6.v .build/Static/Static_slot_con_X2Y7.v .build/Static/Static_slot_con_X2Y8.v .build/Static/Static_slot_con_X2Y9.v .build/Static/Static_slot_con_X2Y10.v .build/Static/Static_slot_con_X2Y11.v .build/Static/Static_slot_con_X2Y12.v .build/Static/Static_slot_con_X2Y13.v .build/Static/Static_slot_con_X2Y14.v .build/Static/Static_slot_con_X2Y15.v .build/Static/Static_slot_con_X2Y16.v \
+					.build/Static/Static_slot_con_X6Y1.v .build/Static/Static_slot_con_X6Y2.v .build/Static/Static_slot_con_X6Y3.v .build/Static/Static_slot_con_X6Y4.v .build/Static/Static_slot_con_X6Y5.v .build/Static/Static_slot_con_X6Y6.v .build/Static/Static_slot_con_X6Y7.v .build/Static/Static_slot_con_X6Y8.v .build/Static/Static_slot_con_X6Y9.v .build/Static/Static_slot_con_X6Y10.v .build/Static/Static_slot_con_X6Y11.v .build/Static/Static_slot_con_X6Y12.v .build/Static/Static_slot_con_X6Y13.v .build/Static/Static_slot_con_X6Y14.v .build/Static/Static_slot_con_X6Y15.v .build/Static/Static_slot_con_X6Y16.v
+static-fasm: TOP = static_slot
+static-fasm: SLOT_ROOT = Static
+static-fasm: PROG_ROOT = Static
+static-fasm: synth pnr
+.PHONY: static-fasm
+
+slot2_1-interleave-fasm: RTL = slot2_1_wrapper.sv slot2_1_interleave.sv ../../primitive_wrappers.v \
+								.build/Slot2_1/Slot2_1_slot_con_X2Y1.v .build/Slot2_1/Slot2_1_slot_con_X2Y2.v .build/Slot2_1/Slot2_1_slot_con_X2Y3.v .build/Slot2_1/Slot2_1_slot_con_X2Y4.v .build/Slot2_1/Slot2_1_slot_con_X2Y5.v .build/Slot2_1/Slot2_1_slot_con_X2Y6.v .build/Slot2_1/Slot2_1_slot_con_X2Y7.v .build/Slot2_1/Slot2_1_slot_con_X2Y8.v .build/Slot2_1/Slot2_1_slot_con_X2Y9.v .build/Slot2_1/Slot2_1_slot_con_X2Y10.v .build/Slot2_1/Slot2_1_slot_con_X2Y11.v .build/Slot2_1/Slot2_1_slot_con_X2Y12.v .build/Slot2_1/Slot2_1_slot_con_X2Y13.v .build/Slot2_1/Slot2_1_slot_con_X2Y14.v .build/Slot2_1/Slot2_1_slot_con_X2Y15.v .build/Slot2_1/Slot2_1_slot_con_X2Y16.v
+slot2_1-interleave-fasm: TOP = slot2_1_interleave
+slot2_1-interleave-fasm: SLOT_ROOT = Slot2_1
+slot2_1-interleave-fasm: PROG_ROOT = Interleave
+slot2_1-interleave-fasm: synth pnr
+.PHONY: slot2_1-interleave-fasm
+
+slot2_1-combine-fasm: RTL = slot2_1_wrapper.sv slot2_1_combine.sv ../../primitive_wrappers.v \
+								.build/Slot2_1/Slot2_1_slot_con_X2Y1.v .build/Slot2_1/Slot2_1_slot_con_X2Y2.v .build/Slot2_1/Slot2_1_slot_con_X2Y3.v .build/Slot2_1/Slot2_1_slot_con_X2Y4.v .build/Slot2_1/Slot2_1_slot_con_X2Y5.v .build/Slot2_1/Slot2_1_slot_con_X2Y6.v .build/Slot2_1/Slot2_1_slot_con_X2Y7.v .build/Slot2_1/Slot2_1_slot_con_X2Y8.v .build/Slot2_1/Slot2_1_slot_con_X2Y9.v .build/Slot2_1/Slot2_1_slot_con_X2Y10.v .build/Slot2_1/Slot2_1_slot_con_X2Y11.v .build/Slot2_1/Slot2_1_slot_con_X2Y12.v .build/Slot2_1/Slot2_1_slot_con_X2Y13.v .build/Slot2_1/Slot2_1_slot_con_X2Y14.v .build/Slot2_1/Slot2_1_slot_con_X2Y15.v .build/Slot2_1/Slot2_1_slot_con_X2Y16.v
+slot2_1-combine-fasm: TOP = slot2_1_combine
+slot2_1-combine-fasm: SLOT_ROOT = Slot2_1
+slot2_1-combine-fasm: PROG_ROOT = Combine
+slot2_1-combine-fasm: synth pnr
+.PHONY: slot2_1-combine-fasm
+
+# Helper functions
+static-gen:
+	python3 $(SLOT_GEN) -gsf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+.PHONY: static-gen
+
+dynamic-gen:
+	python3 $(SLOT_GEN) -gf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC)
+.PHONY: dynamic-gen
+
+bit-gen:
+	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
+.PHONY: bit-gen
+
+synth:
+	yosys \
+	-p \
+	"synth_fabulous \
+	-top $(TOP) \
+	-json $(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).json \
+	-lut 4 \
+	-extra-plib $(EXTRA_PRIMITIVES_PATH)" \
+	$(RTL)
+.PHONY: synth
+
+pnr:
+	FAB_ROOT=$(BASE_FOLDER)/$(SLOT_ROOT)/ \
+	nextpnr-generic \
+	--uarch fabulous \
+	--json $(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).json \
+	-o fasm=$(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).fasm \
+	--verbose \
+	--log $(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT)_log.txt \
+	--timing-allow-fail
+.PHONY: pnr
+
+clean:
+	rm -rf $(BASE_FOLDER)
+.PHONY: clean
