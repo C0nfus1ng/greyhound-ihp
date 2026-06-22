@@ -7,7 +7,6 @@ typedef enum logic [6:0]
     INSTR4 = 7'h7B,
 } OPCODE_XIF_BASE;
 
-// TODO multi bitshift (XIF), bin to bcd/7seg (OBI), Wire crossings(IOs subslot?)
 module static_slot();
     // CLK
     logic clk;

@@ -8,7 +8,7 @@ module slot3_crossover();
         .io_oeb_i (phys_io_oeb),
         .io_o     (phys_io_i),
     );
-    assign phys_io_oeb = '1;
+    assign phys_io_oeb = '0;
 
     // Slot IOs
     logic [31:0] slot_io_i, slot_io_o;

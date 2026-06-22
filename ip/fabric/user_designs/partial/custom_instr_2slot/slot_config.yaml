@@ -44,37 +44,9 @@ Slots:
   - x: 0
     y: 17
   - x: 1
-    y: 9
-  - x: 1
-    y: 10
-  - x: 1
-    y: 11
-  - x: 1
-    y: 12
-  - x: 1
-    y: 13
-  - x: 1
-    y: 14
-  - x: 1
-    y: 15
-  - x: 1
     y: 16
   - x: 1
     y: 17
-  - x: 2
-    y: 9
-  - x: 2
-    y: 10
-  - x: 2
-    y: 11
-  - x: 2
-    y: 12
-  - x: 2
-    y: 13
-  - x: 2
-    y: 14
-  - x: 2
-    y: 15
   - x: 2
     y: 16
   - x: 2
@@ -152,37 +124,9 @@ Slots:
   - x: 4
     y: 17
   - x: 5
-    y: 9
-  - x: 5
-    y: 10
-  - x: 5
-    y: 11
-  - x: 5
-    y: 12
-  - x: 5
-    y: 13
-  - x: 5
-    y: 14
-  - x: 5
-    y: 15
-  - x: 5
     y: 16
   - x: 5
     y: 17
-  - x: 6
-    y: 9
-  - x: 6
-    y: 10
-  - x: 6
-    y: 11
-  - x: 6
-    y: 12
-  - x: 6
-    y: 13
-  - x: 6
-    y: 14
-  - x: 6
-    y: 15
   - x: 6
     y: 16
   - x: 6
@@ -389,6 +333,20 @@ Slots:
     y: 7
   - x: 5
     y: 8
+  - x: 5
+    y: 9
+  - x: 5
+    y: 10
+  - x: 5
+    y: 11
+  - x: 5
+    y: 12
+  - x: 5
+    y: 13
+  - x: 5
+    y: 14
+  - x: 5
+    y: 15
   - x: 6
     y: 0
   - x: 6
@@ -407,6 +365,20 @@ Slots:
     y: 7
   - x: 6
     y: 8
+  - x: 6
+    y: 9
+  - x: 6
+    y: 10
+  - x: 6
+    y: 11
+  - x: 6
+    y: 12
+  - x: 6
+    y: 13
+  - x: 6
+    y: 14
+  - x: 6
+    y: 15
 - Name: Slot2
   Format:
     Specifier: "\e[34m"
@@ -429,6 +401,20 @@ Slots:
     y: 7
   - x: 1
     y: 8
+  - x: 1
+    y: 9
+  - x: 1
+    y: 10
+  - x: 1
+    y: 11
+  - x: 1
+    y: 12
+  - x: 1
+    y: 13
+  - x: 1
+    y: 14
+  - x: 1
+    y: 15
   - x: 2
     y: 0
   - x: 2
@@ -447,31 +433,21 @@ Slots:
     y: 7
   - x: 2
     y: 8
+  - x: 2
+    y: 9
+  - x: 2
+    y: 10
+  - x: 2
+    y: 11
+  - x: 2
+    y: 12
+  - x: 2
+    y: 13
+  - x: 2
+    y: 14
+  - x: 2
+    y: 15
 Points:
-- x: 5
-  y: 3
-  Format:
-    Specifier: "\e[1m"
-- x: 5
-  y: 4
-  Format:
-    Specifier: "\e[1m"
-- x: 5
-  y: 5
-  Format:
-    Specifier: "\e[1m"
-- x: 5
-  y: 6
-  Format:
-    Specifier: "\e[1m"
-- x: 5
-  y: 7
-  Format:
-    Specifier: "\e[1m"
-- x: 5
-  y: 8
-  Format:
-    Specifier: "\e[1m"
 - x: 6
   y: 3
   Format:
@@ -494,42 +470,10 @@ Points:
     Specifier: "\e[1m"
 - x: 6
   y: 8
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 1
   Format:
     Specifier: "\e[1m"
 - x: 2
   y: 1
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 2
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 3
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 4
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 5
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 6
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 7
-  Format:
-    Specifier: "\e[1m"
-- x: 1
-  y: 8
   Format:
     Specifier: "\e[1m"
 - x: 2
@@ -560,14 +504,6 @@ Points:
   y: 8
   Format:
     Specifier: "\e[1m"
-- x: 5
-  y: 1
-  Format:
-    Specifier: "\e[1m"
-- x: 5
-  y: 2
-  Format:
-    Specifier: "\e[1m"
 - x: 6
   y: 1
   Format:
@@ -576,4 +512,180 @@ Points:
   y: 2
   Format:
     Specifier: "\e[1m"
-Bridges: []
+- x: 6
+  y: 9
+  Format:
+    Specifier: "\e[1m"
+- x: 6
+  y: 10
+  Format:
+    Specifier: "\e[1m"
+- x: 6
+  y: 11
+  Format:
+    Specifier: "\e[1m"
+- x: 6
+  y: 12
+  Format:
+    Specifier: "\e[1m"
+- x: 6
+  y: 13
+  Format:
+    Specifier: "\e[1m"
+- x: 6
+  y: 14
+  Format:
+    Specifier: "\e[1m"
+- x: 6
+  y: 15
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 9
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 10
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 11
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 12
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 13
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 14
+  Format:
+    Specifier: "\e[1m"
+- x: 2
+  y: 15
+  Format:
+    Specifier: "\e[1m"
+Bridges:
+- x: 5
+  y: 1
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 2
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 3
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 4
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 5
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 6
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 7
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 8
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 9
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 10
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 11
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 12
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 13
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 14
+  Format:
+    Specifier: "\e[3m"
+- x: 5
+  y: 15
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 1
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 2
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 3
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 4
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 5
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 6
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 7
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 8
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 9
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 10
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 11
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 12
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 13
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 14
+  Format:
+    Specifier: "\e[3m"
+- x: 1
+  y: 15
+  Format:
+    Specifier: "\e[3m"
