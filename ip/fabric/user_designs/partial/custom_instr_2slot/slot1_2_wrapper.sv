@@ -1,9 +1,9 @@
-module slot2_1_wrapper (
+module slot1_2_wrapper (
     output logic [15:0] op0_o,
     output logic [15:0] op1_o,
     input  logic [15:0] result_i,
 );
-    (* keep, BEL="X2Y1.A" *) Slot2_1_slot_con_X2Y1 slot2_1_x6y1 (
+    (* keep, BEL="X6Y1.A" *) Slot1_2_slot_con_X6Y1 slot1_2_x6y1 (
         .W2END0(op1_o[15]),
         .W2END1(op1_o[14]),
         .W2END2(op1_o[13]),
@@ -13,7 +13,7 @@ module slot2_1_wrapper (
         .W2END6(op1_o[9]),
         .W2END7(op1_o[8]),
     );
-    (* keep, BEL="X2Y2.A" *) Slot2_1_slot_con_X2Y2 slot2_1_x6y2 (
+    (* keep, BEL="X6Y2.A" *) Slot1_2_slot_con_X6Y2 slot1_2_x6y2 (
         .W2END0(op1_o[7]),
         .W2END1(op1_o[6]),
         .W2END2(op1_o[5]),
@@ -23,7 +23,7 @@ module slot2_1_wrapper (
         .W2END6(op1_o[1]),
         .W2END7(op1_o[0]),
     );
-    (* keep, BEL="X2Y5.A" *) Slot2_1_slot_con_X2Y5 slot2_1_x6y5 (
+    (* keep, BEL="X6Y5.A" *) Slot1_2_slot_con_X6Y5 slot1_2_x6y5 (
         .E2BEG0(result_i[15]),
         .E2BEG1(result_i[14]),
         .E2BEG2(result_i[13]),
@@ -33,7 +33,7 @@ module slot2_1_wrapper (
         .E2BEG6(result_i[9]),
         .E2BEG7(result_i[8]),
     );
-    (* keep, BEL="X2Y6.A" *) Slot2_1_slot_con_X2Y6 slot2_1_x6y6 (
+    (* keep, BEL="X6Y6.A" *) Slot1_2_slot_con_X6Y6 slot1_2_x6y6 (
         .E2BEG0(result_i[7]),
         .E2BEG1(result_i[6]),
         .E2BEG2(result_i[5]),
@@ -43,7 +43,7 @@ module slot2_1_wrapper (
         .E2BEG6(result_i[1]),
         .E2BEG7(result_i[0]),
     );
-    (* keep, BEL="X2Y9.A" *) Slot2_1_slot_con_X2Y9 slot2_1_x6y9 (
+    (* keep, BEL="X6Y9.A" *) Slot1_2_slot_con_X6Y9 slot1_2_x6y9 (
         .W2END0(op0_o[15]),
         .W2END1(op0_o[14]),
         .W2END2(op0_o[13]),
@@ -53,7 +53,7 @@ module slot2_1_wrapper (
         .W2END6(op0_o[9]),
         .W2END7(op0_o[8]),
     );
-    (* keep, BEL="X2Y10.A" *) Slot2_1_slot_con_X2Y10 slot2_1_x6y10 (
+    (* keep, BEL="X6Y10.A" *) Slot1_2_slot_con_X6Y10 slot1_2_x6y10 (
         .W2END0(op0_o[7]),
         .W2END1(op0_o[6]),
         .W2END2(op0_o[5]),

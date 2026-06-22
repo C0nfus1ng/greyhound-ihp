@@ -1,7 +1,7 @@
-module slot2_1_interleave ();
+module slot1_2_interleave ();
     // Slot IOs
     logic [15:0] op0, op1, result;
-    (* keep *) slot2_1_wrapper wrapper (
+    (* keep *) slot1_2_wrapper wrapper (
         .op0_o    (op0),
         .op1_o    (op1),
         .result_i (result),
