@@ -911,7 +911,7 @@ def npnr_file_gen(layout:FabricLayout, option_static:bool, option_nomerge:bool, 
                 tmp_fabric.tile[con_point.y][con_point.x] = copy.deepcopy(tile)
                 remove_pips["bels"][con_point] = strip_bel_pips(tmp_fabric.tile[con_point.y][con_point.x].bels)
                 if check_tile_in_merged_slot(con_point, merged_slots):
-                    remove_pips["muxes"][con_point] = strip_config_pips(tmp_fabric.tile[bridge.y][bridge.x])
+                    remove_pips["muxes"][con_point] = strip_config_pips(tmp_fabric.tile[con_point.y][con_point.x])
 
                 bel = bel_gen_from_slot(tile, slot, base_dir, con_point, static_slot)
                 tmp_fabric.tile[con_point.y][con_point.x].bels.insert(0, bel) # Insert in front of all other bels, fixes some kind of npnr assert

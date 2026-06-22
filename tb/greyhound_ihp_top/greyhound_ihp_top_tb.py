@@ -104,6 +104,15 @@ partial = {
     'dump_waveforms': True,
 }
 
+partial_2slots = {
+    'flash0_slot0': '../../../firmware/partial_2slots/partial_2slots.hex',
+    'flash0_slot1': '',
+    'flash1_slot0': '',
+    'flash1_slot1': '',
+    'connect_flash1': False,
+    'dump_waveforms': True,
+}
+
 enabled = partial
 
 async def start_clock(clock, freq=50):
@@ -416,6 +425,33 @@ async def test_fpga_blinky(dut):
 @cocotb.test(skip=enabled!=partial)
 async def test_partial(dut):
     """Run the "Partial" program"""
+
+    # Setup UART
+    uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
+    uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
+
+    # Static setup
+    dut.io_fetch_enable_PAD.value = 1
+    dut.io_fpga_mode_PAD.value = 1 # Configure FPGA as receiver
+
+    # Start up
+    await start_up(dut)
+    
+    # Wait for UART to get clocked
+    await ClockCycles(dut.io_clock_PAD, int(50000*1))
+    
+    # Wait for all messages
+    data = bytearray()
+    await ClockCycles(dut.io_clock_PAD, int(50000*35.0))
+    data += uart_sink.read_nowait(-1)
+
+    print(f"All data: {data}")
+
+    print("\nFinished program")
+
+@cocotb.test(skip=enabled!=partial_2slots)
+async def test_partial_2slots(dut):
+    """Run the "Partial 2slots" program"""
 
     # Setup UART
     uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
