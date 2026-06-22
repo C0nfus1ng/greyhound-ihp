@@ -449,29 +449,35 @@ async def test_partial_2slots_jtag(dut):
     await jtag.write("ISC_DISABLE", 0x1, device=1)
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 1_2 Interleave in Slot 1.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Interleave-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'))
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
+    cocotb.log.info("Upload Slot 1_2 Combine in Slot 2.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Combine-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'), -4)
+    await jtag.write("ISC_DISABLE", 0x1, device=1)
+
+    # Wait for all messages
+    await wait_jtag(jtag, int(4*1000/0.7)) # Wait 4ms
+    data1 = uart_sink.read_nowait(-1)
+
+    assert(data1 == b'Init\nStatic\nSlot1\nSlot2\nRet: 00bd\nRet: 0077\n')
+
+    await jtag.write("ISC_ENABLE", 0x1, device=1)
     cocotb.log.info("Upload Slot 1_2 Combine in Slot 1.")
     await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Combine-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'))
     await jtag.write("ISC_DISABLE", 0x1, device=1)
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
-    cocotb.log.info("Upload Slot 1_2 Interleave in Slot 2.")
-    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Interleave-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'), -4)
+    cocotb.log.info("Upload Slot 1_2 Function in Slot 2.")
+    await write_bitstream_jtag(Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Slot1_2/Function-slot-dedup.bit'), jtag, Path('../../../ip/fabric/user_designs/partial/custom_instr_2slot/.build/Static/Static.bit'), -4)
     await jtag.write("ISC_DISABLE", 0x1, device=1)
 
-    # TODO read UART and check values
+    await wait_jtag(jtag, int(9*1000/0.7)) # Wait 9ms
+    data2 = uart_sink.read_nowait(-1)
 
-    # Wait for all messages
-    await wait_jtag(jtag, int(2.5*1000/0.7)) # Wait 2.5ms
-    data = uart_sink.read_nowait(-1)
-
-    # data = bytearray()
-    # for i in range(1, 31):
-    #     await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
-    #     data += uart_sink.read_nowait(-1)
-    #     print(f"Data thus far: {data}")
-
-    print(f"All data raw: {data}")
-    print(f"All data as str: {data.decode()}")
+    assert(data2 == b'Slot1\nSlot2\nRet: 00d8\nRet: 007c\nRet: 00be\nRet: 00a6\nRet: 00c1\nEnd\n')
 
     cocotb.log.info("Uploaded all.")
 

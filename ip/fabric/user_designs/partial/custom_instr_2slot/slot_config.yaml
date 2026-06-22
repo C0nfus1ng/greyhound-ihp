@@ -44,7 +44,11 @@ Slots:
   - x: 0
     y: 17
   - x: 1
+    y: 16
+  - x: 1
     y: 17
+  - x: 2
+    y: 16
   - x: 2
     y: 17
   - x: 3
@@ -120,7 +124,11 @@ Slots:
   - x: 4
     y: 17
   - x: 5
+    y: 16
+  - x: 5
     y: 17
+  - x: 6
+    y: 16
   - x: 6
     y: 17
   - x: 7
@@ -339,8 +347,6 @@ Slots:
     y: 14
   - x: 5
     y: 15
-  - x: 5
-    y: 16
   - x: 6
     y: 0
   - x: 6
@@ -373,8 +379,6 @@ Slots:
     y: 14
   - x: 6
     y: 15
-  - x: 6
-    y: 16
 - Name: Slot2
   Format:
     Specifier: "\e[34m"
@@ -411,8 +415,6 @@ Slots:
     y: 14
   - x: 1
     y: 15
-  - x: 1
-    y: 16
   - x: 2
     y: 0
   - x: 2
@@ -445,8 +447,6 @@ Slots:
     y: 14
   - x: 2
     y: 15
-  - x: 2
-    y: 16
 Points:
 - x: 6
   y: 3
@@ -540,10 +540,6 @@ Points:
   y: 15
   Format:
     Specifier: "\e[1m"
-- x: 6
-  y: 16
-  Format:
-    Specifier: "\e[1m"
 - x: 2
   y: 9
   Format:
@@ -570,10 +566,6 @@ Points:
     Specifier: "\e[1m"
 - x: 2
   y: 15
-  Format:
-    Specifier: "\e[1m"
-- x: 2
-  y: 16
   Format:
     Specifier: "\e[1m"
 Bridges:
@@ -637,10 +629,6 @@ Bridges:
   y: 15
   Format:
     Specifier: "\e[3m"
-- x: 5
-  y: 16
-  Format:
-    Specifier: "\e[3m"
 - x: 1
   y: 1
   Format:
@@ -699,9 +687,5 @@ Bridges:
     Specifier: "\e[3m"
 - x: 1
   y: 15
-  Format:
-    Specifier: "\e[3m"
-- x: 1
-  y: 16
   Format:
     Specifier: "\e[3m"
