@@ -150,6 +150,14 @@ bit-gen:
 	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
 .PHONY: bit-gen
 
+open-config:
+	python3 $(SLOT_GEN) -if $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
+.PHONY: open-config
+
+show-config:
+	@echo 'q' | python3 $(SLOT_GEN) -if $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
+.PHONY: show-config
+
 synth:
 	yosys \
 	-p \
