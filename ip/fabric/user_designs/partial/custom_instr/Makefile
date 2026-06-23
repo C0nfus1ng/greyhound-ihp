@@ -4,7 +4,7 @@ BASE_FOLDER = .build
 SLOT_GEN = ../slot_gen.py
 SLOT_CONFIG = slot_config.yaml
 FABRIC = ../../../../fabulous_fabric/fabric_ihp/fabric.csv
-FASM_FILES = "Static=Static Slot1=Graycode,DirectOut,Crossover,Stage Slot2=XifLeftRoll,XifRightRoll,Peripheral"
+FASM_FILES = "Static=Static Slot1=Graycode,DirectOut,Crossover,Stage Slot2=XifLeftRoll,XifRightRoll,Peripheral,Counter"
 
 # Make all slots
 all:
@@ -79,6 +79,13 @@ all:
 
 	@echo ''
 	@echo '------------------------------------------------------'
+	@echo 'Generate Slot2 counter fasm file'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) slot2-counter-fasm
+
+	@echo ''
+	@echo '------------------------------------------------------'
 	@echo 'Generate bitstreams'
 	@echo '------------------------------------------------------'
 	@echo ''
@@ -150,6 +157,14 @@ slot2-peripheral-fasm: SLOT_ROOT = Slot2
 slot2-peripheral-fasm: PROG_ROOT = Peripheral
 slot2-peripheral-fasm: synth pnr
 .PHONY: slot2-peripheral-fasm
+
+slot2-counter-fasm: RTL = slot2_wrapper.sv slot2_counter.sv ../../../../fabulous_fabric/fabric_ihp/user_designs/primitive_wrappers.v \
+							.build/Slot2/Slot2_slot_con_X4Y1.v .build/Slot2/Slot2_slot_con_X4Y2.v .build/Slot2/Slot2_slot_con_X4Y3.v .build/Slot2/Slot2_slot_con_X4Y4.v .build/Slot2/Slot2_slot_con_X4Y5.v .build/Slot2/Slot2_slot_con_X4Y6.v .build/Slot2/Slot2_slot_con_X4Y7.v .build/Slot2/Slot2_slot_con_X4Y8.v .build/Slot2/Slot2_slot_con_X4Y9.v .build/Slot2/Slot2_slot_con_X4Y10.v .build/Slot2/Slot2_slot_con_X4Y11.v .build/Slot2/Slot2_slot_con_X4Y12.v .build/Slot2/Slot2_slot_con_X4Y13.v
+slot2-counter-fasm: TOP = slot2_counter
+slot2-counter-fasm: SLOT_ROOT = Slot2
+slot2-counter-fasm: PROG_ROOT = Counter
+slot2-counter-fasm: synth pnr
+.PHONY: slot2-counter-fasm
 
 # Helper functions
 static-gen:
