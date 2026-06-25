@@ -1,3 +1,3 @@
-from utils import upload_bitstream
+from utils import test_standalone
 
 test_standalone()

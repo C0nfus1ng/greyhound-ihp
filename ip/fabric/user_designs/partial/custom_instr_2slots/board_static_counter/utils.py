@@ -82,7 +82,7 @@ def load_bitstream(filepath:str, tile_x_offset:int=0):
 
         return loaded_bitstream
 
-def write_bitstream(filepath:str, spi_master, cs, static_file:Path=None, tile_x_offset:int=0):
+def write_bitstream(filepath:str, spi_master, cs, static_file:str=None, tile_x_offset:int=0):
     # Load static bitstream
     loaded_static_bitstream = None
     if static_file:
@@ -196,7 +196,7 @@ def upload_bitstream(bitstream, freq=25_175_000):
     pwm0 = machine.PWM(clock, freq=freq, duty_u16=32768) # 50% duty
     print(pwm0.freq())
 
-def upload_bitstream(bitstream, freq=25_175_000):
+def upload_bitstream(bitstream, freq=25_175_000, static_file:str=None, tile_x_offset:int=0):
     print(f"freq: {machine.freq()}")
 
     # Setup
@@ -244,7 +244,7 @@ def upload_bitstream(bitstream, freq=25_175_000):
     reset_n(1)
 
     print(f"Writing the bitstream {bitstream} !")
-    write_bitstream_spi(bitstream, fpga_spi, fpga_cs_n)
+    write_bitstream(bitstream, fpga_spi, fpga_cs_n, static_file, tile_x_offset)
     
     pwm0 = machine.PWM(clock, freq=freq, duty_u16=32768) # 50% duty
     print(pwm0.freq())
@@ -316,76 +316,23 @@ def upload_firmware(firmware, freq=25_175_000):
     print(pwm0.freq())
 
 def test_standalone():
-    upload_bitstream("bitstreams/Static.bit")
-
-    print(f"freq: {machine.freq()}")
-
-    # Setup
-    clock   = machine.Pin(0, machine.Pin.OUT)
-    reset_n = machine.Pin(1, machine.Pin.OUT)
-
-    # SPI
-    fpga_miso = machine.Pin(4, machine.Pin.IN)
-    fpga_cs_n = machine.Pin(5, machine.Pin.OUT)
-    fpga_sclk = machine.Pin(6, machine.Pin.OUT)
-    fpga_mosi = machine.Pin(7, machine.Pin.OUT)
-
-    fpga_spi = machine.SPI(
-        mosi=fpga_mosi,
-        sck=fpga_sclk,
-        miso=fpga_miso,
-        polarity=0,
-        phase=1,
-        baudrate=1_000_000, # Let's try 1 MBaud/s
-        bits=8,
-        firstbit=machine.SPI.MSB,
-    )
-
-    # Inputs
-    fpga_mode = machine.Pin(2, machine.Pin.IN)
-    fetch_enable = machine.Pin(3, machine.Pin.IN)
-
-    config_busy = machine.Pin(16, machine.Pin.IN)
-    core_sleep  = machine.Pin(17, machine.Pin.IN)
-
-    print(f"fpga_mode: {fpga_mode.value()}")
-    print(f"fetch_enable: {fetch_enable.value()}")
-    print(f"config_busy: {config_busy.value()}")
-    print(f"core_sleep: {core_sleep.value()}")
-
-    print(f"Starting the clock!")
-    
-    pwm0 = machine.PWM(clock, freq=25_175_000, duty_u16=32768) # 50% duty
-    print(pwm0.freq())
-
-    print(f"Reset!")
-
-    reset_n(0)
-    time.sleep_ms(10)
-    reset_n(1)
-
-    print(f"Writing the bitstream bitstreams/Static.bit !")
-    write_bitstream("bitstreams/Static.bit", fpga_spi, fpga_cs_n)
-    print("Uploaded static bitstream")
+    upload_bitstream("bitstreams/all_zeros.bit")
+    time.sleep_ms(1)
 
     print(f"Writing the bitstream bitstreams/Interleave.bit in Slot 1 !")
-    write_bitstream("bitstreams/Interleave.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit")
-    print("Uploaded bitstream")
+    upload_bitstream("bitstreams/Interleave.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit")
 
     print(f"Writing the bitstream bitstreams/Reverse.bit in Slot 2 !")
-    write_bitstream_spi("bitstreams/Reverse.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit", 2)
-    print("Uploaded bitstream")
-    time.sleep_ms(10)
+    upload_bitstream("bitstreams/Reverse.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit", 2)
+    time.sleep_ms(1)
     
     print(f"Writing the bitstream bitstreams/Interleave.bit in Slot 2 !")
-    write_bitstream_spi("bitstreams/Interleave.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit", 2)
-    print("Uploaded bitstream")
+    upload_bitstream("bitstreams/Interleave.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit", 2)
     
-    time.sleep_ms(10)
+    time.sleep_ms(1)
     print(f"Writing the bitstream bitstreams/Reverse.bit in Slot 1!")
-    write_bitstream_spi("bitstreams/Reverse.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit")
-    print("Uploaded bitstream")
+    upload_bitstream("bitstreams/Reverse.bit", fpga_spi, fpga_cs_n, "bitstreams/Static-full.bit")
     
-    time.sleep_ms(10)
+    time.sleep_ms(1)
     print("Finished test")
     
