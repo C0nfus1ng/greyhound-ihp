@@ -1,6 +1,7 @@
 import os
 import time
 import machine
+from winbond import W25QFlash
 
 def write_bitstream_spi(filename, spi_master, cs, active_low=True):
     with open(filename, 'br') as f:
@@ -15,15 +16,19 @@ def write_bitstream_spi(filename, spi_master, cs, active_low=True):
             # Next word
             data = f.read(4)
 
+# from utils import upload_firmware
+# upload_firmware("/firmware/hello_world.bin")
 def verify_bitstream_spi(filename, spi_master, cs, active_low=True):
     with open(filename, 'br') as f:
         txdata = f.read(4)
-        rxdata = bytearray(4)
+        #rxdata = bytearray(4)
         while txdata:
             try:
                 cs(not active_low)
-                spi_master.write_readinto(txdata, rxdata)
-                assert(txdata == rxdata)
+                rxdata = spi_master.read(4)
+                if (txdata != rxdata):
+                    print(f"Data {int.from_bytes(txdata, "big"):x}, read {int.from_bytes(rxdata, "big"):x}")
+                    assert(txdata == rxdata)
             finally:
                 cs(active_low)
             
@@ -195,7 +200,33 @@ def upload_bitstream(bitstream, freq=25_175_000):
     pwm0 = machine.PWM(clock, freq=freq, duty_u16=32768) # 50% duty
     print(pwm0.freq())
 
-def upload_firmware(firmware, freq=25_175_000):
+def write_firmware(flash, firmware):
+    with open(firmware, 'br') as f:
+        data = f.read() # Read complete bitstream
+        
+        if len(data) % 256:
+            print(f"Data len {len(data)}, so add {256-(len(data) % 256)}")
+            firmware_data = data + b'\xFF'*(256-(len(data) % 256))
+        else:
+            firmware_data = data
+
+        flash._write(firmware_data, 0)
+
+def verify_firmware(flash, firmware):    
+    with open(firmware, 'br') as f:
+        data = f.read() # Read complete bitstream
+        
+        if len(data) % 256:
+            firmware_data = data + b'\xFF'*(256-(len(data) % 256))
+        else:
+            firmware_data = data
+
+        firmware_read = bytearray(len(firmware_data)) #b'\xFF'*len(firmware_data)
+        flash._read(firmware_read, 0)
+
+        assert(firmware_data == firmware_read)
+
+def upload_firmware(firmware:str, freq=25_175_000):
     print(f"freq: {machine.freq()}")
 
     # Setup
@@ -227,11 +258,23 @@ def upload_firmware(firmware, freq=25_175_000):
         firstbit=machine.SPI.MSB,
     )
 
-    print(f"Writing the firmware {firmware} !")
-    write_bitstream_spi(firmware, fpga_spi, flash_cs_n)
+    flash = W25QFlash(spi=fpga_spi, cs=flash_cs_n, baud=115200, software_reset=True)
 
-    print(f"Check firmware integrity")
-    verify_bitstream_spi(firmware, fpga_spi, flash_cs_n)
+    print(f"Erase flash")
+    flash.format()
+
+    print(f"Write firmware")
+    write_firmware(flash, firmware)
+
+    print(f"Verify Integrity")
+    verify_firmware(flash, firmware)
+
+    print(f"Deassert SPI")
+    fpga_spi.deinit()
+
+    flash_sclk = machine.Pin(10, machine.Pin.IN)
+    flash_cs_n = machine.Pin(11, machine.Pin.IN)
+    flash_mosi = machine.Pin(12, machine.Pin.IN)
 
     input("Firmware upload complete power up Greyhound by inserting the power jumpers. Then press Enter to continue...")
 
@@ -260,6 +303,40 @@ def upload_firmware(firmware, freq=25_175_000):
 
     pwm0 = machine.PWM(clock, freq=freq, duty_u16=32768) # 50% duty
     print(pwm0.freq())
+
+    read_uart()
+
+def read_uart(freq=25_175_000):
+    # Setup
+    clock   = machine.Pin(0, machine.Pin.OUT)
+    reset_n = machine.Pin(1, machine.Pin.OUT)
+
+    print(f"Reset!")
+    reset_n(0)
+    time.sleep_ms(10)
+    reset_n(1)
+
+    pwm0 = machine.PWM(clock, freq=freq, duty_u16=32768) # 50% duty
+    print(pwm0.freq())
+    
+    tx_pin = machine.Pin(8)
+    rx_pin = machine.Pin(9)
+
+    uart = machine.UART(1, baudrate=115200, tx=tx_pin, rx=rx_pin, bits=8, parity=None, stop=1, timeout=1000)
+
+    print(f"Received from Greyhound:")
+    time_wait = 100
+    while(time_wait > 0):
+        recv = uart.read()
+        if recv:
+            print(recv)
+        else:
+            print("Timeout")
+
+        time_wait -= 1
+        time.sleep_ms(100)
+
+    print(f"Stop receiving now")
 
 def test_standalone(freq=25_175_000):
     upload_bitstream("bitstreams/all_zeros.bit")
