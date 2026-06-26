@@ -272,9 +272,9 @@ def upload_firmware(firmware:str, freq=25_175_000):
     print(f"Deassert SPI")
     fpga_spi.deinit()
 
-    flash_sclk = machine.Pin(10, machine.Pin.IN)
-    flash_cs_n = machine.Pin(11, machine.Pin.IN)
-    flash_mosi = machine.Pin(12, machine.Pin.IN)
+    flash_sclk.init(machine.Pin.IN)
+    flash_cs_n.init(machine.Pin.IN)
+    flash_mosi.init(machine.Pin.IN)
 
     input("Firmware upload complete power up Greyhound by inserting the power jumpers. Then press Enter to continue...")
 
