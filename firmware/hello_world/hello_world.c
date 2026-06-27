@@ -3,14 +3,14 @@
 #include <soc.h>
 #include <EF_UART.h>
 
-#define F_CPU 50000000
+#define F_CPU 25175000
 #define BAUDRATE 115200
 
 int main()
 {
   EF_UART_setGclkEnable(UART0_BASE, 1);
   EF_UART_enable(UART0_BASE);
-  EF_UART_enableRx(UART0_BASE);
+  // EF_UART_enableRx(UART0_BASE);
   EF_UART_enableTx(UART0_BASE);
   EF_UART_disableLoopBack(UART0_BASE);
   EF_UART_disableGlitchFilter(UART0_BASE);
@@ -22,11 +22,13 @@ int main()
   // baudrate = clock_f / ((PR+1)*8)
   EF_UART_setPrescaler(UART0_BASE, F_CPU/(BAUDRATE*8)-1);
   
-  // Echo one character
-  EF_UART_writeChar(UART0_BASE, EF_UART_readChar(UART0_BASE));
-
   // Write using UART
-  printf("Hello World!\n");
+  for (;;)
+    EF_UART_writeChar(UART0_BASE, 'U');   /* 0x55 */
+
+
+  // Echo one character
+  // EF_UART_writeChar(UART0_BASE, EF_UART_readChar(UART0_BASE));
 
   return 0;
 }

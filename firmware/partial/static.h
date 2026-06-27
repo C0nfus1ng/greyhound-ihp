@@ -19,5 +19,5 @@ static const uint32_t static_bitstream[] = {
 0x00000000,
 0x00000000,
 0x00000000,
-0x00100000,
+0x00100000
 };
