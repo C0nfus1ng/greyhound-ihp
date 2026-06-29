@@ -1,3 +1,3 @@
-from utils import test_standalone
+from utils import upload_bitstream
 
-test_standalone()
+upload_bitstream("bitstreams/all_zeros.bit")

@@ -1,10 +1,12 @@
 module io_wrapper #(
-    parameter NUM_IO = 32
+    parameter NUM_IO = 28
 ) (
     input  logic [NUM_IO-1:0] io_i,
     input  logic [NUM_IO-1:0] io_oeb_i,
     output logic [NUM_IO-1:0] io_o,
 );
+    // North is not included in the slots used
+
     // West
     (* keep, BEL="X0Y1.A" *) IO_1_bidirectional_frame_config_pass io27_i (.O(io_o[27]), .I(io_i[27]), .T(io_oeb_i[27]));
     (* keep, BEL="X0Y1.B" *) IO_1_bidirectional_frame_config_pass io26_i (.O(io_o[26]), .I(io_i[26]), .T(io_oeb_i[26]));

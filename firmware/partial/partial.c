@@ -68,6 +68,11 @@ int main()
     *REG_BITSTREAM = slot1_crossover_bitstream[i];
   }
 
+  *((int*)FABRIC_BASE) = 0x0;
+  for (int i=1; i<4; i++) {
+    *((int*)FABRIC_BASE + i) = 0x8 + i;
+  }
+
   for (int i=1; i<4; i++) {
     *((int*)FABRIC_BASE) = i;
     wait_nop(0x10);

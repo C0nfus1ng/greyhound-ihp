@@ -23,13 +23,12 @@ module static_slot_counter();
     );
 
     // Phys IOs
-    logic [31:0] phys_io_i, phys_io_oeb, phys_io_o;
+    logic [27:0] phys_io_i, phys_io_oeb, phys_io_o;
     (* keep *) io_wrapper io (
         .io_i     (phys_io_i),
         .io_oeb_i (phys_io_oeb),
         .io_o     (phys_io_o),
     );
-    assign phys_io_oeb  = '0;
 
     logic [3:0] cnt;
     logic [4:0] wait_cnt;
@@ -47,7 +46,7 @@ module static_slot_counter();
 
     always_ff @(posedge clk) begin
         if (rst) begin
-            cnt <= 4'hf;
+            cnt <= 4'h0;
         end
         else begin
             if (wait_cnt == 0) begin
@@ -56,6 +55,7 @@ module static_slot_counter();
         end
     end
 
+    assign phys_io_oeb[11:0] = '0;
     assign phys_io_i[11:8] = cnt;
     assign phys_io_i[7:4]  = slot2_io_o;
     assign phys_io_i[3:0]  = slot1_io_o;

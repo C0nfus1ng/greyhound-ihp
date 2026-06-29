@@ -27,13 +27,13 @@ module static_slot();
     assign RESULT = {24'h0, slot2_io_o, slot1_io_o};
 
     // Phys IOs
-    logic [31:0] phys_io_i, phys_io_oeb, phys_io_o;
+    logic [27:0] phys_io_i, phys_io_oeb, phys_io_o;
     (* keep *) io_wrapper io (
         .io_i     (phys_io_i),
         .io_oeb_i (phys_io_oeb),
         .io_o     (phys_io_o),
     );
-    assign phys_io_oeb[31:8] = '1;
+    assign phys_io_oeb[27:8] = '1;
     assign phys_io_oeb[7:0]  = '0;
 
     assign phys_io_i[7:4] = slot2_io_o;

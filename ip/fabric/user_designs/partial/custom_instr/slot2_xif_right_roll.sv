@@ -16,15 +16,7 @@ module slot2_xif_right_roll ();
         .io_i  ( RESULT ),
     );
 
-    logic [31:0] shifted;
-
-    assign shifted = RS1 >> RS2;
-    always_comb begin
-        if (RS2[4:0] == 0) begin
-            RESULT = RS1;
-        end
-        else begin
-            RESULT = {RS1[RS2[4:0]-1:0], shifted[31-RS2[4:0]:0]};
-        end
-    end
+    wire [63:0] tmp;
+    assign tmp = {RS1, RS1};
+    assign RESULT = tmp[RS2[4:0]+:32];
 endmodule

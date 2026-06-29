@@ -338,6 +338,7 @@ def boot_uart(freq=25_175_000, release_rst=False, baudrate=115200):
     uart = machine.UART(1, baudrate=baudrate, tx=tx_pin, rx=rx_pin, bits=8, parity=None, stop=1, timeout=1000)
 
     if release_rst:
+        pwm0 = machine.PWM(clock, freq=25_175_000, duty_u16=32768) # 50% duty
         time.sleep_ms(5)
         reset_n.value(1)
     else:
