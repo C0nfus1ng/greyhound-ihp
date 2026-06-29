@@ -5,6 +5,12 @@ module io_wrapper #(
     input  logic [NUM_IO-1:0] io_oeb_i,
     output logic [NUM_IO-1:0] io_o,
 );
+    // North
+    (* keep, BEL="X2Y0.A" *) IO_1_bidirectional_frame_config_pass io31_i (.O(io_o[31]), .I(io_i[31]), .T(io_oeb_i[31]));
+    (* keep, BEL="X2Y0.B" *) IO_1_bidirectional_frame_config_pass io30_i (.O(io_o[30]), .I(io_i[30]), .T(io_oeb_i[30]));
+    (* keep, BEL="X1Y0.A" *) IO_1_bidirectional_frame_config_pass io29_i (.O(io_o[29]), .I(io_i[29]), .T(io_oeb_i[29]));
+    (* keep, BEL="X1Y0.B" *) IO_1_bidirectional_frame_config_pass io28_i (.O(io_o[28]), .I(io_i[28]), .T(io_oeb_i[28]));
+
     // West
     (* keep, BEL="X0Y1.A" *) IO_1_bidirectional_frame_config_pass io27_i (.O(io_o[27]), .I(io_i[27]), .T(io_oeb_i[27]));
     (* keep, BEL="X0Y1.B" *) IO_1_bidirectional_frame_config_pass io26_i (.O(io_o[26]), .I(io_i[26]), .T(io_oeb_i[26]));

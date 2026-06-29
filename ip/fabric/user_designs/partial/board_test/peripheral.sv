@@ -41,9 +41,8 @@ module peripheral();
         .io_oeb_i (phys_io_oeb),
         .io_o     (phys_io_o),
     );
-    assign phys_io_oeb[31:8] = '1;
-    assign phys_io_oeb[7:0]  = '0;
-    assign phys_io_i[7:0]    = periph_reg[7:0];
+    assign phys_io_oeb  = '0;
+    assign phys_io_i    = periph_reg;
     assign GNT = 1'b1;
 
 	always_ff @(posedge clk) begin

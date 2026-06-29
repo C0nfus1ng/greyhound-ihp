@@ -35,13 +35,13 @@ int main()
   wait_nop(0x100);
   *((int*)FABRIC_BASE) = 0x0;
   wait_nop(0x100);
-  *((int*)FABRIC_BASE) = 0x1;
+  *((int*)FABRIC_BASE) = 0xdeadbeef;
   wait_nop(0x100);
-  *((int*)FABRIC_BASE) = 0x2;
+  *((int*)FABRIC_BASE) = 0xc0ffee;
   wait_nop(0x100);
-  *((int*)FABRIC_BASE) = 0x3;
+  *((int*)FABRIC_BASE) = 0xcafebabe;
   wait_nop(0x100);
-  *((int*)FABRIC_BASE) = 0x4;
+  *((int*)FABRIC_BASE) = 0x7eeee7;
   wait_nop(0x100);
 
   // Write bitstream to output 8 bit with the xif
@@ -54,13 +54,13 @@ int main()
   wait_nop(0x100);
   custom_instruction(0x0, 0x0);
   wait_nop(0x100);
-  custom_instruction(0x1, 0x0);
+  custom_instruction(0xbeef, 0xdead);
   wait_nop(0x100);
-  custom_instruction(0x2, 0x0);
+  custom_instruction(0xfee, 0xc0f);
   wait_nop(0x100);
-  custom_instruction(0x3, 0x0);
+  custom_instruction(0xbabe, 0xcafe);
   wait_nop(0x100);
-  custom_instruction(0x4, 0x0);
+  custom_instruction(0xee7, 0x7ee);
   wait_nop(0x100);
 
   return 0;

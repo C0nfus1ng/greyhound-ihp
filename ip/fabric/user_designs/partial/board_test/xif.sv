@@ -9,7 +9,7 @@ module xif();
         .RESULT
     );
 
-    assign RESULT = {24'h0, RS2[3:0], RS1[3:0]};
+    assign RESULT = {RS2[15:0], RS1[15:0]};
 
     // Phys IOs
     logic [31:0] phys_io_i, phys_io_oeb, phys_io_o;
@@ -18,9 +18,8 @@ module xif();
         .io_oeb_i (phys_io_oeb),
         .io_o     (phys_io_o),
     );
-    assign phys_io_oeb[31:8] = '1;
-    assign phys_io_oeb[7:0]  = '0;
+    assign phys_io_oeb = '0;
 
-    assign phys_io_i[7:4] = RS2[3:0];
-    assign phys_io_i[3:0] = RS1[3:0];
+    assign phys_io_i[31:16] = RS2[15:0];
+    assign phys_io_i[15:0] = RS1[15:0];
 endmodule
