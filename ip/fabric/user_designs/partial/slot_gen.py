@@ -1212,6 +1212,12 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
     merged_slots = gen_merged_slots(layout, option_nomerge)
     all_slots = layout.slots + list(merged_slots.keys())
 
+    if len(all_slots) == 1 and all_slots[0].name == "Static":
+        return
+    elif len(all_slots) == 1:
+        raise RuntimeError(f"Cannot use a single dynamic slot")
+        return
+
     usercode_bitsize = int(28/(len(all_slots)-1))
     print(f"There are up to 15 usercodes for the Static slot and up to {(1<<usercode_bitsize)-1} usercodes per dynamic slot available (Usercodes start at 1)")
 
