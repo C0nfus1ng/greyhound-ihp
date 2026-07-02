@@ -426,37 +426,68 @@ async def test_fpga_blinky(dut):
 async def test_partial(dut):
     """Run the "Partial" program"""
 
-    # Setup UART
-    uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
-    uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
-
     # Static setup
     dut.io_fetch_enable_PAD.value = 1
     dut.io_fpga_mode_PAD.value = 1 # Configure FPGA as receiver
 
     # Start up
     await start_up(dut)
-    
-    # Wait for UART to get clocked
-    await ClockCycles(dut.io_clock_PAD, int(50000*1))
-    
-    # Wait for all messages
-    data = bytearray()
-    await ClockCycles(dut.io_clock_PAD, int(50000*35.0))
-    data += uart_sink.read_nowait(-1)
 
-    print(f"All data: {data}")
+    # Wait for firts 3 slots to upload
+    await FallingEdge(dut.io_config_busy_PAD)
+    await FallingEdge(dut.io_config_busy_PAD)
+    await FallingEdge(dut.io_config_busy_PAD)
+    assert(dut.io_gpio_PAD.value == 0x0)
+    await ClockCycles(dut.io_clock_PAD, int(50*20)) # 20µs
+    assert(dut.io_gpio_PAD.value == 0x9)
+    await ClockCycles(dut.io_clock_PAD, int(50*20)) # 20µs
+    assert(dut.io_gpio_PAD.value == 0xA)
+    await ClockCycles(dut.io_clock_PAD, int(50*20)) # 20µs
+    assert(dut.io_gpio_PAD.value == 0xB)
+    
+    # Wait to reconfigure to crossover slot
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    assert(dut.io_gpio_PAD.value == 0x0)
+    await ClockCycles(dut.io_clock_PAD, int(50*9)) # 9µs
+    assert(dut.io_gpio_PAD.value == 0x9000_0000)
+    await ClockCycles(dut.io_clock_PAD, int(50*9)) # 9µs
+    assert(dut.io_gpio_PAD.value == 0x5000_0000)
+    await ClockCycles(dut.io_clock_PAD, int(50*9)) # 9µs
+    assert(dut.io_gpio_PAD.value == 0xD000_0000)
 
-    print("\nFinished program")
+    # Wait for first Xif instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    assert(dut.io_gpio_PAD.value == 0x7E47_9201)
+
+    # Wait for second Xif instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    assert(dut.io_gpio_PAD.value == 0xC06D_1341)
+
+    # Wait for third Xif instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    assert(dut.io_gpio_PAD.value == 0x9C06_D134)
+
+    # Wait for fourth Xif instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    assert(dut.io_gpio_PAD.value == 0x2_001E)
+    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    assert(dut.io_gpio_PAD.value == 0x0)
+    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    assert(dut.io_gpio_PAD.value == 0x2)
+    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    assert(dut.io_gpio_PAD.value == 0x200)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1us
 
 @cocotb.test(skip=enabled!=partial_2slots)
 async def test_partial_2slots(dut):
     """Run the "Partial 2slots" program"""
 
-    # Setup UART
-    uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
-    uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
-
     # Static setup
     dut.io_fetch_enable_PAD.value = 1
     dut.io_fpga_mode_PAD.value = 1 # Configure FPGA as receiver
@@ -464,17 +495,24 @@ async def test_partial_2slots(dut):
     # Start up
     await start_up(dut)
     
-    # Wait for UART to get clocked
-    await ClockCycles(dut.io_clock_PAD, int(50000*1))
-    
-    # Wait for all messages
-    data = bytearray()
-    await ClockCycles(dut.io_clock_PAD, int(50000*35.0))
-    data += uart_sink.read_nowait(-1)
+    # Wait for firts 3 slots to upload
+    await FallingEdge(dut.io_config_busy_PAD)
+    await FallingEdge(dut.io_config_busy_PAD)
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*120)) # 120µs
+    assert(dut.io_gpio_PAD.value[7:0] == 0x59)
 
-    print(f"All data: {data}")
+    # Wait for seconf Xif instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    assert(dut.io_gpio_PAD.value[7:0] == 0x99)
 
-    print("\nFinished program")
+    # Wait for third Xif instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    assert(dut.io_gpio_PAD.value[7:0] == 0x95)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1us
 
 if __name__ == "__main__":
 
