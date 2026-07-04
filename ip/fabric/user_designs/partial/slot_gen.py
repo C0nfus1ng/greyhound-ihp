@@ -97,8 +97,12 @@ class Slot:
 
         sort_by_x = lambda point: point.x
         sort_by_y = lambda point: point.y
-        self.lower_left  = Point(min(tiles_sorted, key=sort_by_x).x , max(tiles_sorted, key=sort_by_y).y, Format(Format.get_default()))
-        self.upper_right = Point(max(tiles_sorted, key=sort_by_x).x , min(tiles_sorted, key=sort_by_y).y, Format(Format.get_default()))
+        if len(tiles_sorted) == 0:
+            self.lower_left  = Point(0, 0, Format(Format.get_default()))
+            self.upper_right = Point(0, 0, Format(Format.get_default()))
+        else:
+            self.lower_left  = Point(min(tiles_sorted, key=sort_by_x).x , max(tiles_sorted, key=sort_by_y).y, Format(Format.get_default()))
+            self.upper_right = Point(max(tiles_sorted, key=sort_by_x).x , min(tiles_sorted, key=sort_by_y).y, Format(Format.get_default()))
 
     @classmethod
     def sort_x_then_y(cls, point:Point, layout_height:int) -> int:
@@ -858,7 +862,13 @@ def npnr_file_gen(layout:FabricLayout, option_static:bool, option_nomerge:bool, 
 
     # create merged slots
     merged_slots = gen_merged_slots(layout, option_nomerge)
-    all_slots = layout.slots + list(merged_slots.keys())
+    all_slots = []
+    
+    # auto gen static slot if non existend
+    if option_static and len(layout.slots) > 0 and layout.slots[0].name != "Static":
+        all_slots += [Slot([], "Static", Format(Format.get_static()))]
+
+    all_slots += layout.slots + list(merged_slots.keys())
 
     # Build fabric per slot
     for slot in all_slots:
@@ -1051,7 +1061,7 @@ def reduce_enabled_tiles(enabled_tiles_bitstream:[bytes], usercode:int) -> [byte
     
     return []
 
-def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, static_filename:str, slots:[Slot]) -> None:
+def gen_dedup_bitstream(layout:FabricLayout, filename_in:str, filename_out:str, static_filename:str, slots:[Slot]) -> None:
     print(f"Deduplicate {filename_in} into {filename_out}")
 
     with open(filename_in, 'rb') as bitstream_file_in, open(filename_out, 'wb') as bitstream_file_out, open(static_filename, 'rb') as static_bitstream_file:
@@ -1071,13 +1081,21 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
                 usercode = seek_word
 
             seek_byte_counter += 1
-            seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(bitstream_file_in.read(1), "big")
+            seek_byte = bitstream_file_in.read(1)
+            if not seek_byte:
+                RuntimeError("Bitstream start sequence not found!")
+
+            seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
 
         static_seek_word = int.from_bytes(static_bitstream_file.read(4), "big")
         while FabricLayout.bit_start != static_seek_word:
-            static_seek_word = ((static_seek_word & 0xFFFFFF) << 8) | int.from_bytes(static_bitstream_file.read(1), "big")
+            static_seek_byte = static_bitstream_file.read(1)
+            if not static_seek_byte:
+                RuntimeError("Bitstream start sequence not found!")
 
-        bytes_per_frame = (layout_height+1)*4
+            static_seek_word = ((static_seek_word & 0xFFFFFF) << 8) | int.from_bytes(static_seek_byte, "big")
+
+        bytes_per_frame = (layout.height+1)*4
         data = bitstream_file_in.read(bytes_per_frame)
         static_data = static_bitstream_file.read(bytes_per_frame)
         static_slot_data = {}
@@ -1114,9 +1132,9 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
 
                     # Merge with static frame
                     frame_data_key = bytes()
-                    for i_tile in reversed(range(layout_height)):
+                    for i_tile in reversed(range(layout.height)):
                         use_tile = (enabled_tiles_word >> i_tile) & 0x1
-                        tile_start = 4*(layout_height-i_tile)
+                        tile_start = 4*(layout.height-i_tile)
 
                         if use_tile:
                             frame_data_key += data[tile_start:tile_start+4]
@@ -1138,7 +1156,22 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
         bitstream.append(usercode.to_bytes(4))
         bitstream.append(FabricLayout.bit_start.to_bytes(4))
 
-        for col in range(slots[0].lower_left.x, slots[0].upper_right.x+1):
+        if slots[0].name == "Static": # Static can have arbritary form, add all connections/bridges to initialize them correctly
+            slot_cols_set = set()
+            for tile_pos in slots[0].tiles:
+                slot_cols_set.add(tile_pos.x)
+
+            for bridge_pos in layout.bridges:
+                slot_cols_set.add(bridge_pos.x)
+
+            for con_pos in layout.points:
+                slot_cols_set.add(con_pos.x)
+
+            slot_cols = sorted(list(slot_cols_set))
+        else:
+            slot_cols = range(slots[0].lower_left.x, slots[0].upper_right.x+1)
+
+        for col in slot_cols:
             frame_cols = [col + slot_x_offset for slot_x_offset in slot_x_offsets]
             frame_strobes = []
 
@@ -1196,7 +1229,7 @@ def gen_dedup_bitstream(layout_height:int, filename_in:str, filename_out:str, st
         enabled_tiles_bitstream = reduce_enabled_tiles(enabled_tiles_bitstream, usercode)
         bitstream_file_out.write(b''.join(bitstream[:2] + enabled_tiles_bitstream + bitstream[2:]))
 
-def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_files:{str:[str]}) -> None:
+def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_files:{str:[str]}, static_usercode:int) -> None:
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
@@ -1204,10 +1237,22 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
 
     # Create Static bitstream and hex file
     genBitstream(f"{base_dir}/Static/{static_prog}.fasm", f"{base_dir}/Static/bitStreamSpec.bin", f"{base_dir}/Static/{static_prog}.bit")
-    bit_to_hex(f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
+    with open(f"{base_dir}/Static/{static_prog}.bit", "rb+") as static_bitstream_file:
+        seek_word = int.from_bytes(static_bitstream_file.read(4), "big")
+        while FabricLayout.stream_start != seek_word:
+            seek_byte = static_bitstream_file.read(1)
+            if not seek_byte:
+                RuntimeError("Bitstream start sequence not found!")
 
-    gen_dedup_bitstream(layout.height, f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [layout.slots[0]])
-    bit_to_hex(f"{base_dir}/Static/{static_prog}-dedup.bit", f"{base_dir}/Static/{static_prog}-dedup.hex", bytes_per_word=1)
+            seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
+        
+        static_usercode &= 0xF
+        static_bitstream_file.write(static_usercode.to_bytes(4))
+
+    bit_to_hex(f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
+    gen_dedup_bitstream(layout, f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}-slot-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", 
+                        [layout.slots[0]] if len(layout.slots) > 0 and layout.slots[0].name == "Static" else [Slot([], "Static", Format(Format.get_static()))])
+    bit_to_hex(f"{base_dir}/Static/{static_prog}-slot-dedup.bit", f"{base_dir}/Static/{static_prog}-slot-dedup.hex", bytes_per_word=1)
 
     merged_slots = gen_merged_slots(layout, option_nomerge)
     all_slots = layout.slots + list(merged_slots.keys())
@@ -1218,10 +1263,11 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
         raise RuntimeError(f"Cannot use a single dynamic slot")
         return
 
-    usercode_bitsize = int(28/(len(all_slots)-1))
+    static_slot_present = 1 if len(all_slots) > 0 and all_slots[0].name == "Static" else 0
+    usercode_bitsize = int(28/(len(all_slots)-static_slot_present))
     print(f"There are up to 15 usercodes for the Static slot and up to {(1<<usercode_bitsize)-1} usercodes per dynamic slot available (Usercodes start at 1)")
 
-    for i_slot, slot in enumerate(all_slots):
+    for i_slot, slot in enumerate(all_slots, start=1-static_slot_present):
         if slot.name == "Static":
             continue
 
@@ -1237,7 +1283,7 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
         for i_fasm_file, fasm_file in enumerate(tmp_fasm_files[slot.name]):
             genBitstream(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{fasm_file}.bit")
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
-            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [slot])
+            gen_dedup_bitstream(layout, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [slot])
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.hex", bytes_per_word=1)
             usercode = ((i_fasm_file+1)<<(4+(usercode_bitsize*(i_slot-1)))) & 0xFFFFFFFF
             print(f"{slot.name}/{fasm_file} has usercode: {usercode:08x}")
@@ -1252,7 +1298,11 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
 
                 seek_word = int.from_bytes(bitstream_file_in.read(4), "big")
                 while(FabricLayout.bit_start != seek_word):
-                    seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(bitstream_file_in.read(1), "big")
+                    seek_byte = bitstream_file_in.read(1)
+                    if not seek_byte:
+                        RuntimeError("Bitstream start sequence not found!")
+
+                    seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
 
                 bytes_per_frame = (layout.height+1)*4
                 data = bitstream_file_in.read(bytes_per_frame)
@@ -1284,7 +1334,7 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
                 bitstream_file_out.write(b''.join(slot_bitstream[:2]+slot_enabled_tiles_bitstream+slot_bitstream[2:]))
 
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot.hex", bytes_per_word=1)
-            gen_dedup_bitstream(layout.height, f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", merged_slots[slot] if slot in merged_slots.keys() else [slot])
+            gen_dedup_bitstream(layout, f"{base_dir}/{slot.name}/{fasm_file}-slot.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", merged_slots[slot] if slot in merged_slots.keys() else [slot])
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-slot-dedup.hex", bytes_per_word=1)
 
 def print_help() -> None:
@@ -1337,7 +1387,7 @@ def init_config(layout:FabricLayout, config_path:str, fabric_path:str) -> None:
         load_config(layout, config_path)
 
 # Interactivly partition into slots
-def slot_part(generate_files:bool, config_path:str, option_static:bool, option_combine:bool, option_bitstream:bool, option_nomerge:bool, base_dir:str, fabric_path:str, fasm_files:{str:[str]}) -> None:
+def slot_part(generate_files:bool, config_path:str, option_static:bool, option_combine:bool, option_bitstream:bool, option_nomerge:bool, base_dir:str, fabric_path:str, fasm_files:{str:[str]}, static_usercode:int) -> None:
     fabric_layout = FabricLayout()
     init_config(fabric_layout, config_path, fabric_path)
     print_layout(fabric_layout, option_nomerge)
@@ -1370,7 +1420,7 @@ def slot_part(generate_files:bool, config_path:str, option_static:bool, option_c
             if option_combine:
                 combine_fasm(layout, option_nomerge, base_dir, fasm_files)
             if option_bitstream:
-                gen_bitstream(layout, option_nomerge, base_dir, fasm_files)
+                gen_bitstream(layout, option_nomerge, base_dir, fasm_files, static_usercode)
         elif user_input == "h":
             print_help()
         else:
@@ -1423,7 +1473,7 @@ if __name__ == "__main__":
             "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
             "6) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
             "7) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
-            "--basedir, --fabric, --spec, --progdir and --nomerge can be combined with all options and are used if applicable\n"\
+            "--basedir, --fabric, --spec, --progdir, --nomerge, --static_usercode can be combined with all options and are used if applicable\n"\
             "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command"
 
     arg_parser = argparse.ArgumentParser(description=usage)
@@ -1438,6 +1488,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
     arg_parser.add_argument("--fasm", help="FASM file to generate the bitstream for a slot, defaults to slot name=slot name. Use with specifiying the slot, like --fasm \"Slot1=Prog1,Prog2,.. Slot2=...\"")
     arg_parser.add_argument("--nomerge", action="store_true", help="Prevent merging of slots, may allow routing for static slot with high congestion by sacrificing slot interoperability")
+    arg_parser.add_argument("--static_usercode", type=int, default=1, help="15bit wide USERCODE to use for the static slot other usercodes are automatically generated")
 
     args = arg_parser.parse_args()
     
@@ -1458,7 +1509,7 @@ if __name__ == "__main__":
         fabric_path = args.fabric
 
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, args.nomerge, base_dir, fabric_path, fasm_files)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, args.nomerge, base_dir, fabric_path, fasm_files, args.static_usercode)
         exit
 
     fabric_layout = None
@@ -1489,6 +1540,6 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            gen_bitstream(fabric_layout, args.nomerge, base_dir, fasm_files)
+            gen_bitstream(fabric_layout, args.nomerge, base_dir, fasm_files, args.static_usercode)
         else:
             print("The -b parameter requires the -f parameter")
