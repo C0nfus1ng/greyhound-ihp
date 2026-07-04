@@ -378,6 +378,7 @@ module greyhound_ihp (
     logic [31:0] bitstream_data;
     logic        bitstream_valid;
     wire fpga_jtag_tdi;
+    logic [31:0] usercode;
     fpga_dm #(
         .FABRIC_NUM_IO_WEST ( FABRIC_NUM_IO_WEST )
     ) fpga_dm (
@@ -398,6 +399,8 @@ module greyhound_ihp (
         .fabric_configured_i    ( fabric_config_configured ),
         .fabric_bitstream_valid_i ( bitstream_valid         ),
         .fabric_bitstream_data_i  ( bitstream_data          ),
+        // USERCODE
+        .usercode_o             ( usercode                ),
         // Boundary scan register (intercept all relevant fabric connections)
         // GPIOs
         // to boundary
@@ -686,7 +689,8 @@ module greyhound_ihp (
         .jtag_tdi_i     ( jtag_tdi           ),
         .jtag_tdo_o     ( fpga_jtag_tdi      ),
         .jtag_tms_i     ( jtag_tms           ),
-        .jtag_trst_ni   ( jtag_trst_n_module_sync )
+        .jtag_trst_ni   ( jtag_trst_n_module_sync ),
+        .usercode_i     ( usercode           )
     );
     
     // Connect SRAM to the SoC

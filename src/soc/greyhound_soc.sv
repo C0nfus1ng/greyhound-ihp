@@ -92,7 +92,8 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     input  logic      jtag_tdi_i,
     output logic      jtag_tdo_o,
     input  logic      jtag_tms_i,
-    input  logic      jtag_trst_ni
+    input  logic      jtag_trst_ni,
+    input  logic [31:0] usercode_i
 );
 
     // Custom instruction interface
@@ -851,9 +852,10 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
 
     // FabricConfig Peripheral
     //TODO localparam REG_XIF_OR_PERIPH        = 4'd0;
-    localparam REG_FABRIC_CONFIG_BUSY   = 4'd4;
-    localparam REG_BITSTREAM            = 4'd8;
-    localparam REG_TRIGGER_SLOT         = 4'd12;
+    localparam REG_FABRIC_CONFIG_BUSY   = 5'd4;
+    localparam REG_BITSTREAM            = 5'd8;
+    localparam REG_TRIGGER_SLOT         = 5'd12;
+    localparam REG_USERCODE             = 5'd16; // Place usercode with fabric, as it represents what is loaded
     
     `ifdef DEBUG
     logic [  32-1:0] debug_fabric_config_req;
@@ -909,7 +911,7 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
                 // Write
                 if (fabric_config_obi_req.a.we) begin
                     
-                    if (fabric_config_obi_req.a.addr[3:0] == REG_BITSTREAM) begin
+                    if (fabric_config_obi_req.a.addr[4:0] == REG_BITSTREAM) begin
                         if (fabric_config_obi_req.a.be[0]) bitstream_data_o[ 7: 0] <= fabric_config_obi_req.a.wdata[7 : 0];
                         if (fabric_config_obi_req.a.be[1]) bitstream_data_o[15: 8] <= fabric_config_obi_req.a.wdata[15: 8];
                         if (fabric_config_obi_req.a.be[2]) bitstream_data_o[23:16] <= fabric_config_obi_req.a.wdata[23:16];
@@ -918,7 +920,7 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
                         bitstream_valid_o <= 1'b1;
                     end
                     
-                    if (fabric_config_obi_req.a.addr[3:0] == REG_TRIGGER_SLOT) begin
+                    if (fabric_config_obi_req.a.addr[4:0] == REG_TRIGGER_SLOT) begin
                         if (fabric_config_obi_req.a.be[0]) warmboot_slot_o <= fabric_config_obi_req.a.wdata[3 : 0];
 
                         warmboot_boot_o <= 1'b1;
@@ -926,8 +928,12 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
                 // Read
                 end else begin
                     fabric_config_obi_rsp.r.rdata <= '0;
-                    if (fabric_config_obi_req.a.addr[3:0] == REG_FABRIC_CONFIG_BUSY) begin
+                    if (fabric_config_obi_req.a.addr[4:0] == REG_FABRIC_CONFIG_BUSY) begin
                         fabric_config_obi_rsp.r.rdata <= {31'd0, fabric_config_busy_i};
+                    end
+
+                    if (fabric_config_obi_req.a.addr[4:0] == REG_USERCODE) begin
+                        fabric_config_obi_rsp.r.rdata <= usercode_i;
                     end
                 end
             end

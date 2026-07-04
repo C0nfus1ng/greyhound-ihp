@@ -28,6 +28,9 @@ module fpga_dm import soc_pkg::*; #(
     input  logic        fabric_bitstream_valid_i,
     input  logic [31:0] fabric_bitstream_data_i,
 
+    // USERCODE
+    output logic [31:0] usercode_o,
+
     // Boundary scan registers
     // GPIOs
     // to boundary
@@ -195,6 +198,8 @@ module fpga_dm import soc_pkg::*; #(
             end
         end
     end
+
+    assign usercode_o = usercode_q; // Output the usercode reg to read from memory
 
     // Sync whole usercode into tclk domain, this will never be used faster than 2 tclk cycles, and if used faster the result is undefined anyway...
     // after changing usercode_q (because of the IEEE1149.1 state machine and fabric programming taking many cycles)

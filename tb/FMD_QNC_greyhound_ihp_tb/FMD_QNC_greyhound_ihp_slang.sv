@@ -40579,9 +40579,9 @@ module \fifo_v3$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_periph_e
 endmodule
 
 (* src = "src/debug/fpga_dm.sv:4.8" *)
-module \fpga_dm$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm (clk_i, rst_ni, clk_o, tck_i, tms_i, trst_ni, td_i, td_o, en_jtag_receiver_o, jtag_bitstream_o, jtag_bitstream_valid_o, fabric_busy_i, fabric_configured_i, fabric_bitstream_valid_i, fabric_bitstream_data_i, fabric_pin_i, fabric_pin_o, fabric_enable_pin_o, fabric_output_enable_i, fabric_output_data_i, fabric_input_data_o
-, fabric_irq_o, fabric_irq_i, fabric_issue_ready_o, fabric_issue_accept_o, fabric_issue_valid_i, fabric_issue_instr_i, fabric_issue_op0_i, fabric_issue_op1_i, fabric_issue_id_i, fabric_result_valid_o, fabric_result_id_o, fabric_result_rd_o, fabric_result_o, fabric_issue_ready_i, fabric_issue_accept_i, fabric_issue_valid_o, fabric_issue_instr_o, fabric_issue_op0_o, fabric_issue_op1_o, fabric_issue_id_o, fabric_result_valid_i
-, fabric_result_id_i, fabric_result_rd_i, fabric_result_i, fabric_obi_req_i, fabric_obi_we_i, fabric_obi_be_i, fabric_obi_addr_i, fabric_obi_wdata_i, fabric_obi_gnt_o, fabric_obi_rvalid_o, fabric_obi_rdata_o, fabric_obi_req_o, fabric_obi_we_o, fabric_obi_be_o, fabric_obi_addr_o, fabric_obi_wdata_o, fabric_obi_gnt_i, fabric_obi_rvalid_i, fabric_obi_rdata_i);
+module \fpga_dm$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm (clk_i, rst_ni, clk_o, tck_i, tms_i, trst_ni, td_i, td_o, en_jtag_receiver_o, jtag_bitstream_o, jtag_bitstream_valid_o, fabric_busy_i, fabric_configured_i, fabric_bitstream_valid_i, fabric_bitstream_data_i, usercode_o, fabric_pin_i, fabric_pin_o, fabric_enable_pin_o, fabric_output_enable_i, fabric_output_data_i
+, fabric_input_data_o, fabric_irq_o, fabric_irq_i, fabric_issue_ready_o, fabric_issue_accept_o, fabric_issue_valid_i, fabric_issue_instr_i, fabric_issue_op0_i, fabric_issue_op1_i, fabric_issue_id_i, fabric_result_valid_o, fabric_result_id_o, fabric_result_rd_o, fabric_result_o, fabric_issue_ready_i, fabric_issue_accept_i, fabric_issue_valid_o, fabric_issue_instr_o, fabric_issue_op0_o, fabric_issue_op1_o, fabric_issue_id_o
+, fabric_result_valid_i, fabric_result_id_i, fabric_result_rd_i, fabric_result_i, fabric_obi_req_i, fabric_obi_we_i, fabric_obi_be_i, fabric_obi_addr_i, fabric_obi_wdata_i, fabric_obi_gnt_o, fabric_obi_rvalid_o, fabric_obi_rdata_o, fabric_obi_req_o, fabric_obi_we_o, fabric_obi_be_o, fabric_obi_addr_o, fabric_obi_wdata_o, fabric_obi_gnt_i, fabric_obi_rvalid_i, fabric_obi_rdata_i);
   (* hdlname = "clk_i" *)
   (* src = "src/debug/fpga_dm.sv:7.25" *)
   input clk_i;
@@ -40642,346 +40642,350 @@ module \fpga_dm$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm (clk_i, rst_ni, cl
   (* src = "src/debug/fpga_dm.sv:29.25" *)
   input [31:0] fabric_bitstream_data_i;
   wire [31:0] fabric_bitstream_data_i;
+  (* hdlname = "usercode_o" *)
+  (* src = "src/debug/fpga_dm.sv:32.25" *)
+  output [31:0] usercode_o;
+  wire [31:0] usercode_o;
   (* hdlname = "fabric_pin_i" *)
-  (* src = "src/debug/fpga_dm.sv:34.43" *)
+  (* src = "src/debug/fpga_dm.sv:37.43" *)
   input [31:0] fabric_pin_i;
   wire [31:0] fabric_pin_i;
   (* hdlname = "fabric_pin_o" *)
-  (* src = "src/debug/fpga_dm.sv:35.43" *)
+  (* src = "src/debug/fpga_dm.sv:38.43" *)
   output [31:0] fabric_pin_o;
   wire [31:0] fabric_pin_o;
   (* hdlname = "fabric_enable_pin_o" *)
-  (* src = "src/debug/fpga_dm.sv:36.43" *)
+  (* src = "src/debug/fpga_dm.sv:39.43" *)
   output [31:0] fabric_enable_pin_o;
   wire [31:0] fabric_enable_pin_o;
   (* hdlname = "fabric_output_enable_i" *)
-  (* src = "src/debug/fpga_dm.sv:38.43" *)
+  (* src = "src/debug/fpga_dm.sv:41.43" *)
   input [31:0] fabric_output_enable_i;
   wire [31:0] fabric_output_enable_i;
   (* hdlname = "fabric_output_data_i" *)
-  (* src = "src/debug/fpga_dm.sv:39.43" *)
+  (* src = "src/debug/fpga_dm.sv:42.43" *)
   input [31:0] fabric_output_data_i;
   wire [31:0] fabric_output_data_i;
   (* hdlname = "fabric_input_data_o" *)
-  (* src = "src/debug/fpga_dm.sv:40.43" *)
+  (* src = "src/debug/fpga_dm.sv:43.43" *)
   output [31:0] fabric_input_data_o;
   wire [31:0] fabric_input_data_o;
   (* hdlname = "fabric_irq_o" *)
-  (* src = "src/debug/fpga_dm.sv:43.18" *)
+  (* src = "src/debug/fpga_dm.sv:46.18" *)
   output [3:0] fabric_irq_o;
   wire [3:0] fabric_irq_o;
   (* hdlname = "fabric_irq_i" *)
-  (* src = "src/debug/fpga_dm.sv:45.18" *)
+  (* src = "src/debug/fpga_dm.sv:48.18" *)
   input [3:0] fabric_irq_i;
   wire [3:0] fabric_irq_i;
   (* hdlname = "fabric_issue_ready_o" *)
-  (* src = "src/debug/fpga_dm.sv:48.25" *)
+  (* src = "src/debug/fpga_dm.sv:51.25" *)
   output fabric_issue_ready_o;
   wire fabric_issue_ready_o;
   (* hdlname = "fabric_issue_accept_o" *)
-  (* src = "src/debug/fpga_dm.sv:49.25" *)
+  (* src = "src/debug/fpga_dm.sv:52.25" *)
   output fabric_issue_accept_o;
   wire fabric_issue_accept_o;
   (* hdlname = "fabric_issue_valid_i" *)
-  (* src = "src/debug/fpga_dm.sv:50.25" *)
+  (* src = "src/debug/fpga_dm.sv:53.25" *)
   input fabric_issue_valid_i;
   wire fabric_issue_valid_i;
   (* hdlname = "fabric_issue_instr_i" *)
-  (* src = "src/debug/fpga_dm.sv:51.25" *)
+  (* src = "src/debug/fpga_dm.sv:54.25" *)
   input [31:0] fabric_issue_instr_i;
   wire [31:0] fabric_issue_instr_i;
   (* hdlname = "fabric_issue_op0_i" *)
-  (* src = "src/debug/fpga_dm.sv:52.25" *)
+  (* src = "src/debug/fpga_dm.sv:55.25" *)
   input [31:0] fabric_issue_op0_i;
   wire [31:0] fabric_issue_op0_i;
   (* hdlname = "fabric_issue_op1_i" *)
-  (* src = "src/debug/fpga_dm.sv:53.25" *)
+  (* src = "src/debug/fpga_dm.sv:56.25" *)
   input [31:0] fabric_issue_op1_i;
   wire [31:0] fabric_issue_op1_i;
   (* hdlname = "fabric_issue_id_i" *)
-  (* src = "src/debug/fpga_dm.sv:54.25" *)
+  (* src = "src/debug/fpga_dm.sv:57.25" *)
   input [3:0] fabric_issue_id_i;
   wire [3:0] fabric_issue_id_i;
   (* hdlname = "fabric_result_valid_o" *)
-  (* src = "src/debug/fpga_dm.sv:55.25" *)
+  (* src = "src/debug/fpga_dm.sv:58.25" *)
   output fabric_result_valid_o;
   wire fabric_result_valid_o;
   (* hdlname = "fabric_result_id_o" *)
-  (* src = "src/debug/fpga_dm.sv:56.25" *)
+  (* src = "src/debug/fpga_dm.sv:59.25" *)
   output [3:0] fabric_result_id_o;
   wire [3:0] fabric_result_id_o;
   (* hdlname = "fabric_result_rd_o" *)
-  (* src = "src/debug/fpga_dm.sv:57.25" *)
+  (* src = "src/debug/fpga_dm.sv:60.25" *)
   output [4:0] fabric_result_rd_o;
   wire [4:0] fabric_result_rd_o;
   (* hdlname = "fabric_result_o" *)
-  (* src = "src/debug/fpga_dm.sv:58.25" *)
+  (* src = "src/debug/fpga_dm.sv:61.25" *)
   output [31:0] fabric_result_o;
   wire [31:0] fabric_result_o;
   (* hdlname = "fabric_issue_ready_i" *)
-  (* src = "src/debug/fpga_dm.sv:60.25" *)
+  (* src = "src/debug/fpga_dm.sv:63.25" *)
   input fabric_issue_ready_i;
   wire fabric_issue_ready_i;
   (* hdlname = "fabric_issue_accept_i" *)
-  (* src = "src/debug/fpga_dm.sv:61.25" *)
+  (* src = "src/debug/fpga_dm.sv:64.25" *)
   input fabric_issue_accept_i;
   wire fabric_issue_accept_i;
   (* hdlname = "fabric_issue_valid_o" *)
-  (* src = "src/debug/fpga_dm.sv:62.25" *)
+  (* src = "src/debug/fpga_dm.sv:65.25" *)
   output fabric_issue_valid_o;
   wire fabric_issue_valid_o;
   (* hdlname = "fabric_issue_instr_o" *)
-  (* src = "src/debug/fpga_dm.sv:63.25" *)
+  (* src = "src/debug/fpga_dm.sv:66.25" *)
   output [31:0] fabric_issue_instr_o;
   wire [31:0] fabric_issue_instr_o;
   (* hdlname = "fabric_issue_op0_o" *)
-  (* src = "src/debug/fpga_dm.sv:64.25" *)
+  (* src = "src/debug/fpga_dm.sv:67.25" *)
   output [31:0] fabric_issue_op0_o;
   wire [31:0] fabric_issue_op0_o;
   (* hdlname = "fabric_issue_op1_o" *)
-  (* src = "src/debug/fpga_dm.sv:65.25" *)
+  (* src = "src/debug/fpga_dm.sv:68.25" *)
   output [31:0] fabric_issue_op1_o;
   wire [31:0] fabric_issue_op1_o;
   (* hdlname = "fabric_issue_id_o" *)
-  (* src = "src/debug/fpga_dm.sv:66.25" *)
+  (* src = "src/debug/fpga_dm.sv:69.25" *)
   output [3:0] fabric_issue_id_o;
   wire [3:0] fabric_issue_id_o;
   (* hdlname = "fabric_result_valid_i" *)
-  (* src = "src/debug/fpga_dm.sv:67.25" *)
+  (* src = "src/debug/fpga_dm.sv:70.25" *)
   input fabric_result_valid_i;
   wire fabric_result_valid_i;
   (* hdlname = "fabric_result_id_i" *)
-  (* src = "src/debug/fpga_dm.sv:68.25" *)
+  (* src = "src/debug/fpga_dm.sv:71.25" *)
   input [3:0] fabric_result_id_i;
   wire [3:0] fabric_result_id_i;
   (* hdlname = "fabric_result_rd_i" *)
-  (* src = "src/debug/fpga_dm.sv:69.25" *)
+  (* src = "src/debug/fpga_dm.sv:72.25" *)
   input [4:0] fabric_result_rd_i;
   wire [4:0] fabric_result_rd_i;
   (* hdlname = "fabric_result_i" *)
-  (* src = "src/debug/fpga_dm.sv:70.25" *)
+  (* src = "src/debug/fpga_dm.sv:73.25" *)
   input [31:0] fabric_result_i;
   wire [31:0] fabric_result_i;
   (* hdlname = "fabric_obi_req_i" *)
-  (* src = "src/debug/fpga_dm.sv:73.25" *)
+  (* src = "src/debug/fpga_dm.sv:76.25" *)
   input fabric_obi_req_i;
   wire fabric_obi_req_i;
   (* hdlname = "fabric_obi_we_i" *)
-  (* src = "src/debug/fpga_dm.sv:74.25" *)
+  (* src = "src/debug/fpga_dm.sv:77.25" *)
   input fabric_obi_we_i;
   wire fabric_obi_we_i;
   (* hdlname = "fabric_obi_be_i" *)
-  (* src = "src/debug/fpga_dm.sv:75.25" *)
+  (* src = "src/debug/fpga_dm.sv:78.25" *)
   input [3:0] fabric_obi_be_i;
   wire [3:0] fabric_obi_be_i;
   (* hdlname = "fabric_obi_addr_i" *)
-  (* src = "src/debug/fpga_dm.sv:76.25" *)
+  (* src = "src/debug/fpga_dm.sv:79.25" *)
   input [23:0] fabric_obi_addr_i;
   wire [23:0] fabric_obi_addr_i;
   (* hdlname = "fabric_obi_wdata_i" *)
-  (* src = "src/debug/fpga_dm.sv:77.25" *)
+  (* src = "src/debug/fpga_dm.sv:80.25" *)
   input [31:0] fabric_obi_wdata_i;
   wire [31:0] fabric_obi_wdata_i;
   (* hdlname = "fabric_obi_gnt_o" *)
-  (* src = "src/debug/fpga_dm.sv:78.25" *)
+  (* src = "src/debug/fpga_dm.sv:81.25" *)
   output fabric_obi_gnt_o;
   wire fabric_obi_gnt_o;
   (* hdlname = "fabric_obi_rvalid_o" *)
-  (* src = "src/debug/fpga_dm.sv:79.25" *)
+  (* src = "src/debug/fpga_dm.sv:82.25" *)
   output fabric_obi_rvalid_o;
   wire fabric_obi_rvalid_o;
   (* hdlname = "fabric_obi_rdata_o" *)
-  (* src = "src/debug/fpga_dm.sv:80.25" *)
+  (* src = "src/debug/fpga_dm.sv:83.25" *)
   output [31:0] fabric_obi_rdata_o;
   wire [31:0] fabric_obi_rdata_o;
   (* hdlname = "fabric_obi_req_o" *)
-  (* src = "src/debug/fpga_dm.sv:82.25" *)
+  (* src = "src/debug/fpga_dm.sv:85.25" *)
   output fabric_obi_req_o;
   wire fabric_obi_req_o;
   (* hdlname = "fabric_obi_we_o" *)
-  (* src = "src/debug/fpga_dm.sv:83.25" *)
+  (* src = "src/debug/fpga_dm.sv:86.25" *)
   output fabric_obi_we_o;
   wire fabric_obi_we_o;
   (* hdlname = "fabric_obi_be_o" *)
-  (* src = "src/debug/fpga_dm.sv:84.25" *)
+  (* src = "src/debug/fpga_dm.sv:87.25" *)
   output [3:0] fabric_obi_be_o;
   wire [3:0] fabric_obi_be_o;
   (* hdlname = "fabric_obi_addr_o" *)
-  (* src = "src/debug/fpga_dm.sv:85.25" *)
+  (* src = "src/debug/fpga_dm.sv:88.25" *)
   output [23:0] fabric_obi_addr_o;
   wire [23:0] fabric_obi_addr_o;
   (* hdlname = "fabric_obi_wdata_o" *)
-  (* src = "src/debug/fpga_dm.sv:86.25" *)
+  (* src = "src/debug/fpga_dm.sv:89.25" *)
   output [31:0] fabric_obi_wdata_o;
   wire [31:0] fabric_obi_wdata_o;
   (* hdlname = "fabric_obi_gnt_i" *)
-  (* src = "src/debug/fpga_dm.sv:87.25" *)
+  (* src = "src/debug/fpga_dm.sv:90.25" *)
   input fabric_obi_gnt_i;
   wire fabric_obi_gnt_i;
   (* hdlname = "fabric_obi_rvalid_i" *)
-  (* src = "src/debug/fpga_dm.sv:88.25" *)
+  (* src = "src/debug/fpga_dm.sv:91.25" *)
   input fabric_obi_rvalid_i;
   wire fabric_obi_rvalid_i;
   (* hdlname = "fabric_obi_rdata_i" *)
-  (* src = "src/debug/fpga_dm.sv:89.25" *)
+  (* src = "src/debug/fpga_dm.sv:92.25" *)
   input [31:0] fabric_obi_rdata_i;
   wire [31:0] fabric_obi_rdata_i;
   wire _00_;
   wire _01_;
   wire _02_;
   wire _03_;
-  (* src = "src/debug/fpga_dm.sv:212.13-214.16" *)
+  (* src = "src/debug/fpga_dm.sv:217.13-219.16" *)
   wire _04_;
   wire _05_;
   wire _06_;
   wire [31:0] _07_;
   (* hdlname = "boundary_scan_tdi" *)
-  (* src = "src/debug/fpga_dm.sv:126.11" *)
+  (* src = "src/debug/fpga_dm.sv:129.11" *)
   wire boundary_scan_tdi;
   (* hdlname = "boundary_scan_tdo" *)
-  (* src = "src/debug/fpga_dm.sv:126.30" *)
+  (* src = "src/debug/fpga_dm.sv:129.30" *)
   (* unused_bits = "0" *)
   wire boundary_scan_tdo;
   (* hdlname = "capture_bsr_select" *)
-  (* src = "src/debug/fpga_dm.sv:127.11" *)
+  (* src = "src/debug/fpga_dm.sv:130.11" *)
   (* unused_bits = "0" *)
   wire capture_bsr_select;
   (* hdlname = "clk_enable" *)
-  (* src = "src/debug/fpga_dm.sv:93.35" *)
+  (* src = "src/debug/fpga_dm.sv:96.35" *)
   (* unused_bits = "0" *)
   wire clk_enable;
   (* hdlname = "dm_clear" *)
-  (* src = "src/debug/fpga_dm.sv:124.18" *)
+  (* src = "src/debug/fpga_dm.sv:127.18" *)
   wire dm_clear;
   (* hdlname = "ejtag_d" *)
-  (* src = "src/debug/fpga_dm.sv:116.11" *)
+  (* src = "src/debug/fpga_dm.sv:119.11" *)
   wire ejtag_d;
   (* hdlname = "ejtag_q" *)
-  (* src = "src/debug/fpga_dm.sv:116.20" *)
+  (* src = "src/debug/fpga_dm.sv:119.20" *)
   reg ejtag_q;
   (* hdlname = "ejtag_valid" *)
-  (* src = "src/debug/fpga_dm.sv:116.29" *)
+  (* src = "src/debug/fpga_dm.sv:119.29" *)
   wire ejtag_valid;
   (* hdlname = "en_jtag_receiver_d" *)
-  (* src = "src/debug/fpga_dm.sv:219.17" *)
+  (* src = "src/debug/fpga_dm.sv:224.17" *)
   reg [1:0] en_jtag_receiver_d;
   (* hdlname = "fabric_bitstream_data_q" *)
-  (* src = "src/debug/fpga_dm.sv:173.18" *)
+  (* src = "src/debug/fpga_dm.sv:176.18" *)
   reg [31:0] fabric_bitstream_data_q;
   (* hdlname = "fabric_bitstream_valid_q" *)
-  (* src = "src/debug/fpga_dm.sv:172.11" *)
+  (* src = "src/debug/fpga_dm.sv:175.11" *)
   reg fabric_bitstream_valid_q;
   (* hdlname = "highZ" *)
-  (* src = "src/debug/fpga_dm.sv:125.39" *)
+  (* src = "src/debug/fpga_dm.sv:128.39" *)
   (* unused_bits = "0" *)
   wire highZ;
   (* hdlname = "isc_ext_conf" *)
-  (* src = "src/debug/fpga_dm.sv:118.49" *)
+  (* src = "src/debug/fpga_dm.sv:121.49" *)
   wire isc_ext_conf;
   (* hdlname = "isc_ext_conf_d" *)
-  (* src = "src/debug/fpga_dm.sv:245.17" *)
+  (* src = "src/debug/fpga_dm.sv:250.17" *)
   reg [2:0] isc_ext_conf_d;
   (* hdlname = "isc_ext_prog" *)
-  (* src = "src/debug/fpga_dm.sv:118.35" *)
+  (* src = "src/debug/fpga_dm.sv:121.35" *)
   wire isc_ext_prog;
   (* hdlname = "isc_ext_prog_d" *)
-  (* src = "src/debug/fpga_dm.sv:244.17" *)
+  (* src = "src/debug/fpga_dm.sv:249.17" *)
   reg [2:0] isc_ext_prog_d;
   (* hdlname = "isc_pdata" *)
-  (* src = "src/debug/fpga_dm.sv:119.18" *)
+  (* src = "src/debug/fpga_dm.sv:122.18" *)
   wire [31:0] isc_pdata;
   (* hdlname = "isc_pdata_valid" *)
-  (* src = "src/debug/fpga_dm.sv:118.18" *)
+  (* src = "src/debug/fpga_dm.sv:121.18" *)
   wire isc_pdata_valid;
   (* hdlname = "jtag_usercode_q" *)
-  (* src = "src/debug/fpga_dm.sv:121.18" *)
+  (* src = "src/debug/fpga_dm.sv:124.18" *)
   reg [31:0] jtag_usercode_q;
   (* hdlname = "mode1" *)
-  (* src = "src/debug/fpga_dm.sv:125.11" *)
+  (* src = "src/debug/fpga_dm.sv:128.11" *)
   (* unused_bits = "0" *)
   wire mode1;
   (* hdlname = "mode2" *)
-  (* src = "src/debug/fpga_dm.sv:125.18" *)
+  (* src = "src/debug/fpga_dm.sv:128.18" *)
   (* unused_bits = "0" *)
   wire mode2;
   (* hdlname = "mode5" *)
-  (* src = "src/debug/fpga_dm.sv:125.25" *)
+  (* src = "src/debug/fpga_dm.sv:128.25" *)
   (* unused_bits = "0" *)
   wire mode5;
   (* hdlname = "mode6" *)
-  (* src = "src/debug/fpga_dm.sv:125.32" *)
+  (* src = "src/debug/fpga_dm.sv:128.32" *)
   (* unused_bits = "0" *)
   wire mode6;
   (* hdlname = "shift_bsr_select" *)
-  (* src = "src/debug/fpga_dm.sv:127.31" *)
+  (* src = "src/debug/fpga_dm.sv:130.31" *)
   (* unused_bits = "0" *)
   wire shift_bsr_select;
   (* hdlname = "tck_n" *)
-  (* src = "src/debug/fpga_dm.sv:124.11" *)
+  (* src = "src/debug/fpga_dm.sv:127.11" *)
   (* unused_bits = "0" *)
   wire tck_n;
   (* hdlname = "testmode" *)
-  (* src = "src/debug/fpga_dm.sv:93.25" *)
+  (* src = "src/debug/fpga_dm.sv:96.25" *)
   (* unused_bits = "0" *)
   wire testmode;
   (* hdlname = "update_bsr_select" *)
-  (* src = "src/debug/fpga_dm.sv:127.49" *)
+  (* src = "src/debug/fpga_dm.sv:130.49" *)
   (* unused_bits = "0" *)
   wire update_bsr_select;
   (* hdlname = "usercode_q" *)
-  (* src = "src/debug/fpga_dm.sv:121.35" *)
+  (* src = "src/debug/fpga_dm.sv:124.35" *)
   reg [31:0] usercode_q;
   (* hdlname = "usercode_valid_d" *)
-  (* src = "src/debug/fpga_dm.sv:122.18" *)
+  (* src = "src/debug/fpga_dm.sv:125.18" *)
   wire usercode_valid_d;
   (* hdlname = "usercode_valid_q" *)
-  (* src = "src/debug/fpga_dm.sv:122.36" *)
+  (* src = "src/debug/fpga_dm.sv:125.36" *)
   reg usercode_valid_q;
-  assign _01_ = fabric_bitstream_data_q == (* src = "src/debug/fpga_dm.sv:179.59-179.99" *) 24'haaff01;
-  assign _00_ = ~ (* src = "src/debug/fpga_dm.sv:256.27-256.45" *) isc_ext_prog_d[2];
-  assign usercode_valid_d = fabric_bitstream_valid_q & (* src = "src/debug/fpga_dm.sv:179.31-179.100" *) _01_;
-  assign isc_ext_prog = _00_ & (* src = "src/debug/fpga_dm.sv:256.27-256.65" *) isc_ext_prog_d[1];
-  assign _02_ = ~ (* src = "src/debug/fpga_dm.sv:257.27-257.45" *) isc_ext_conf_d[2];
-  assign isc_ext_conf = _02_ & (* src = "src/debug/fpga_dm.sv:257.27-257.65" *) isc_ext_conf_d[1];
-  assign _03_ = usercode_valid_q & (* src = "src/debug/fpga_dm.sv:185.17-185.60" *) fabric_bitstream_valid_q;
-  (* src = "src/debug/fpga_dm.sv:208.5" *)
+  assign _01_ = fabric_bitstream_data_q == (* src = "src/debug/fpga_dm.sv:182.59-182.99" *) 24'haaff01;
+  assign _00_ = ~ (* src = "src/debug/fpga_dm.sv:261.27-261.45" *) isc_ext_prog_d[2];
+  assign usercode_valid_d = fabric_bitstream_valid_q & (* src = "src/debug/fpga_dm.sv:182.31-182.100" *) _01_;
+  assign isc_ext_prog = _00_ & (* src = "src/debug/fpga_dm.sv:261.27-261.65" *) isc_ext_prog_d[1];
+  assign _02_ = ~ (* src = "src/debug/fpga_dm.sv:262.27-262.45" *) isc_ext_conf_d[2];
+  assign isc_ext_conf = _02_ & (* src = "src/debug/fpga_dm.sv:262.27-262.65" *) isc_ext_conf_d[1];
+  assign _03_ = usercode_valid_q & (* src = "src/debug/fpga_dm.sv:188.17-188.60" *) fabric_bitstream_valid_q;
+  (* src = "src/debug/fpga_dm.sv:213.5" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) ejtag_q <= 1'h0;
     else ejtag_q <= _04_;
-  (* src = "src/debug/fpga_dm.sv:220.5" *)
+  (* src = "src/debug/fpga_dm.sv:225.5" *)
   always_ff @(posedge clk_i)
     en_jtag_receiver_d <= { en_jtag_receiver_d[0], ejtag_q };
-  (* src = "src/debug/fpga_dm.sv:174.5" *)
+  (* src = "src/debug/fpga_dm.sv:177.5" *)
   always_ff @(posedge clk_i)
     fabric_bitstream_data_q <= fabric_bitstream_data_i;
-  (* src = "src/debug/fpga_dm.sv:174.5" *)
+  (* src = "src/debug/fpga_dm.sv:177.5" *)
   always_ff @(posedge clk_i)
     fabric_bitstream_valid_q <= fabric_bitstream_valid_i;
-  (* src = "src/debug/fpga_dm.sv:246.5" *)
+  (* src = "src/debug/fpga_dm.sv:251.5" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) isc_ext_conf_d <= 3'h0;
     else isc_ext_conf_d <= { isc_ext_conf_d[1:0], fabric_configured_i };
-  (* src = "src/debug/fpga_dm.sv:246.5" *)
+  (* src = "src/debug/fpga_dm.sv:251.5" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) isc_ext_prog_d <= 3'h0;
     else isc_ext_prog_d <= { isc_ext_prog_d[1:0], fabric_busy_i };
-  (* src = "src/debug/fpga_dm.sv:201.5" *)
+  (* src = "src/debug/fpga_dm.sv:206.5" *)
   always_ff @(posedge tck_i)
     jtag_usercode_q <= usercode_q;
-  (* src = "src/debug/fpga_dm.sv:180.5" *)
+  (* src = "src/debug/fpga_dm.sv:183.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) usercode_q <= 32'd0;
     else usercode_q <= _07_;
-  (* src = "src/debug/fpga_dm.sv:180.5" *)
+  (* src = "src/debug/fpga_dm.sv:183.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) usercode_valid_q <= 1'h0;
     else usercode_valid_q <= _05_;
-  assign _05_ = usercode_valid_d ? (* src = "src/debug/fpga_dm.sv:194.17-194.42|src/debug/fpga_dm.sv:193.13-195.16" *) 1'h1 : _06_;
-  assign _06_ = fabric_bitstream_valid_q ? (* src = "src/debug/fpga_dm.sv:190.17-190.42|src/debug/fpga_dm.sv:189.13-191.16" *) 1'h0 : usercode_valid_q;
-  assign _07_ = _03_ ? (* src = "src/debug/fpga_dm.sv:186.17-186.55|src/debug/fpga_dm.sv:185.13-187.16" *) fabric_bitstream_data_q : usercode_q;
-  assign _04_ = ejtag_valid ? (* src = "src/debug/fpga_dm.sv:213.17-213.36|src/debug/fpga_dm.sv:212.13-214.16" *) ejtag_d : ejtag_q;
+  assign _05_ = usercode_valid_d ? (* src = "src/debug/fpga_dm.sv:197.17-197.42|src/debug/fpga_dm.sv:196.13-198.16" *) 1'h1 : _06_;
+  assign _06_ = fabric_bitstream_valid_q ? (* src = "src/debug/fpga_dm.sv:193.17-193.42|src/debug/fpga_dm.sv:192.13-194.16" *) 1'h0 : usercode_valid_q;
+  assign _07_ = _03_ ? (* src = "src/debug/fpga_dm.sv:189.17-189.55|src/debug/fpga_dm.sv:188.13-190.16" *) fabric_bitstream_data_q : usercode_q;
+  assign _04_ = ejtag_valid ? (* src = "src/debug/fpga_dm.sv:218.17-218.36|src/debug/fpga_dm.sv:217.13-219.16" *) ejtag_d : ejtag_q;
   (* hdlname = "i_cdc_jtag_out" *)
-  (* src = "src/debug/fpga_dm.sv:228.46" *)
+  (* src = "src/debug/fpga_dm.sv:233.46" *)
   \cdc_2phase_clearable$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_cdc_jtag_out  i_cdc_jtag_out (
     .dst_clear_i(1'h0),
     .dst_clk_i(clk_i),
@@ -40996,7 +41000,7 @@ module \fpga_dm$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm (clk_i, rst_ni, cl
     .src_valid_i(isc_pdata_valid)
   );
   (* hdlname = "i_dm_jtag_tap" *)
-  (* src = "src/debug/fpga_dm.sv:134.7" *)
+  (* src = "src/debug/fpga_dm.sv:137.7" *)
   \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag_tap  i_dm_jtag_tap (
     .boundary_scan_i(1'h0),
     .boundary_scan_o(boundary_scan_tdo),
@@ -41052,10 +41056,11 @@ module \fpga_dm$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm (clk_i, rst_ni, cl
   assign fabric_result_o = fabric_result_i;
   assign fabric_result_rd_o = fabric_result_rd_i;
   assign fabric_result_valid_o = fabric_result_valid_i;
+  assign usercode_o = usercode_q;
 endmodule
 
 (* src = "src/debug/fpga_dm_jtag_tap.sv:21.8" *)
-module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag_tap (tck_i, tms_i, trst_ni, td_i, td_o, tck_no, dm_rst_o, ejtag_o, ejtag_valid_o, ejtag_i, usercode_i, isc_pdata_valid_o, isc_pdata_o, isc_ext_prog_i, isc_ext_conf_i, mode1_o, mode2_o, mode5_o, mode6_o, isc_highZ_o, boundary_scan_o
+module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag_tap (tck_i, tms_i, trst_ni, td_i, td_o, usercode_i, tck_no, dm_rst_o, ejtag_o, ejtag_valid_o, ejtag_i, isc_pdata_valid_o, isc_pdata_o, isc_ext_prog_i, isc_ext_conf_i, mode1_o, mode2_o, mode5_o, mode6_o, isc_highZ_o, boundary_scan_o
 , boundary_scan_i, capture_bsr_select_o, shift_bsr_select_o, update_bsr_select_o, testmode_o, testmode_clk_pulse_o);
   (* hdlname = "tck_i" *)
   (* src = "src/debug/fpga_dm_jtag_tap.sv:30.23" *)
@@ -41077,6 +41082,10 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   (* src = "src/debug/fpga_dm_jtag_tap.sv:34.23" *)
   output td_o;
   reg td_o;
+  (* hdlname = "usercode_i" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:43.23" *)
+  input [31:0] usercode_i;
+  wire [31:0] usercode_i;
   (* hdlname = "tck_no" *)
   (* src = "src/debug/fpga_dm_jtag_tap.sv:35.23" *)
   output tck_no;
@@ -41097,10 +41106,6 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   (* src = "src/debug/fpga_dm_jtag_tap.sv:41.23" *)
   input ejtag_i;
   wire ejtag_i;
-  (* hdlname = "usercode_i" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:43.23" *)
-  input [31:0] usercode_i;
-  wire [31:0] usercode_i;
   (* hdlname = "isc_pdata_valid_o" *)
   (* src = "src/debug/fpga_dm_jtag_tap.sv:45.23" *)
   output isc_pdata_valid_o;
@@ -41167,16 +41172,16 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   reg testmode_clk_pulse_o;
   wire _000_;
   wire _001_;
-  wire [1:0] _002_;
-  wire [3:0] _003_;
-  wire _004_;
-  wire [3:0] _005_;
+  wire _002_;
+  wire [1:0] _003_;
+  wire [3:0] _004_;
+  wire _005_;
   wire [3:0] _006_;
   wire [3:0] _007_;
-  wire [2:0] _008_;
-  wire [1:0] _009_;
-  wire [2:0] _010_;
-  wire _011_;
+  wire [3:0] _008_;
+  wire [2:0] _009_;
+  wire [1:0] _010_;
+  wire [2:0] _011_;
   wire _012_;
   wire _013_;
   wire _014_;
@@ -41214,31 +41219,31 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   wire [31:0] _033_;
   (* src = "src/debug/fpga_dm_jtag_tap.sv:190.5-202.8" *)
   wire [31:0] _034_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:471.9-475.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:476.9-480.12" *)
   wire _035_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:478.9-480.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-485.12" *)
   wire _036_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *)
   wire _037_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:491.5-495.8" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:496.5-500.8" *)
   wire _038_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:471.9-475.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:476.9-480.12" *)
   wire _039_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-486.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:488.9-491.12" *)
   wire _040_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *)
   wire _041_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:491.5-495.8" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:496.5-500.8" *)
   wire _042_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:462.9-464.12" *)
-  wire _043_;
   (* src = "src/debug/fpga_dm_jtag_tap.sv:467.9-469.12" *)
+  wire _043_;
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:472.9-474.12" *)
   wire _044_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:471.9-475.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:476.9-480.12" *)
   wire _045_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *)
   wire _046_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:491.5-495.8" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:496.5-500.8" *)
   wire _047_;
   (* src = "src/debug/fpga_dm_jtag_tap.sv:187.7-187.54" *)
   wire [31:0] _048_;
@@ -41366,16 +41371,16 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   (* src = "src/debug/fpga_dm_jtag_tap.sv:104.42" *)
   reg [4:0] jtag_ir_shift_q;
   (* hdlname = "mode1_d" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:350.9" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:355.9" *)
   wire mode1_d;
   (* hdlname = "mode2_d" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:350.18" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:355.18" *)
   wire mode2_d;
   (* hdlname = "mode5_d" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:350.27" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:355.27" *)
   wire mode5_d;
   (* hdlname = "mode6_d" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:350.36" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:355.36" *)
   wire mode6_d;
   (* hdlname = "shift_bsr_select_d" *)
   (* src = "src/debug/fpga_dm_jtag_tap.sv:253.31" *)
@@ -41399,7 +41404,7 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   (* src = "src/debug/fpga_dm_jtag_tap.sv:293.9" *)
   wire tck_n;
   (* hdlname = "tdo_mux" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:398.9" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:403.9" *)
   wire tdo_mux;
   (* hdlname = "test_logic_reset" *)
   (* src = "src/debug/fpga_dm_jtag_tap.sv:107.42" *)
@@ -41425,20 +41430,20 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   (* hdlname = "usercode_select" *)
   (* src = "src/debug/fpga_dm_jtag_tap.sv:157.16" *)
   wire usercode_select;
-  assign _000_ = isc_ext_conf_i & (* src = "src/debug/fpga_dm_jtag_tap.sv:497.9-497.52" *) _012_;
-  assign _001_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:521.23-521.61" *) 1'h0 : 1'h1;
-  assign _002_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:525.23-525.59" *) 2'h2 : 2'h1;
-  assign _003_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:529.23-529.57" *) 4'h9 : 4'h3;
-  assign _004_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:533.23-533.50" *) 1'h1 : 1'h0;
-  assign _005_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:540.23-540.51" *) 4'h8 : 4'h6;
-  assign _006_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:546.23-546.51" *) 4'h8 : 4'h4;
-  assign _007_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:554.23-554.59" *) 4'h0 : 4'ha;
-  assign _008_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:562.23-562.50" *) 3'h4 : 3'h3;
-  assign _009_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:573.23-573.51" *) 2'h3 : 2'h1;
-  assign _010_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:580.23-580.51" *) 3'h7 : 3'h3;
-  assign _011_ = ! (* src = "src/debug/fpga_dm_jtag_tap.sv:617.20-617.49" *) tap_state_q;
-  assign _012_ = jtag_ir_q != (* src = "src/debug/fpga_dm_jtag_tap.sv:491.27-491.51" *) 5'h16;
-  assign _013_ = isc_ext_prog_i & (* src = "src/debug/fpga_dm_jtag_tap.sv:491.9-491.52" *) _012_;
+  assign _000_ = jtag_ir_q != (* src = "src/debug/fpga_dm_jtag_tap.sv:502.27-502.51" *) 5'h16;
+  assign _001_ = isc_ext_conf_i & (* src = "src/debug/fpga_dm_jtag_tap.sv:502.9-502.52" *) _000_;
+  assign _002_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:526.23-526.61" *) 1'h0 : 1'h1;
+  assign _003_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:530.23-530.59" *) 2'h2 : 2'h1;
+  assign _004_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:534.23-534.57" *) 4'h9 : 4'h3;
+  assign _005_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:538.23-538.50" *) 1'h1 : 1'h0;
+  assign _006_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:545.23-545.51" *) 4'h8 : 4'h6;
+  assign _007_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:551.23-551.51" *) 4'h8 : 4'h4;
+  assign _008_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:559.23-559.59" *) 4'h0 : 4'ha;
+  assign _009_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:567.23-567.50" *) 3'h4 : 3'h3;
+  assign _010_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:578.23-578.51" *) 2'h3 : 2'h1;
+  assign _011_ = tms_i ? (* src = "src/debug/fpga_dm_jtag_tap.sv:585.23-585.51" *) 3'h7 : 3'h3;
+  assign _012_ = ! (* src = "src/debug/fpga_dm_jtag_tap.sv:622.20-622.49" *) tap_state_q;
+  assign _013_ = isc_ext_prog_i & (* src = "src/debug/fpga_dm_jtag_tap.sv:496.9-496.52" *) _000_;
   assign _014_ = | { _062_, _061_ };
   assign _015_ = | { _068_, _067_, _066_, _065_, _062_, _061_, _060_ };
   assign _016_ = | { _068_, _067_, _066_ };
@@ -41446,7 +41451,7 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   assign _018_ = | { _083_, _076_, _069_ };
   assign _019_ = | { _074_, _073_ };
   assign _020_ = | { _081_, _080_ };
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:594.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:599.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) bypass_q <= 1'h0;
     else bypass_q <= bypass_d;
@@ -41454,31 +41459,31 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) capture_bsr_select_o <= 1'h0;
     else capture_bsr_select_o <= 1'h0;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:612.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:617.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) dm_rst_o <= 1'h0;
-    else dm_rst_o <= _011_;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:594.3" *)
+    else dm_rst_o <= _012_;
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:599.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) idcode_q <= 32'd73687041;
     else idcode_q <= idcode_d;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:438.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:443.3" *)
   always_ff @(posedge tck_n, negedge trst_ni)
     if (!trst_ni) isc_disable_completing_q <= 1'h0;
     else isc_disable_completing_q <= isc_disable_completing_d;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:438.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:443.3" *)
   always_ff @(posedge tck_n, negedge trst_ni)
     if (!trst_ni) isc_done_q <= 1'h0;
     else isc_done_q <= isc_done_d;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:438.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:443.3" *)
   always_ff @(posedge tck_n, negedge trst_ni)
     if (!trst_ni) isc_enabled_q <= 1'h0;
     else isc_enabled_q <= isc_enabled_d;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:334.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:339.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) isc_highZ_q <= 1'h0;
     else isc_highZ_q <= 1'h0;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:594.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:599.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) isc_pdata_q <= 32'd0;
     else isc_pdata_q <= isc_pdata_d;
@@ -41490,19 +41495,19 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) jtag_ir_shift_q <= 5'h00;
     else jtag_ir_shift_q <= jtag_ir_shift_d;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:375.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:380.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) mode1_o <= 1'h0;
     else mode1_o <= 1'h0;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:375.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:380.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) mode2_o <= 1'h0;
     else mode2_o <= 1'h0;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:375.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:380.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) mode5_o <= 1'h0;
     else mode5_o <= 1'h0;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:375.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:380.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) mode6_o <= 1'h0;
     else mode6_o <= 1'h0;
@@ -41510,11 +41515,11 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) shift_bsr_select_o <= 1'h0;
     else shift_bsr_select_o <= 1'h0;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:594.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:599.3" *)
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) tap_state_q <= 4'h0;
     else tap_state_q <= tap_state_d;
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:427.3" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:432.3" *)
   always_ff @(posedge tck_n, negedge trst_ni)
     if (!trst_ni) td_o <= 1'h0;
     else td_o <= tdo_mux;
@@ -41530,29 +41535,29 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
   always_ff @(posedge tck_i, negedge trst_ni)
     if (!trst_ni) update_bsr_select_o <= 1'h0;
     else update_bsr_select_o <= 1'h0;
-  assign isc_disable_completing_d = _000_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:497.54-501.8|src/debug/fpga_dm_jtag_tap.sv:497.5-501.8" *) 1'h0 : _038_;
-  assign isc_done_d = _000_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:497.54-501.8|src/debug/fpga_dm_jtag_tap.sv:497.5-501.8" *) 1'h1 : _042_;
-  assign isc_enabled_d = _000_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:497.54-501.8|src/debug/fpga_dm_jtag_tap.sv:497.5-501.8" *) 1'h0 : _047_;
-  assign _038_ = _013_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:491.54-495.8|src/debug/fpga_dm_jtag_tap.sv:491.5-495.8" *) 1'h0 : _037_;
-  assign _042_ = _013_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:491.54-495.8|src/debug/fpga_dm_jtag_tap.sv:491.5-495.8" *) 1'h0 : _041_;
-  assign _047_ = _013_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:491.54-495.8|src/debug/fpga_dm_jtag_tap.sv:491.5-495.8" *) 1'h1 : _046_;
-  assign _040_ = isc_enable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:483.32-486.12|src/debug/fpga_dm_jtag_tap.sv:483.9-486.12" *) 1'h0 : isc_done_q;
-  assign _056_ = { isc_enabled_q, isc_done_q, isc_disable_completing_q } == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-486.12|src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *) 2'h2;
-  assign _043_ = isc_enable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:483.32-486.12|src/debug/fpga_dm_jtag_tap.sv:483.9-486.12" *) 1'h1 : 1'h0;
-  assign _036_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:479.11-479.43|src/debug/fpga_dm_jtag_tap.sv:478.9-480.12" *) isc_disable_completing_q : 1'h0;
-  assign _057_ = { isc_enabled_q, isc_disable_completing_q } == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:478.9-480.12|src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *) 1'h1;
-  assign _035_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:471.33-475.12|src/debug/fpga_dm_jtag_tap.sv:471.9-475.12" *) 1'h1 : isc_disable_completing_q;
-  assign _039_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:471.33-475.12|src/debug/fpga_dm_jtag_tap.sv:471.9-475.12" *) 1'h1 : isc_done_q;
-  assign _045_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:471.33-475.12|src/debug/fpga_dm_jtag_tap.sv:471.9-475.12" *) 1'h0 : _044_;
-  assign _044_ = test_logic_reset ? (* src = "src/debug/fpga_dm_jtag_tap.sv:468.11-468.32|src/debug/fpga_dm_jtag_tap.sv:467.9-469.12" *) 1'h0 : 1'h1;
-  assign _058_ = ! (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:462.9-464.12|src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *) { isc_enabled_q, isc_done_q, isc_disable_completing_q };
+  assign isc_disable_completing_d = _001_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:502.54-506.8|src/debug/fpga_dm_jtag_tap.sv:502.5-506.8" *) 1'h0 : _038_;
+  assign isc_done_d = _001_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:502.54-506.8|src/debug/fpga_dm_jtag_tap.sv:502.5-506.8" *) 1'h1 : _042_;
+  assign isc_enabled_d = _001_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:502.54-506.8|src/debug/fpga_dm_jtag_tap.sv:502.5-506.8" *) 1'h0 : _047_;
+  assign _038_ = _013_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:496.54-500.8|src/debug/fpga_dm_jtag_tap.sv:496.5-500.8" *) 1'h0 : _037_;
+  assign _042_ = _013_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:496.54-500.8|src/debug/fpga_dm_jtag_tap.sv:496.5-500.8" *) 1'h0 : _041_;
+  assign _047_ = _013_ ? (* src = "src/debug/fpga_dm_jtag_tap.sv:496.54-500.8|src/debug/fpga_dm_jtag_tap.sv:496.5-500.8" *) 1'h1 : _046_;
+  assign _040_ = isc_enable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:488.32-491.12|src/debug/fpga_dm_jtag_tap.sv:488.9-491.12" *) 1'h0 : isc_done_q;
+  assign _056_ = { isc_enabled_q, isc_done_q, isc_disable_completing_q } == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:488.9-491.12|src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *) 2'h2;
+  assign _043_ = isc_enable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:488.32-491.12|src/debug/fpga_dm_jtag_tap.sv:488.9-491.12" *) 1'h1 : 1'h0;
+  assign _036_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:484.11-484.43|src/debug/fpga_dm_jtag_tap.sv:483.9-485.12" *) isc_disable_completing_q : 1'h0;
+  assign _057_ = { isc_enabled_q, isc_disable_completing_q } == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-485.12|src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *) 1'h1;
+  assign _035_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:476.33-480.12|src/debug/fpga_dm_jtag_tap.sv:476.9-480.12" *) 1'h1 : isc_disable_completing_q;
+  assign _039_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:476.33-480.12|src/debug/fpga_dm_jtag_tap.sv:476.9-480.12" *) 1'h1 : isc_done_q;
+  assign _045_ = isc_disable_select ? (* src = "src/debug/fpga_dm_jtag_tap.sv:476.33-480.12|src/debug/fpga_dm_jtag_tap.sv:476.9-480.12" *) 1'h0 : _044_;
+  assign _044_ = test_logic_reset ? (* src = "src/debug/fpga_dm_jtag_tap.sv:473.11-473.32|src/debug/fpga_dm_jtag_tap.sv:472.9-474.12" *) 1'h0 : 1'h1;
+  assign _058_ = ! (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:467.9-469.12|src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *) { isc_enabled_q, isc_done_q, isc_disable_completing_q };
   function [0:0] _142_;
     input [0:0] a;
     input [1:0] b;
     input [1:0] s;
     (* full_case = 32'd1 *)
     (* parallel_case = 32'd1 *)
-    (* src = "src/debug/fpga_dm_jtag_tap.sv:478.9-480.12|src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *)
+    (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-485.12|src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *)
     (* parallel_case *)
     casez (s)
       2'b?1:
@@ -41570,7 +41575,7 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
     input [1:0] s;
     (* full_case = 32'd1 *)
     (* parallel_case = 32'd1 *)
-    (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-486.12|src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *)
+    (* src = "src/debug/fpga_dm_jtag_tap.sv:488.9-491.12|src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *)
     (* parallel_case *)
     casez (s)
       2'b?1:
@@ -41588,7 +41593,7 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
     input [1:0] s;
     (* full_case = 32'd1 *)
     (* parallel_case = 32'd1 *)
-    (* src = "src/debug/fpga_dm_jtag_tap.sv:483.9-486.12|src/debug/fpga_dm_jtag_tap.sv:460.5-489.12" *)
+    (* src = "src/debug/fpga_dm_jtag_tap.sv:488.9-491.12|src/debug/fpga_dm_jtag_tap.sv:465.5-494.12" *)
     (* parallel_case *)
     casez (s)
       2'b?1:
@@ -41606,7 +41611,7 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
     input [1:0] s;
     (* full_case = 32'd1 *)
     (* parallel_case = 32'd1 *)
-    (* src = "src/debug/fpga_dm_jtag_tap.sv:412.25-412.50|src/debug/fpga_dm_jtag_tap.sv:406.7-414.14" *)
+    (* src = "src/debug/fpga_dm_jtag_tap.sv:417.25-417.50|src/debug/fpga_dm_jtag_tap.sv:411.7-419.14" *)
     (* parallel_case *)
     casez (s)
       2'b?1:
@@ -41618,14 +41623,14 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
     endcase
   endfunction
   assign _059_ = _145_(bypass_q, { idcode_q[0], isc_pdata_q[0] }, { _014_, _060_ });
-  assign _060_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:412.25-412.50|src/debug/fpga_dm_jtag_tap.sv:406.7-414.14" *) 5'h16;
-  assign _061_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:408.25-408.47|src/debug/fpga_dm_jtag_tap.sv:406.7-414.14" *) 2'h2;
-  assign _062_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:407.25-407.47|src/debug/fpga_dm_jtag_tap.sv:406.7-414.14" *) 1'h1;
-  assign tdo_mux = shift_ir ? (* full_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:403.7-403.36|src/debug/fpga_dm_jtag_tap.sv:402.5-415.8" *) jtag_ir_shift_q[0] : _059_;
-  assign isc_disable_select = _063_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:321.20-321.46|src/debug/fpga_dm_jtag_tap.sv:319.5-323.12" *) 1'h1 : 1'h0;
-  assign _063_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:321.20-321.46|src/debug/fpga_dm_jtag_tap.sv:319.5-323.12" *) 5'h15;
-  assign isc_enable_select = _064_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:320.20-320.46|src/debug/fpga_dm_jtag_tap.sv:319.5-323.12" *) 1'h1 : 1'h0;
-  assign _064_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:320.20-320.46|src/debug/fpga_dm_jtag_tap.sv:319.5-323.12" *) 5'h14;
+  assign _060_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:417.25-417.50|src/debug/fpga_dm_jtag_tap.sv:411.7-419.14" *) 5'h16;
+  assign _061_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:413.25-413.47|src/debug/fpga_dm_jtag_tap.sv:411.7-419.14" *) 2'h2;
+  assign _062_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:412.25-412.47|src/debug/fpga_dm_jtag_tap.sv:411.7-419.14" *) 1'h1;
+  assign tdo_mux = shift_ir ? (* full_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:408.7-408.36|src/debug/fpga_dm_jtag_tap.sv:407.5-420.8" *) jtag_ir_shift_q[0] : _059_;
+  assign isc_disable_select = _063_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:326.20-326.46|src/debug/fpga_dm_jtag_tap.sv:324.5-328.12" *) 1'h1 : 1'h0;
+  assign _063_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:326.20-326.46|src/debug/fpga_dm_jtag_tap.sv:324.5-328.12" *) 5'h15;
+  assign isc_enable_select = _064_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:325.20-325.46|src/debug/fpga_dm_jtag_tap.sv:324.5-328.12" *) 1'h1 : 1'h0;
+  assign _064_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:325.20-325.46|src/debug/fpga_dm_jtag_tap.sv:324.5-328.12" *) 5'h14;
   assign isc_pdata_select = _060_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:241.23-241.51|src/debug/fpga_dm_jtag_tap.sv:231.5-245.12" *) 1'h1 : 1'h0;
   assign ejtag_select = _065_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:238.23-238.51|src/debug/fpga_dm_jtag_tap.sv:231.5-245.12" *) 1'h1 : 1'h0;
   assign _065_ = jtag_ir_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:238.23-238.51|src/debug/fpga_dm_jtag_tap.sv:231.5-245.12" *) 5'h10;
@@ -41665,7 +41670,7 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
     input [11:0] s;
     (* full_case = 32'd1 *)
     (* parallel_case = 32'd1 *)
-    (* src = "src/debug/fpga_dm_jtag_tap.sv:586.17-589.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *)
+    (* src = "src/debug/fpga_dm_jtag_tap.sv:591.17-594.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *)
     (* parallel_case *)
     casez (s)
       12'b???????????1:
@@ -41696,36 +41701,36 @@ module \fpga_dm_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag
         _187_ = a;
     endcase
   endfunction
-  assign tap_state_d = _187_(4'hx, { 3'h0, _001_, _003_, 3'h2, _004_, _005_, 3'h3, _004_, _006_, _007_, 1'h1, _008_, 2'h3, _009_, 2'h3, _002_, 1'h1, _010_, 2'h0, _002_ }, { _011_, _082_, _020_, _079_, _078_, _077_, _075_, _019_, _072_, _071_, _070_, _018_ });
-  assign _069_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:586.17-589.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'hf;
-  assign _070_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:580.9-580.52|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'he;
-  assign _071_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:577.9-577.51|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'hd;
-  assign _072_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:573.9-573.52|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'hc;
-  assign _073_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:568.16-571.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'hb;
-  assign _074_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:560.18-563.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'ha;
-  assign _075_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:554.9-554.60|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'h9;
-  assign _076_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:548.17-551.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 4'h8;
-  assign _077_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:546.9-546.52|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 3'h7;
-  assign _078_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:543.9-543.51|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 3'h6;
-  assign _079_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:540.9-540.52|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 3'h5;
-  assign _080_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:535.16-538.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 3'h4;
-  assign _081_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:531.18-534.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 2'h3;
-  assign _082_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:529.9-529.58|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 2'h2;
-  assign _083_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:525.9-525.60|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1;
-  assign test_logic_reset = _011_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:520.23-523.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
-  assign update_ir = _069_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:586.17-589.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
-  assign shift_ir = _073_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:568.16-571.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
-  assign capture_ir = _074_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:560.18-563.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
-  assign capture_dr = _081_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:531.18-534.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
-  assign shift_dr = _080_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:535.16-538.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
-  assign update_dr = _076_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:548.17-551.10|src/debug/fpga_dm_jtag_tap.sv:519.5-591.12" *) 1'h1 : 1'h0;
+  assign tap_state_d = _187_(4'hx, { 3'h0, _002_, _004_, 3'h2, _005_, _006_, 3'h3, _005_, _007_, _008_, 1'h1, _009_, 2'h3, _010_, 2'h3, _003_, 1'h1, _011_, 2'h0, _003_ }, { _012_, _082_, _020_, _079_, _078_, _077_, _075_, _019_, _072_, _071_, _070_, _018_ });
+  assign _069_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:591.17-594.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'hf;
+  assign _070_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:585.9-585.52|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'he;
+  assign _071_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:582.9-582.51|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'hd;
+  assign _072_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:578.9-578.52|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'hc;
+  assign _073_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:573.16-576.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'hb;
+  assign _074_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:565.18-568.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'ha;
+  assign _075_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:559.9-559.60|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'h9;
+  assign _076_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:553.17-556.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 4'h8;
+  assign _077_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:551.9-551.52|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 3'h7;
+  assign _078_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:548.9-548.51|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 3'h6;
+  assign _079_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:545.9-545.52|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 3'h5;
+  assign _080_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:540.16-543.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 3'h4;
+  assign _081_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:536.18-539.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 2'h3;
+  assign _082_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:534.9-534.58|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 2'h2;
+  assign _083_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:530.9-530.60|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1;
+  assign test_logic_reset = _012_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:525.23-528.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
+  assign update_ir = _069_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:591.17-594.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
+  assign shift_ir = _073_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:573.16-576.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
+  assign capture_ir = _074_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:565.18-568.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
+  assign capture_dr = _081_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:536.18-539.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
+  assign shift_dr = _080_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:540.16-543.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
+  assign update_dr = _076_ ? (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "src/debug/fpga_dm_jtag_tap.sv:553.17-556.10|src/debug/fpga_dm_jtag_tap.sv:524.5-596.12" *) 1'h1 : 1'h0;
   assign jtag_ir_d = test_logic_reset ? (* src = "src/debug/fpga_dm_jtag_tap.sv:128.27-132.8|src/debug/fpga_dm_jtag_tap.sv:128.5-132.8" *) 5'h01 : _053_;
   assign jtag_ir_shift_d = test_logic_reset ? (* src = "src/debug/fpga_dm_jtag_tap.sv:128.27-132.8|src/debug/fpga_dm_jtag_tap.sv:128.5-132.8" *) 5'h00 : _055_;
   assign _053_ = update_ir ? (* src = "src/debug/fpga_dm_jtag_tap.sv:125.7-125.46|src/debug/fpga_dm_jtag_tap.sv:124.5-126.8" *) jtag_ir_shift_q : jtag_ir_q;
   assign _055_ = capture_ir ? (* src = "src/debug/fpga_dm_jtag_tap.sv:120.7-120.45|src/debug/fpga_dm_jtag_tap.sv:119.5-121.8" *) 5'h05 : _054_;
   assign _054_ = shift_ir ? (* src = "src/debug/fpga_dm_jtag_tap.sv:115.7-115.63|src/debug/fpga_dm_jtag_tap.sv:114.5-116.8" *) { td_i, jtag_ir_shift_q[4:1] } : jtag_ir_shift_q;
   (* hdlname = "i_tck_inv" *)
-  (* src = "src/debug/fpga_dm_jtag_tap.sv:421.19" *)
+  (* src = "src/debug/fpga_dm_jtag_tap.sv:426.19" *)
   \tc_clk_inverter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag_tap.i_tck_inv  i_tck_inv (
     .clk_i(tck_i),
     .clk_o(tck_n)
@@ -41898,7 +41903,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   wire _011_;
   wire _012_;
   wire _013_;
-  (* src = "src/greyhound_ihp.sv:493.18-497.12" *)
+  (* src = "src/greyhound_ihp.sv:496.18-500.12" *)
   wire [31:0] _014_;
   (* src = "src/greyhound_ihp.sv:288.13-327.16" *)
   wire _015_;
@@ -41949,28 +41954,28 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   (* src = "src/greyhound_ihp.sv:88.45" *)
   wire [239:0] FrameStrobe;
   (* hdlname = "bank_be" *)
-  (* src = "src/greyhound_ihp.sv:588.22" *)
+  (* src = "src/greyhound_ihp.sv:591.22" *)
   wire [3:0] bank_be;
   (* hdlname = "bank_rdata" *)
-  (* src = "src/greyhound_ihp.sv:586.22" *)
+  (* src = "src/greyhound_ihp.sv:589.22" *)
   wire [31:0] bank_rdata;
   (* hdlname = "bank_rdata_sram_0" *)
-  (* src = "src/greyhound_ihp.sv:694.18" *)
+  (* src = "src/greyhound_ihp.sv:698.18" *)
   wire [31:0] bank_rdata_sram_0;
   (* hdlname = "bank_rdata_sram_1" *)
-  (* src = "src/greyhound_ihp.sv:695.18" *)
+  (* src = "src/greyhound_ihp.sv:699.18" *)
   wire [31:0] bank_rdata_sram_1;
   (* hdlname = "bank_req" *)
-  (* src = "src/greyhound_ihp.sv:590.22" *)
+  (* src = "src/greyhound_ihp.sv:593.22" *)
   wire bank_req;
   (* hdlname = "bank_wdata" *)
-  (* src = "src/greyhound_ihp.sv:589.22" *)
+  (* src = "src/greyhound_ihp.sv:592.22" *)
   wire [31:0] bank_wdata;
   (* hdlname = "bank_we" *)
-  (* src = "src/greyhound_ihp.sv:591.22" *)
+  (* src = "src/greyhound_ihp.sv:594.22" *)
   wire bank_we;
   (* hdlname = "bank_word_addr" *)
-  (* src = "src/greyhound_ihp.sv:587.22" *)
+  (* src = "src/greyhound_ihp.sv:590.22" *)
   wire [10:0] bank_word_addr;
   (* hdlname = "bitstream_data" *)
   (* src = "src/greyhound_ihp.sv:378.18" *)
@@ -42144,13 +42149,13 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   (* src = "src/greyhound_ihp.sv:187.21" *)
   wire fabric_we_soc;
   (* hdlname = "fetch_enable_d" *)
-  (* src = "src/greyhound_ihp.sv:594.17" *)
+  (* src = "src/greyhound_ihp.sv:597.17" *)
   reg [1:0] fetch_enable_d;
   (* hdlname = "fetch_enable_sync" *)
-  (* src = "src/greyhound_ihp.sv:595.11" *)
+  (* src = "src/greyhound_ihp.sv:598.11" *)
   wire fetch_enable_sync;
   (* hdlname = "flash_io_oe" *)
-  (* src = "src/greyhound_ihp.sv:580.16" *)
+  (* src = "src/greyhound_ihp.sv:583.16" *)
   wire [3:0] flash_io_oe;
   (* hdlname = "fpga_jtag_tdi" *)
   (* src = "src/greyhound_ihp.sv:380.10" *)
@@ -42189,7 +42194,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   (* src = "src/greyhound_ihp.sv:218.11" *)
   wire jtag_trst_ni_sync;
   (* hdlname = "psram_io_oe" *)
-  (* src = "src/greyhound_ihp.sv:580.29" *)
+  (* src = "src/greyhound_ihp.sv:583.29" *)
   wire [3:0] psram_io_oe;
   (* hdlname = "rst_n_sync" *)
   (* src = "src/greyhound_ihp.sv:95.11" *)
@@ -42246,14 +42251,17 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   (* src = "src/greyhound_ihp.sv:130.11" *)
   wire spi_receiver_sclk_i;
   (* hdlname = "sram_enable" *)
-  (* src = "src/greyhound_ihp.sv:697.11" *)
+  (* src = "src/greyhound_ihp.sv:701.11" *)
   wire sram_enable;
   (* hdlname = "sram_enable_d" *)
-  (* src = "src/greyhound_ihp.sv:700.11" *)
+  (* src = "src/greyhound_ihp.sv:704.11" *)
   reg sram_enable_d;
   (* hdlname = "startup_trigger" *)
   (* src = "src/greyhound_ihp.sv:207.11" *)
   reg startup_trigger;
+  (* hdlname = "usercode" *)
+  (* src = "src/greyhound_ihp.sv:381.18" *)
+  wire [31:0] usercode;
   assign _000_ = fabric_warmboot_boot_o || (* src = "src/greyhound_ihp.sv:305.64-305.109" *) cpu_warmboot_boot_o;
   assign _001_ = fabric_config_busy || (* src = "src/greyhound_ihp.sv:305.116-305.164" *) fabric_spi_controller_busy;
   assign _002_ = ! (* src = "src/greyhound_ihp.sv:305.114-305.165" *) _001_;
@@ -42262,17 +42270,17 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   assign _005_ = cpu_warmboot_boot_o ? (* src = "src/greyhound_ihp.sv:306.66-306.132" *) cpu_warmboot_slot_o : fabric_warmboot_slot_o;
   assign _006_ = startup_trigger ? (* src = "src/greyhound_ihp.sv:306.43-306.132" *) 4'h0 : _005_;
   assign _008_ = ! (* src = "src/greyhound_ihp.sv:222.60-222.71" *) rst_nd[1];
-  assign _007_ = bitstream_valid_cpu || (* src = "src/greyhound_ihp.sv:500.30-500.72" *) spi_bitstream_valid;
-  assign bitstream_valid = _007_ || (* src = "src/greyhound_ihp.sv:500.30-500.96" *) jtag_bitstream_valid;
+  assign _007_ = bitstream_valid_cpu || (* src = "src/greyhound_ihp.sv:503.30-503.72" *) spi_bitstream_valid;
+  assign bitstream_valid = _007_ || (* src = "src/greyhound_ihp.sv:503.30-503.96" *) jtag_bitstream_valid;
   assign _010_ = en_jtag_receiver | (* src = "src/greyhound_ihp.sv:222.41-222.71" *) _008_;
-  assign flash_io_oe_no = ~ (* src = "src/greyhound_ihp.sv:582.29-582.41" *) flash_io_oe;
-  assign psram_io_oe_no = ~ (* src = "src/greyhound_ihp.sv:583.29-583.41" *) psram_io_oe;
-  assign _009_ = ~ (* src = "src/greyhound_ihp.sv:719.34-719.53" *) bank_word_addr[10];
+  assign flash_io_oe_no = ~ (* src = "src/greyhound_ihp.sv:585.29-585.41" *) flash_io_oe;
+  assign psram_io_oe_no = ~ (* src = "src/greyhound_ihp.sv:586.29-586.41" *) psram_io_oe;
+  assign _009_ = ~ (* src = "src/greyhound_ihp.sv:723.34-723.53" *) bank_word_addr[10];
   assign jtag_trst_n_module_sync_d = _010_ ? (* src = "src/greyhound_ihp.sv:222.40-222.99" *) fpga_mode_d[1] : 1'h1;
-  assign _011_ = bank_req && (* src = "src/greyhound_ihp.sv:719.22-719.53" *) _009_;
-  assign _012_ = ! (* src = "src/greyhound_ihp.sv:721.22-721.30" *) bank_we;
-  assign _013_ = bank_req && (* src = "src/greyhound_ihp.sv:739.22-739.53" *) bank_word_addr[10];
-  (* src = "src/greyhound_ihp.sv:596.5" *)
+  assign _011_ = bank_req && (* src = "src/greyhound_ihp.sv:723.22-723.53" *) _009_;
+  assign _012_ = ! (* src = "src/greyhound_ihp.sv:725.22-725.30" *) bank_we;
+  assign _013_ = bank_req && (* src = "src/greyhound_ihp.sv:743.22-743.53" *) bank_word_addr[10];
+  (* src = "src/greyhound_ihp.sv:599.5" *)
   always_ff @(posedge clk_i)
     fetch_enable_d <= { fetch_enable_d[0], fetch_enable_i };
   (* src = "src/greyhound_ihp.sv:111.5" *)
@@ -42285,7 +42293,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) rst_nd <= 2'h0;
     else rst_nd <= { rst_nd[0], 1'h1 };
-  (* src = "src/greyhound_ihp.sv:702.5" *)
+  (* src = "src/greyhound_ihp.sv:706.5" *)
   always_ff @(posedge clk_i, negedge rst_nd[1])
     if (!rst_nd[1]) sram_enable_d <= 1'h0;
     else sram_enable_d <= bank_word_addr[10];
@@ -42293,8 +42301,8 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   always_ff @(posedge clk_i, negedge rst_nd[1])
     if (!rst_nd[1]) startup_trigger <= 1'h1;
     else startup_trigger <= 1'h0;
-  assign _014_ = jtag_bitstream_valid ? (* full_case = 32'd1 *) (* src = "src/greyhound_ihp.sv:494.13-494.50|src/greyhound_ihp.sv:493.18-497.12" *) jtag_bitstream_data : bitstream_data_cpu;
-  assign bitstream_data = spi_bitstream_valid ? (* full_case = 32'd1 *) (* src = "src/greyhound_ihp.sv:492.13-492.49|src/greyhound_ihp.sv:491.9-497.12" *) spi_bitstream_data : _014_;
+  assign _014_ = jtag_bitstream_valid ? (* full_case = 32'd1 *) (* src = "src/greyhound_ihp.sv:497.13-497.50|src/greyhound_ihp.sv:496.18-500.12" *) jtag_bitstream_data : bitstream_data_cpu;
+  assign bitstream_data = spi_bitstream_valid ? (* full_case = 32'd1 *) (* src = "src/greyhound_ihp.sv:495.13-495.49|src/greyhound_ihp.sv:494.9-500.12" *) spi_bitstream_data : _014_;
   assign spi_controller_slot_i = en_jtag_receiver ? (* src = "src/greyhound_ihp.sv:330.31-357.12|src/greyhound_ihp.sv:330.9-357.12" *) 4'h0 : _035_;
   assign spi_controller_start_i = en_jtag_receiver ? (* src = "src/greyhound_ihp.sv:330.31-357.12|src/greyhound_ihp.sv:330.9-357.12" *) 1'h0 : _036_;
   assign spi_controller_miso_i = en_jtag_receiver ? (* src = "src/greyhound_ihp.sv:330.31-357.12|src/greyhound_ihp.sv:330.9-357.12" *) 1'h0 : _037_;
@@ -42344,7 +42352,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     input [63:0] b;
     input [1:0] s;
     (* full_case = 32'd1 *)
-    (* src = "src/greyhound_ihp.sv:713.19-713.50|src/greyhound_ihp.sv:711.9-714.16" *)
+    (* src = "src/greyhound_ihp.sv:717.19-717.50|src/greyhound_ihp.sv:715.9-718.16" *)
     (* parallel_case *)
     casez (s)
       2'b?1:
@@ -42356,9 +42364,9 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     endcase
   endfunction
   assign bank_rdata = _114_(32'hxxxxxxxx, { bank_rdata_sram_0, bank_rdata_sram_1 }, { _043_, sram_enable_d });
-  assign _043_ = ~ (* full_case = 32'd1 *) (* src = "src/greyhound_ihp.sv:712.19-712.50|src/greyhound_ihp.sv:711.9-714.16" *) sram_enable_d;
+  assign _043_ = ~ (* full_case = 32'd1 *) (* src = "src/greyhound_ihp.sv:716.19-716.50|src/greyhound_ihp.sv:715.9-718.16" *) sram_enable_d;
   (* hdlname = "fabric_config" *)
-  (* src = "src/greyhound_ihp.sv:508.7" *)
+  (* src = "src/greyhound_ihp.sv:511.7" *)
   \fabric_config$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_config  fabric_config (
     .FrameData_o(FrameData),
     .FrameStrobe_o(FrameStrobe),
@@ -42370,7 +42378,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     .rst_ni(rst_nd[1])
   );
   (* hdlname = "fabric_spi_controller" *)
-  (* src = "src/greyhound_ihp.sv:467.7" *)
+  (* src = "src/greyhound_ihp.sv:470.7" *)
   \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_controller  fabric_spi_controller (
     .bitstream_data_o(spi_controller_bitstream_data_o),
     .bitstream_valid_o(spi_controller_bitstream_valid_o),
@@ -42399,7 +42407,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   );
   (* hdlname = "fabric_wrapper" *)
   (* keep = 1'h1 *)
-  (* src = "src/greyhound_ihp.sv:529.31" *)
+  (* src = "src/greyhound_ihp.sv:532.31" *)
   \fabric_wrapper$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_wrapper  fabric_wrapper (
     .FrameData_i(FrameData),
     .FrameStrobe_i(FrameStrobe),
@@ -42433,7 +42441,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     .fabric_warmboot_slot_o(fabric_warmboot_slot_o)
   );
   (* hdlname = "fpga_dm" *)
-  (* src = "src/greyhound_ihp.sv:383.7" *)
+  (* src = "src/greyhound_ihp.sv:384.7" *)
   \fpga_dm$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm  fpga_dm (
     .clk_i(clk_i),
     .clk_o(clk),
@@ -42495,10 +42503,11 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     .td_i(fpga_jtag_tdi),
     .td_o(jtag_tdo),
     .tms_i(jtag_tms),
-    .trst_ni(jtag_trst_n_module_sync)
+    .trst_ni(jtag_trst_n_module_sync),
+    .usercode_o(usercode)
   );
   (* hdlname = "i_greyhound_soc" *)
-  (* src = "src/greyhound_ihp.sv:601.19" *)
+  (* src = "src/greyhound_ihp.sv:604.19" *)
   \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc  i_greyhound_soc (
     .bank_be_o(bank_be),
     .bank_rdata_i(bank_rdata),
@@ -42551,11 +42560,12 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     .rst_ni(rst_nd[1]),
     .uart0_rx(ser_rx_i),
     .uart0_tx(ser_tx_o),
+    .usercode_i(usercode),
     .warmboot_boot_o(cpu_warmboot_boot_o),
     .warmboot_slot_o(cpu_warmboot_slot_o)
   );
   (* hdlname = "i_soc_sram0" *)
-  (* src = "src/greyhound_ihp.sv:717.38" *)
+  (* src = "src/greyhound_ihp.sv:721.38" *)
   RM_IHPSG13_1P_1024x32_c2_bm_bist i_soc_sram0 (
     .A_ADDR(bank_word_addr[9:0]),
     .A_BIST_ADDR(10'h000),
@@ -42576,7 +42586,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
     .A_WEN(bank_we)
   );
   (* hdlname = "i_soc_sram1" *)
-  (* src = "src/greyhound_ihp.sv:737.38" *)
+  (* src = "src/greyhound_ihp.sv:741.38" *)
   RM_IHPSG13_1P_1024x32_c2_bm_bist i_soc_sram1 (
     .A_ADDR(bank_word_addr[9:0]),
     .A_BIST_ADDR(10'h000),
@@ -42611,7 +42621,7 @@ endmodule
 (* src = "src/soc/greyhound_soc.sv:7.8" *)
 module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk_i, rst_ni, fetch_enable_i, core_sleep_o, bitstream_data_o, bitstream_valid_o, fabric_configured_i, fabric_irq_i, fabric_issue_ready_i, fabric_issue_accept_i, fabric_issue_valid_o, fabric_issue_instr_o, fabric_issue_op0_o, fabric_issue_op1_o, fabric_issue_id_o, fabric_result_valid_i, fabric_result_id_i, fabric_result_rd_i, fabric_result_i, fabric_config_busy_i, warmboot_boot_o
 , warmboot_slot_o, fabric_gnt_i, fabric_req_o, fabric_rvalid_i, fabric_we_o, fabric_be_o, fabric_addr_o, fabric_wdata_o, fabric_rdata_i, bank_rdata_i, bank_word_addr_o, bank_be_o, bank_wdata_o, bank_req_o, bank_we_o, flash_sck, flash_ce_n, flash_din, flash_dout, flash_douten, psram_sck
-, psram_ce_n, psram_din, psram_dout, psram_douten, uart0_rx, uart0_tx, jtag_tck_i, jtag_tdi_i, jtag_tdo_o, jtag_tms_i, jtag_trst_ni);
+, psram_ce_n, psram_din, psram_dout, psram_douten, uart0_rx, uart0_tx, jtag_tck_i, jtag_tdi_i, jtag_tdo_o, jtag_tms_i, jtag_trst_ni, usercode_i);
   (* hdlname = "clk_i" *)
   (* src = "src/soc/greyhound_soc.sv:15.29" *)
   input clk_i;
@@ -42824,6 +42834,10 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   (* src = "src/soc/greyhound_soc.sv:95.23" *)
   input jtag_trst_ni;
   wire jtag_trst_ni;
+  (* hdlname = "usercode_i" *)
+  (* src = "src/soc/greyhound_soc.sv:96.25" *)
+  input [31:0] usercode_i;
+  wire [31:0] usercode_i;
   wire [63:0] _000_;
   wire _001_;
   wire _002_;
@@ -42849,233 +42863,236 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   wire _022_;
   wire _023_;
   wire _024_;
-  (* src = "src/soc/greyhound_soc.sv:929.21-931.24" *)
-  wire [31:0] _025_;
-  (* src = "src/soc/greyhound_soc.sv:912.21-919.24" *)
+  wire _025_;
+  (* src = "src/soc/greyhound_soc.sv:931.21-933.24" *)
   wire [31:0] _026_;
-  (* src = "src/soc/greyhound_soc.sv:910.17-932.20" *)
+  (* src = "src/soc/greyhound_soc.sv:914.21-921.24" *)
   wire [31:0] _027_;
-  (* src = "src/soc/greyhound_soc.sv:905.13-933.16" *)
+  (* src = "src/soc/greyhound_soc.sv:912.17-938.20" *)
   wire [31:0] _028_;
-  (* src = "src/soc/greyhound_soc.sv:914.25-914.124" *)
-  wire [7:0] _029_;
-  (* src = "src/soc/greyhound_soc.sv:915.25-915.124" *)
-  wire [7:0] _030_;
+  (* src = "src/soc/greyhound_soc.sv:907.13-939.16" *)
+  wire [31:0] _029_;
   (* src = "src/soc/greyhound_soc.sv:916.25-916.124" *)
+  wire [7:0] _030_;
+  (* src = "src/soc/greyhound_soc.sv:917.25-917.124" *)
   wire [7:0] _031_;
-  (* src = "src/soc/greyhound_soc.sv:913.25-913.124" *)
+  (* src = "src/soc/greyhound_soc.sv:918.25-918.124" *)
   wire [7:0] _032_;
-  (* src = "src/soc/greyhound_soc.sv:912.21-919.24" *)
-  wire _033_;
-  (* src = "src/soc/greyhound_soc.sv:910.17-932.20" *)
+  (* src = "src/soc/greyhound_soc.sv:915.25-915.124" *)
+  wire [7:0] _033_;
+  (* src = "src/soc/greyhound_soc.sv:914.21-921.24" *)
   wire _034_;
-  (* src = "src/soc/greyhound_soc.sv:905.13-933.16" *)
+  (* src = "src/soc/greyhound_soc.sv:912.17-938.20" *)
   wire _035_;
-  (* src = "src/soc/greyhound_soc.sv:905.13-933.16" *)
+  (* src = "src/soc/greyhound_soc.sv:907.13-939.16" *)
   wire _036_;
-  (* src = "src/soc/greyhound_soc.sv:910.17-932.20" *)
-  wire [31:0] _037_;
-  (* src = "src/soc/greyhound_soc.sv:905.13-933.16" *)
+  (* src = "src/soc/greyhound_soc.sv:907.13-939.16" *)
+  wire _037_;
+  (* src = "src/soc/greyhound_soc.sv:935.21-937.24" *)
   wire [31:0] _038_;
-  (* src = "src/soc/greyhound_soc.sv:498.9-499.144" *)
-  wire [2:0] _039_;
-  (* src = "src/soc/greyhound_soc.sv:498.9-499.144" *)
-  wire [2:0] _040_;
-  (* src = "src/soc/greyhound_soc.sv:498.9-499.144" *)
+  (* src = "src/soc/greyhound_soc.sv:912.17-938.20" *)
+  wire [31:0] _039_;
+  (* src = "src/soc/greyhound_soc.sv:907.13-939.16" *)
+  wire [31:0] _040_;
+  (* src = "src/soc/greyhound_soc.sv:499.9-500.144" *)
   wire [2:0] _041_;
-  (* src = "src/soc/greyhound_soc.sv:498.9-499.144" *)
+  (* src = "src/soc/greyhound_soc.sv:499.9-500.144" *)
   wire [2:0] _042_;
-  (* src = "src/soc/greyhound_soc.sv:498.9-499.144" *)
+  (* src = "src/soc/greyhound_soc.sv:499.9-500.144" *)
   wire [2:0] _043_;
-  (* src = "src/soc/greyhound_soc.sv:498.9-499.144" *)
+  (* src = "src/soc/greyhound_soc.sv:499.9-500.144" *)
   wire [2:0] _044_;
-  wire [3:0] _045_;
-  wire [3:0] _046_;
-  wire _047_;
+  (* src = "src/soc/greyhound_soc.sv:499.9-500.144" *)
+  wire [2:0] _045_;
+  (* src = "src/soc/greyhound_soc.sv:499.9-500.144" *)
+  wire [2:0] _046_;
+  wire [3:0] _047_;
   wire [3:0] _048_;
   wire _049_;
   wire [3:0] _050_;
   wire _051_;
+  wire [3:0] _052_;
+  wire _053_;
   (* hdlname = "all_periph_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:235.36" *)
-  (* unused_bits = "73 217 289 361 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 425 426 427 428 429 430 431 433 496 497 498 499 500 501 502 503 505" *)
+  (* src = "src/soc/greyhound_soc.sv:236.36" *)
+  (* unused_bits = "73 217 289 361 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 425 426 427 428 429 430 431 433 496 497 498 499 500 501 502 503 505" *)
   wire [575:0] all_periph_obi_req;
   (* hdlname = "all_periph_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:236.36" *)
+  (* src = "src/soc/greyhound_soc.sv:237.36" *)
   wire [295:0] all_periph_obi_rsp;
   (* hdlname = "bank_byte_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:676.37" *)
+  (* src = "src/soc/greyhound_soc.sv:677.37" *)
   (* unused_bits = "0 1 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31" *)
   wire [31:0] bank_byte_addr;
   (* hdlname = "bank_gnt" *)
-  (* src = "src/soc/greyhound_soc.sv:675.11" *)
+  (* src = "src/soc/greyhound_soc.sv:676.11" *)
   wire bank_gnt;
   (* hdlname = "core_data_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:195.19" *)
+  (* src = "src/soc/greyhound_soc.sv:196.19" *)
   wire [71:0] core_data_obi_req;
   (* hdlname = "core_data_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:196.19" *)
+  (* src = "src/soc/greyhound_soc.sv:197.19" *)
   (* unused_bits = "2 4" *)
   wire [36:0] core_data_obi_rsp;
   (* hdlname = "core_instr_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:186.19" *)
+  (* src = "src/soc/greyhound_soc.sv:187.19" *)
   wire [71:0] core_instr_obi_req;
   (* hdlname = "core_instr_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:187.19" *)
+  (* src = "src/soc/greyhound_soc.sv:188.19" *)
   (* unused_bits = "2 4" *)
   wire [36:0] core_instr_obi_rsp;
   (* hdlname = "data_addr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:308.36" *)
+  (* src = "src/soc/greyhound_soc.sv:309.36" *)
   wire [31:0] data_addr_o;
   (* hdlname = "data_be_o" *)
-  (* src = "src/soc/greyhound_soc.sv:309.36" *)
+  (* src = "src/soc/greyhound_soc.sv:310.36" *)
   wire [3:0] data_be_o;
   (* hdlname = "data_err_i" *)
-  (* src = "src/soc/greyhound_soc.sv:313.36" *)
+  (* src = "src/soc/greyhound_soc.sv:314.36" *)
   wire data_err_i;
   (* hdlname = "data_gnt_i" *)
-  (* src = "src/soc/greyhound_soc.sv:306.36" *)
+  (* src = "src/soc/greyhound_soc.sv:307.36" *)
   wire data_gnt_i;
   (* hdlname = "data_rdata_i" *)
-  (* src = "src/soc/greyhound_soc.sv:312.36" *)
+  (* src = "src/soc/greyhound_soc.sv:313.36" *)
   wire [31:0] data_rdata_i;
   (* hdlname = "data_req_o" *)
-  (* src = "src/soc/greyhound_soc.sv:305.36" *)
+  (* src = "src/soc/greyhound_soc.sv:306.36" *)
   wire data_req_o;
   (* hdlname = "data_rvalid_i" *)
-  (* src = "src/soc/greyhound_soc.sv:307.36" *)
+  (* src = "src/soc/greyhound_soc.sv:308.36" *)
   wire data_rvalid_i;
   (* hdlname = "data_wdata_o" *)
-  (* src = "src/soc/greyhound_soc.sv:311.36" *)
+  (* src = "src/soc/greyhound_soc.sv:312.36" *)
   wire [31:0] data_wdata_o;
   (* hdlname = "data_we_o" *)
-  (* src = "src/soc/greyhound_soc.sv:310.36" *)
+  (* src = "src/soc/greyhound_soc.sv:311.36" *)
   wire data_we_o;
   (* hdlname = "dbg_mem_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:267.19" *)
+  (* src = "src/soc/greyhound_soc.sv:268.19" *)
   (* unused_bits = "1" *)
   wire [71:0] dbg_mem_obi_req;
   (* hdlname = "dbg_mem_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:268.19" *)
+  (* src = "src/soc/greyhound_soc.sv:269.19" *)
   wire [36:0] dbg_mem_obi_rsp;
   (* hdlname = "dbg_req_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:201.19" *)
+  (* src = "src/soc/greyhound_soc.sv:202.19" *)
   wire [71:0] dbg_req_obi_req;
   (* hdlname = "dbg_req_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:202.19" *)
+  (* src = "src/soc/greyhound_soc.sv:203.19" *)
   (* unused_bits = "2 4" *)
   wire [36:0] dbg_req_obi_rsp;
   (* hdlname = "debug_fabric_a_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:982.22" *)
+  (* src = "src/soc/greyhound_soc.sv:988.22" *)
   (* unused_bits = "0" *)
   wire debug_fabric_a_optional;
   (* hdlname = "debug_fabric_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:977.22" *)
+  (* src = "src/soc/greyhound_soc.sv:983.22" *)
   (* unused_bits = "24 25 26 27 28 29 30 31" *)
   wire [31:0] debug_fabric_addr;
   (* hdlname = "debug_fabric_aid" *)
-  (* src = "src/soc/greyhound_soc.sv:981.22" *)
+  (* src = "src/soc/greyhound_soc.sv:987.22" *)
   wire debug_fabric_aid;
   (* hdlname = "debug_fabric_be" *)
-  (* src = "src/soc/greyhound_soc.sv:979.22" *)
+  (* src = "src/soc/greyhound_soc.sv:985.22" *)
   wire [3:0] debug_fabric_be;
   (* hdlname = "debug_fabric_config_a_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:865.22" *)
+  (* src = "src/soc/greyhound_soc.sv:867.22" *)
   (* unused_bits = "0" *)
   wire debug_fabric_config_a_optional;
   (* hdlname = "debug_fabric_config_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:860.22" *)
-  (* unused_bits = "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31" *)
+  (* src = "src/soc/greyhound_soc.sv:862.22" *)
+  (* unused_bits = "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31" *)
   wire [31:0] debug_fabric_config_addr;
   (* hdlname = "debug_fabric_config_aid" *)
-  (* src = "src/soc/greyhound_soc.sv:864.22" *)
+  (* src = "src/soc/greyhound_soc.sv:866.22" *)
   wire debug_fabric_config_aid;
   (* hdlname = "debug_fabric_config_be" *)
-  (* src = "src/soc/greyhound_soc.sv:862.22" *)
+  (* src = "src/soc/greyhound_soc.sv:864.22" *)
   wire [3:0] debug_fabric_config_be;
   (* hdlname = "debug_fabric_config_err" *)
-  (* src = "src/soc/greyhound_soc.sv:879.20" *)
+  (* src = "src/soc/greyhound_soc.sv:881.20" *)
   wire debug_fabric_config_err;
   (* hdlname = "debug_fabric_config_gnt" *)
-  (* src = "src/soc/greyhound_soc.sv:875.20" *)
+  (* src = "src/soc/greyhound_soc.sv:877.20" *)
   wire debug_fabric_config_gnt;
   (* hdlname = "debug_fabric_config_r_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:880.20" *)
+  (* src = "src/soc/greyhound_soc.sv:882.20" *)
   wire debug_fabric_config_r_optional;
   (* hdlname = "debug_fabric_config_rdata" *)
-  (* src = "src/soc/greyhound_soc.sv:877.20" *)
+  (* src = "src/soc/greyhound_soc.sv:879.20" *)
   wire [31:0] debug_fabric_config_rdata;
   (* hdlname = "debug_fabric_config_req" *)
-  (* src = "src/soc/greyhound_soc.sv:859.22" *)
+  (* src = "src/soc/greyhound_soc.sv:861.22" *)
   wire [31:0] debug_fabric_config_req;
   (* hdlname = "debug_fabric_config_rid" *)
-  (* src = "src/soc/greyhound_soc.sv:878.20" *)
+  (* src = "src/soc/greyhound_soc.sv:880.20" *)
   wire debug_fabric_config_rid;
   (* hdlname = "debug_fabric_config_rvalid" *)
-  (* src = "src/soc/greyhound_soc.sv:876.20" *)
+  (* src = "src/soc/greyhound_soc.sv:878.20" *)
   wire debug_fabric_config_rvalid;
   (* hdlname = "debug_fabric_config_wdata" *)
-  (* src = "src/soc/greyhound_soc.sv:863.22" *)
+  (* src = "src/soc/greyhound_soc.sv:865.22" *)
   wire [31:0] debug_fabric_config_wdata;
   (* hdlname = "debug_fabric_config_we" *)
-  (* src = "src/soc/greyhound_soc.sv:861.22" *)
+  (* src = "src/soc/greyhound_soc.sv:863.22" *)
   wire debug_fabric_config_we;
   (* hdlname = "debug_fabric_err" *)
-  (* src = "src/soc/greyhound_soc.sv:996.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1002.20" *)
   wire debug_fabric_err;
   (* hdlname = "debug_fabric_gnt" *)
-  (* src = "src/soc/greyhound_soc.sv:992.20" *)
+  (* src = "src/soc/greyhound_soc.sv:998.20" *)
   wire debug_fabric_gnt;
   (* hdlname = "debug_fabric_r_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:997.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1003.20" *)
   wire debug_fabric_r_optional;
   (* hdlname = "debug_fabric_rdata" *)
-  (* src = "src/soc/greyhound_soc.sv:994.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1000.20" *)
   wire [31:0] debug_fabric_rdata;
   (* hdlname = "debug_fabric_req" *)
-  (* src = "src/soc/greyhound_soc.sv:976.22" *)
+  (* src = "src/soc/greyhound_soc.sv:982.22" *)
   wire [31:0] debug_fabric_req;
   (* hdlname = "debug_fabric_rid" *)
-  (* src = "src/soc/greyhound_soc.sv:995.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1001.20" *)
   wire debug_fabric_rid;
   (* hdlname = "debug_fabric_rvalid" *)
-  (* src = "src/soc/greyhound_soc.sv:993.20" *)
+  (* src = "src/soc/greyhound_soc.sv:999.20" *)
   wire debug_fabric_rvalid;
   (* hdlname = "debug_fabric_wdata" *)
-  (* src = "src/soc/greyhound_soc.sv:980.22" *)
+  (* src = "src/soc/greyhound_soc.sv:986.22" *)
   wire [31:0] debug_fabric_wdata;
   (* hdlname = "debug_fabric_we" *)
-  (* src = "src/soc/greyhound_soc.sv:978.22" *)
+  (* src = "src/soc/greyhound_soc.sv:984.22" *)
   wire debug_fabric_we;
   (* hdlname = "debug_req" *)
-  (* src = "src/soc/greyhound_soc.sv:336.11" *)
+  (* src = "src/soc/greyhound_soc.sv:337.11" *)
   wire debug_req;
   (* hdlname = "dmi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:1010.17" *)
+  (* src = "src/soc/greyhound_soc.sv:1016.17" *)
   wire [40:0] dmi_req;
   (* hdlname = "dmi_req_ready" *)
-  (* src = "src/soc/greyhound_soc.sv:1009.35" *)
+  (* src = "src/soc/greyhound_soc.sv:1015.35" *)
   wire dmi_req_ready;
   (* hdlname = "dmi_req_valid" *)
-  (* src = "src/soc/greyhound_soc.sv:1009.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1015.20" *)
   wire dmi_req_valid;
   (* hdlname = "dmi_resp" *)
-  (* src = "src/soc/greyhound_soc.sv:1011.18" *)
+  (* src = "src/soc/greyhound_soc.sv:1017.18" *)
   wire [33:0] dmi_resp;
   (* hdlname = "dmi_resp_ready" *)
-  (* src = "src/soc/greyhound_soc.sv:1009.66" *)
+  (* src = "src/soc/greyhound_soc.sv:1015.66" *)
   wire dmi_resp_ready;
   (* hdlname = "dmi_resp_valid" *)
-  (* src = "src/soc/greyhound_soc.sv:1009.50" *)
+  (* src = "src/soc/greyhound_soc.sv:1015.50" *)
   wire dmi_resp_valid;
   (* hdlname = "dmi_rst_n" *)
-  (* src = "src/soc/greyhound_soc.sv:1009.9" *)
+  (* src = "src/soc/greyhound_soc.sv:1015.9" *)
   wire dmi_rst_n;
   (* hdlname = "error_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:239.19" *)
+  (* src = "src/soc/greyhound_soc.sv:240.19" *)
   wire [71:0] error_obi_req;
   (* hdlname = "error_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:240.19" *)
+  (* src = "src/soc/greyhound_soc.sv:241.19" *)
   wire [36:0] error_obi_rsp;
   (* hdlname = "ext_if commit" *)
   (* src = "ip/cv32e40x/rtl/cv32e40x_if_xif.sv:134.23" *)
@@ -43135,294 +43152,296 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   (* src = "ip/cv32e40x/rtl/cv32e40x_if_xif.sv:147.23" *)
   wire \ext_if.result_valid ;
   (* hdlname = "fabric_config_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:259.19" *)
-  (* unused_bits = "1 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71" *)
+  (* src = "src/soc/greyhound_soc.sv:260.19" *)
+  (* unused_bits = "1 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71" *)
   wire [71:0] fabric_config_obi_req;
   (* hdlname = "fabric_config_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:260.19" *)
+  (* src = "src/soc/greyhound_soc.sv:261.19" *)
   wire [36:0] fabric_config_obi_rsp;
   (* hdlname = "fabric_gnt_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:947.22" *)
+  (* src = "src/soc/greyhound_soc.sv:953.22" *)
   wire fabric_gnt_gated;
   (* hdlname = "fabric_issue_accept_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:123.18" *)
+  (* src = "src/soc/greyhound_soc.sv:124.18" *)
   wire fabric_issue_accept_gated;
   (* hdlname = "fabric_issue_ready_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:122.18" *)
+  (* src = "src/soc/greyhound_soc.sv:123.18" *)
   wire fabric_issue_ready_gated;
   (* hdlname = "fabric_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:263.19" *)
+  (* src = "src/soc/greyhound_soc.sv:264.19" *)
   (* unused_bits = "1 64 65 66 67 68 69 70 71" *)
   wire [71:0] fabric_obi_req;
   (* hdlname = "fabric_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:264.19" *)
+  (* src = "src/soc/greyhound_soc.sv:265.19" *)
   wire [36:0] fabric_obi_rsp;
   (* hdlname = "fabric_rdata_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:949.22" *)
+  (* src = "src/soc/greyhound_soc.sv:955.22" *)
   wire [31:0] fabric_rdata_gated;
   (* hdlname = "fabric_result_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:128.18" *)
+  (* src = "src/soc/greyhound_soc.sv:129.18" *)
   wire [31:0] fabric_result_gated;
   (* hdlname = "fabric_result_id_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:126.18" *)
+  (* src = "src/soc/greyhound_soc.sv:127.18" *)
   wire [3:0] fabric_result_id_gated;
   (* hdlname = "fabric_result_rd_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:127.18" *)
+  (* src = "src/soc/greyhound_soc.sv:128.18" *)
   wire [4:0] fabric_result_rd_gated;
   (* hdlname = "fabric_result_valid_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:125.18" *)
+  (* src = "src/soc/greyhound_soc.sv:126.18" *)
   wire fabric_result_valid_gated;
   (* hdlname = "fabric_rvalid_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:948.22" *)
+  (* src = "src/soc/greyhound_soc.sv:954.22" *)
   wire fabric_rvalid_gated;
   (* hdlname = "flash_HADDR" *)
-  (* src = "src/soc/greyhound_soc.sv:544.26" *)
+  (* src = "src/soc/greyhound_soc.sv:545.26" *)
   wire [31:0] flash_HADDR;
   (* hdlname = "flash_HRDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:549.26" *)
+  (* src = "src/soc/greyhound_soc.sv:550.26" *)
   wire [31:0] flash_HRDATA;
   (* hdlname = "flash_HREADY" *)
-  (* src = "src/soc/greyhound_soc.sv:547.26" *)
+  (* src = "src/soc/greyhound_soc.sv:548.26" *)
   wire flash_HREADY;
   (* hdlname = "flash_HREADYOUT" *)
-  (* src = "src/soc/greyhound_soc.sv:548.26" *)
+  (* src = "src/soc/greyhound_soc.sv:549.26" *)
   wire flash_HREADYOUT;
   (* hdlname = "flash_HSEL" *)
-  (* src = "src/soc/greyhound_soc.sv:543.26" *)
+  (* src = "src/soc/greyhound_soc.sv:544.26" *)
   wire flash_HSEL;
   (* hdlname = "flash_HTRANS" *)
-  (* src = "src/soc/greyhound_soc.sv:545.26" *)
+  (* src = "src/soc/greyhound_soc.sv:546.26" *)
   wire [1:0] flash_HTRANS;
   (* hdlname = "flash_HWRITE" *)
-  (* src = "src/soc/greyhound_soc.sv:546.26" *)
+  (* src = "src/soc/greyhound_soc.sv:547.26" *)
   wire flash_HWRITE;
   (* hdlname = "flash_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:243.19" *)
+  (* src = "src/soc/greyhound_soc.sv:244.19" *)
   (* unused_bits = "1" *)
   wire [71:0] flash_obi_req;
   (* hdlname = "flash_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:244.19" *)
+  (* src = "src/soc/greyhound_soc.sv:245.19" *)
   wire [36:0] flash_obi_rsp;
   (* hdlname = "instr_addr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:300.36" *)
+  (* src = "src/soc/greyhound_soc.sv:301.36" *)
   wire [31:0] instr_addr_o;
   (* hdlname = "instr_err_i" *)
-  (* src = "src/soc/greyhound_soc.sv:302.36" *)
+  (* src = "src/soc/greyhound_soc.sv:303.36" *)
   wire instr_err_i;
   (* hdlname = "instr_gnt_i" *)
-  (* src = "src/soc/greyhound_soc.sv:298.36" *)
+  (* src = "src/soc/greyhound_soc.sv:299.36" *)
   wire instr_gnt_i;
   (* hdlname = "instr_rdata_i" *)
-  (* src = "src/soc/greyhound_soc.sv:301.36" *)
+  (* src = "src/soc/greyhound_soc.sv:302.36" *)
   wire [31:0] instr_rdata_i;
   (* hdlname = "instr_req_o" *)
-  (* src = "src/soc/greyhound_soc.sv:297.36" *)
+  (* src = "src/soc/greyhound_soc.sv:298.36" *)
   wire instr_req_o;
   (* hdlname = "instr_rvalid_i" *)
-  (* src = "src/soc/greyhound_soc.sv:299.36" *)
+  (* src = "src/soc/greyhound_soc.sv:300.36" *)
   wire instr_rvalid_i;
   (* hdlname = "irq" *)
-  (* src = "src/soc/greyhound_soc.sv:339.18" *)
+  (* src = "src/soc/greyhound_soc.sv:340.18" *)
   wire [31:0] irq;
   (* hdlname = "mgrs_mux_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:217.37" *)
+  (* src = "src/soc/greyhound_soc.sv:218.37" *)
   wire [215:0] mgrs_mux_obi_req;
   (* hdlname = "mgrs_mux_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:218.37" *)
+  (* src = "src/soc/greyhound_soc.sv:219.37" *)
   (* unused_bits = "2 4 39 41 76 78" *)
   wire [110:0] mgrs_mux_obi_rsp;
   (* hdlname = "mux_demux_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:210.19" *)
+  (* src = "src/soc/greyhound_soc.sv:211.19" *)
   wire [71:0] mux_demux_obi_req;
   (* hdlname = "mux_demux_obi_req_a_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:503.16" *)
+  (* src = "src/soc/greyhound_soc.sv:504.16" *)
   wire [31:0] mux_demux_obi_req_a_addr;
   (* hdlname = "mux_demux_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:211.19" *)
+  (* src = "src/soc/greyhound_soc.sv:212.19" *)
   wire [36:0] mux_demux_obi_rsp;
   (* hdlname = "periph_idx" *)
-  (* src = "src/soc/greyhound_soc.sv:471.50" *)
+  (* src = "src/soc/greyhound_soc.sv:472.50" *)
   wire [2:0] periph_idx;
   (* hdlname = "psram_HADDR" *)
-  (* src = "src/soc/greyhound_soc.sv:705.26" *)
+  (* src = "src/soc/greyhound_soc.sv:706.26" *)
   wire [31:0] psram_HADDR;
   (* hdlname = "psram_HRDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:712.26" *)
+  (* src = "src/soc/greyhound_soc.sv:713.26" *)
   wire [31:0] psram_HRDATA;
   (* hdlname = "psram_HREADY" *)
-  (* src = "src/soc/greyhound_soc.sv:710.26" *)
+  (* src = "src/soc/greyhound_soc.sv:711.26" *)
   wire psram_HREADY;
   (* hdlname = "psram_HREADYOUT" *)
-  (* src = "src/soc/greyhound_soc.sv:711.26" *)
+  (* src = "src/soc/greyhound_soc.sv:712.26" *)
   wire psram_HREADYOUT;
   (* hdlname = "psram_HSEL" *)
-  (* src = "src/soc/greyhound_soc.sv:704.26" *)
+  (* src = "src/soc/greyhound_soc.sv:705.26" *)
   wire psram_HSEL;
   (* hdlname = "psram_HSIZE" *)
-  (* src = "src/soc/greyhound_soc.sv:707.26" *)
+  (* src = "src/soc/greyhound_soc.sv:708.26" *)
   wire [2:0] psram_HSIZE;
   (* hdlname = "psram_HTRANS" *)
-  (* src = "src/soc/greyhound_soc.sv:706.26" *)
+  (* src = "src/soc/greyhound_soc.sv:707.26" *)
   wire [1:0] psram_HTRANS;
   (* hdlname = "psram_HWDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:708.26" *)
+  (* src = "src/soc/greyhound_soc.sv:709.26" *)
   wire [31:0] psram_HWDATA;
   (* hdlname = "psram_HWRITE" *)
-  (* src = "src/soc/greyhound_soc.sv:709.26" *)
+  (* src = "src/soc/greyhound_soc.sv:710.26" *)
   wire psram_HWRITE;
   (* hdlname = "psram_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:251.19" *)
+  (* src = "src/soc/greyhound_soc.sv:252.19" *)
   (* unused_bits = "1" *)
   wire [71:0] psram_obi_req;
   (* hdlname = "psram_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:252.19" *)
+  (* src = "src/soc/greyhound_soc.sv:253.19" *)
   wire [36:0] psram_obi_rsp;
   (* hdlname = "sram_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:247.19" *)
+  (* src = "src/soc/greyhound_soc.sv:248.19" *)
   wire [71:0] sram_obi_req;
   (* hdlname = "sram_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:248.19" *)
+  (* src = "src/soc/greyhound_soc.sv:249.19" *)
   wire [36:0] sram_obi_rsp;
   (* hdlname = "time_counter" *)
-  (* src = "src/soc/greyhound_soc.sv:172.18" *)
+  (* src = "src/soc/greyhound_soc.sv:173.18" *)
   reg [63:0] time_counter;
   (* hdlname = "uart0_HADDR" *)
-  (* src = "src/soc/greyhound_soc.sv:782.26" *)
+  (* src = "src/soc/greyhound_soc.sv:783.26" *)
   wire [31:0] uart0_HADDR;
   (* hdlname = "uart0_HRDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:789.26" *)
+  (* src = "src/soc/greyhound_soc.sv:790.26" *)
   wire [31:0] uart0_HRDATA;
   (* hdlname = "uart0_HREADY" *)
-  (* src = "src/soc/greyhound_soc.sv:787.26" *)
+  (* src = "src/soc/greyhound_soc.sv:788.26" *)
   wire uart0_HREADY;
   (* hdlname = "uart0_HREADYOUT" *)
-  (* src = "src/soc/greyhound_soc.sv:788.26" *)
+  (* src = "src/soc/greyhound_soc.sv:789.26" *)
   wire uart0_HREADYOUT;
   (* hdlname = "uart0_HSEL" *)
-  (* src = "src/soc/greyhound_soc.sv:781.26" *)
+  (* src = "src/soc/greyhound_soc.sv:782.26" *)
   wire uart0_HSEL;
   (* hdlname = "uart0_HSIZE" *)
-  (* src = "src/soc/greyhound_soc.sv:784.26" *)
+  (* src = "src/soc/greyhound_soc.sv:785.26" *)
   (* unused_bits = "0 1 2" *)
   wire [2:0] uart0_HSIZE;
   (* hdlname = "uart0_HTRANS" *)
-  (* src = "src/soc/greyhound_soc.sv:783.26" *)
+  (* src = "src/soc/greyhound_soc.sv:784.26" *)
   wire [1:0] uart0_HTRANS;
   (* hdlname = "uart0_HWDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:785.26" *)
+  (* src = "src/soc/greyhound_soc.sv:786.26" *)
   wire [31:0] uart0_HWDATA;
   (* hdlname = "uart0_HWRITE" *)
-  (* src = "src/soc/greyhound_soc.sv:786.26" *)
+  (* src = "src/soc/greyhound_soc.sv:787.26" *)
   wire uart0_HWRITE;
   (* hdlname = "uart0_irq" *)
-  (* src = "src/soc/greyhound_soc.sv:340.11" *)
+  (* src = "src/soc/greyhound_soc.sv:341.11" *)
   wire uart0_irq;
   (* hdlname = "uart0_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:255.19" *)
+  (* src = "src/soc/greyhound_soc.sv:256.19" *)
   (* unused_bits = "1" *)
   wire [71:0] uart0_obi_req;
   (* hdlname = "uart0_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:256.19" *)
+  (* src = "src/soc/greyhound_soc.sv:257.19" *)
   wire [36:0] uart0_obi_rsp;
-  assign _000_ = time_counter + (* src = "src/soc/greyhound_soc.sv:177.29-177.45" *) 1'h1;
-  assign _001_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 31'h50000000;
-  assign _002_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 31'h51000000;
-  assign _003_ = _001_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _002_;
-  assign _004_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 31'h40000000;
-  assign _005_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 31'h40000100;
-  assign _006_ = _004_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _005_;
-  assign _007_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 30'h30000000;
-  assign _008_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 30'h30010000;
-  assign _009_ = _007_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _008_;
-  assign _010_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 30'h20000000;
-  assign _011_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 30'h21000000;
-  assign _012_ = _010_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _011_;
-  assign _013_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 29'h10000000;
-  assign _014_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 29'h10002000;
-  assign _015_ = _013_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _014_;
-  assign _016_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 1'h0;
-  assign _017_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 25'h1000000;
-  assign _018_ = _016_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _017_;
-  assign _019_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:498.14-498.71" *) 31'h60000000;
-  assign _020_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:499.11-499.65" *) 31'h60001000;
-  assign _021_ = _019_ && (* src = "src/soc/greyhound_soc.sv:498.13-499.106" *) _020_;
-  assign flash_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:585.25-585.50" *) 1'h1;
-  assign psram_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:748.25-748.50" *) 2'h3;
-  assign uart0_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:825.25-825.50" *) 3'h4;
-  assign _022_ = all_periph_obi_req[403:400] == (* src = "src/soc/greyhound_soc.sv:912.25-912.75" *) 4'h8;
-  assign _023_ = all_periph_obi_req[403:400] == (* src = "src/soc/greyhound_soc.sv:921.25-921.78" *) 4'hc;
-  assign _024_ = all_periph_obi_req[403:400] == (* src = "src/soc/greyhound_soc.sv:929.25-929.84" *) 3'h4;
-  (* src = "src/soc/greyhound_soc.sv:890.5" *)
+  assign _000_ = time_counter + (* src = "src/soc/greyhound_soc.sv:178.29-178.45" *) 1'h1;
+  assign _001_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 31'h50000000;
+  assign _002_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 31'h51000000;
+  assign _003_ = _001_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _002_;
+  assign _004_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 31'h40000000;
+  assign _005_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 31'h40000100;
+  assign _006_ = _004_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _005_;
+  assign _007_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 30'h30000000;
+  assign _008_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 30'h30010000;
+  assign _009_ = _007_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _008_;
+  assign _010_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 30'h20000000;
+  assign _011_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 30'h21000000;
+  assign _012_ = _010_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _011_;
+  assign _013_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 29'h10000000;
+  assign _014_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 29'h10002000;
+  assign _015_ = _013_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _014_;
+  assign _016_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 1'h0;
+  assign _017_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 25'h1000000;
+  assign _018_ = _016_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _017_;
+  assign _019_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:499.14-499.71" *) 31'h60000000;
+  assign _020_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:500.11-500.65" *) 31'h60001000;
+  assign _021_ = _019_ && (* src = "src/soc/greyhound_soc.sv:499.13-500.106" *) _020_;
+  assign flash_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:586.25-586.50" *) 1'h1;
+  assign psram_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:749.25-749.50" *) 2'h3;
+  assign uart0_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:826.25-826.50" *) 3'h4;
+  assign _022_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:914.25-914.75" *) 4'h8;
+  assign _023_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:923.25-923.78" *) 4'hc;
+  assign _024_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:931.25-931.84" *) 3'h4;
+  assign _025_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:935.25-935.74" *) 5'h10;
+  (* src = "src/soc/greyhound_soc.sv:892.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) bitstream_data_o <= 32'd0;
-    else bitstream_data_o <= _028_;
-  (* src = "src/soc/greyhound_soc.sv:890.5" *)
+    else bitstream_data_o <= _029_;
+  (* src = "src/soc/greyhound_soc.sv:892.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) bitstream_valid_o <= 1'h0;
-    else bitstream_valid_o <= _035_;
-  reg [31:0] _082_;
-  (* src = "src/soc/greyhound_soc.sv:890.5" *)
+    else bitstream_valid_o <= _036_;
+  reg [31:0] _085_;
+  (* src = "src/soc/greyhound_soc.sv:892.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
-    if (!rst_ni) _082_ <= 32'd0;
-    else _082_ <= _038_;
-  assign fabric_config_obi_rsp[36:5] = _082_;
+    if (!rst_ni) _085_ <= 32'd0;
+    else _085_ <= _040_;
+  assign fabric_config_obi_rsp[36:5] = _085_;
   reg \fabric_config_obi_rsp_reg[0] ;
-  (* src = "src/soc/greyhound_soc.sv:890.5" *)
+  (* src = "src/soc/greyhound_soc.sv:892.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) \fabric_config_obi_rsp_reg[0]  <= 1'h0;
-    else \fabric_config_obi_rsp_reg[0]  <= _036_;
+    else \fabric_config_obi_rsp_reg[0]  <= _037_;
   assign fabric_config_obi_rsp[0] = \fabric_config_obi_rsp_reg[0] ;
-  (* src = "src/soc/greyhound_soc.sv:173.5" *)
+  (* src = "src/soc/greyhound_soc.sv:174.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) time_counter <= 64'h0000000000000000;
     else time_counter <= _000_;
-  (* src = "src/soc/greyhound_soc.sv:890.5" *)
+  (* src = "src/soc/greyhound_soc.sv:892.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) warmboot_boot_o <= 1'h0;
-    else warmboot_boot_o <= _051_;
-  (* src = "src/soc/greyhound_soc.sv:890.5" *)
+    else warmboot_boot_o <= _053_;
+  (* src = "src/soc/greyhound_soc.sv:892.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) warmboot_slot_o <= 4'h0;
-    else warmboot_slot_o <= _050_;
-  assign _025_[0] = _024_ ? (* src = "src/soc/greyhound_soc.sv:930.25-930.88|src/soc/greyhound_soc.sv:929.21-931.24" *) fabric_config_busy_i : 1'h0;
-  assign _045_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:922.60-922.116|src/soc/greyhound_soc.sv:922.25-922.116" *) all_periph_obi_req[366:363] : warmboot_slot_o;
-  assign _046_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:921.80-925.24|src/soc/greyhound_soc.sv:921.21-925.24" *) _045_ : warmboot_slot_o;
-  assign _047_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:921.80-925.24|src/soc/greyhound_soc.sv:921.21-925.24" *) 1'h1 : 1'h0;
-  assign _031_ = all_periph_obi_req[398] ? (* src = "src/soc/greyhound_soc.sv:916.60-916.124|src/soc/greyhound_soc.sv:916.25-916.124" *) all_periph_obi_req[394:387] : bitstream_data_o[31:24];
-  assign _030_ = all_periph_obi_req[397] ? (* src = "src/soc/greyhound_soc.sv:915.60-915.124|src/soc/greyhound_soc.sv:915.25-915.124" *) all_periph_obi_req[386:379] : bitstream_data_o[23:16];
-  assign _029_ = all_periph_obi_req[396] ? (* src = "src/soc/greyhound_soc.sv:914.60-914.124|src/soc/greyhound_soc.sv:914.25-914.124" *) all_periph_obi_req[378:371] : bitstream_data_o[15:8];
-  assign _032_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:913.60-913.124|src/soc/greyhound_soc.sv:913.25-913.124" *) all_periph_obi_req[370:363] : bitstream_data_o[7:0];
-  assign _026_ = _022_ ? (* src = "src/soc/greyhound_soc.sv:912.77-919.24|src/soc/greyhound_soc.sv:912.21-919.24" *) { _031_, _030_, _029_, _032_ } : bitstream_data_o;
-  assign _033_ = _022_ ? (* src = "src/soc/greyhound_soc.sv:912.77-919.24|src/soc/greyhound_soc.sv:912.21-919.24" *) 1'h1 : 1'h0;
-  assign _037_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:910.49-927.20|src/soc/greyhound_soc.sv:910.17-932.20" *) fabric_config_obi_rsp[36:5] : { 31'h00000000, _025_[0] };
-  assign _048_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:910.49-927.20|src/soc/greyhound_soc.sv:910.17-932.20" *) _046_ : warmboot_slot_o;
-  assign _049_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:910.49-927.20|src/soc/greyhound_soc.sv:910.17-932.20" *) _047_ : 1'h0;
-  assign _027_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:910.49-927.20|src/soc/greyhound_soc.sv:910.17-932.20" *) _026_ : bitstream_data_o;
-  assign _034_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:910.49-927.20|src/soc/greyhound_soc.sv:910.17-932.20" *) _033_ : 1'h0;
-  assign _038_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:905.44-933.16|src/soc/greyhound_soc.sv:905.13-933.16" *) _037_ : fabric_config_obi_rsp[36:5];
-  assign _036_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:905.44-933.16|src/soc/greyhound_soc.sv:905.13-933.16" *) 1'h1 : 1'h0;
-  assign _050_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:905.44-933.16|src/soc/greyhound_soc.sv:905.13-933.16" *) _048_ : warmboot_slot_o;
-  assign _051_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:905.44-933.16|src/soc/greyhound_soc.sv:905.13-933.16" *) _049_ : 1'h0;
-  assign _028_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:905.44-933.16|src/soc/greyhound_soc.sv:905.13-933.16" *) _027_ : bitstream_data_o;
-  assign _035_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:905.44-933.16|src/soc/greyhound_soc.sv:905.13-933.16" *) _034_ : 1'h0;
-  assign periph_idx = _021_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h7 : _044_;
-  assign _044_ = _018_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h1 : _043_;
-  assign _043_ = _015_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h2 : _042_;
-  assign _042_ = _012_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h3 : _041_;
-  assign _041_ = _009_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h4 : _040_;
-  assign _040_ = _006_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h5 : _039_;
-  assign _039_ = _003_ ? (* src = "src/soc/greyhound_soc.sv:499.108-499.144|src/soc/greyhound_soc.sv:498.9-499.144" *) 3'h6 : 3'h0;
-  assign debug_fabric_rdata = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:955.34-959.12|src/soc/greyhound_soc.sv:955.9-959.12" *) fabric_rdata_i : 32'd0;
-  assign debug_fabric_rvalid = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:955.34-959.12|src/soc/greyhound_soc.sv:955.9-959.12" *) fabric_rvalid_i : 1'h0;
-  assign debug_fabric_gnt = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:955.34-959.12|src/soc/greyhound_soc.sv:955.9-959.12" *) fabric_gnt_i : 1'h0;
-  assign fabric_result_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:138.34-146.12|src/soc/greyhound_soc.sv:138.9-146.12" *) fabric_result_i : 32'd0;
-  assign fabric_result_rd_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:138.34-146.12|src/soc/greyhound_soc.sv:138.9-146.12" *) fabric_result_rd_i : 5'h00;
-  assign fabric_result_id_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:138.34-146.12|src/soc/greyhound_soc.sv:138.9-146.12" *) fabric_result_id_i : 4'h0;
-  assign fabric_result_valid_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:138.34-146.12|src/soc/greyhound_soc.sv:138.9-146.12" *) fabric_result_valid_i : 1'h0;
-  assign fabric_issue_accept_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:138.34-146.12|src/soc/greyhound_soc.sv:138.9-146.12" *) fabric_issue_accept_i : 1'h0;
-  assign fabric_issue_ready_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:138.34-146.12|src/soc/greyhound_soc.sv:138.9-146.12" *) fabric_issue_ready_i : 1'h1;
+    else warmboot_slot_o <= _052_;
+  assign _038_ = _025_ ? (* src = "src/soc/greyhound_soc.sv:936.25-936.69|src/soc/greyhound_soc.sv:935.21-937.24" *) usercode_i : { 31'h00000000, _026_[0] };
+  assign _026_[0] = _024_ ? (* src = "src/soc/greyhound_soc.sv:932.25-932.88|src/soc/greyhound_soc.sv:931.21-933.24" *) fabric_config_busy_i : 1'h0;
+  assign _047_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:924.60-924.116|src/soc/greyhound_soc.sv:924.25-924.116" *) all_periph_obi_req[366:363] : warmboot_slot_o;
+  assign _048_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:923.80-927.24|src/soc/greyhound_soc.sv:923.21-927.24" *) _047_ : warmboot_slot_o;
+  assign _049_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:923.80-927.24|src/soc/greyhound_soc.sv:923.21-927.24" *) 1'h1 : 1'h0;
+  assign _032_ = all_periph_obi_req[398] ? (* src = "src/soc/greyhound_soc.sv:918.60-918.124|src/soc/greyhound_soc.sv:918.25-918.124" *) all_periph_obi_req[394:387] : bitstream_data_o[31:24];
+  assign _031_ = all_periph_obi_req[397] ? (* src = "src/soc/greyhound_soc.sv:917.60-917.124|src/soc/greyhound_soc.sv:917.25-917.124" *) all_periph_obi_req[386:379] : bitstream_data_o[23:16];
+  assign _030_ = all_periph_obi_req[396] ? (* src = "src/soc/greyhound_soc.sv:916.60-916.124|src/soc/greyhound_soc.sv:916.25-916.124" *) all_periph_obi_req[378:371] : bitstream_data_o[15:8];
+  assign _033_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:915.60-915.124|src/soc/greyhound_soc.sv:915.25-915.124" *) all_periph_obi_req[370:363] : bitstream_data_o[7:0];
+  assign _027_ = _022_ ? (* src = "src/soc/greyhound_soc.sv:914.77-921.24|src/soc/greyhound_soc.sv:914.21-921.24" *) { _032_, _031_, _030_, _033_ } : bitstream_data_o;
+  assign _034_ = _022_ ? (* src = "src/soc/greyhound_soc.sv:914.77-921.24|src/soc/greyhound_soc.sv:914.21-921.24" *) 1'h1 : 1'h0;
+  assign _039_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:912.49-929.20|src/soc/greyhound_soc.sv:912.17-938.20" *) fabric_config_obi_rsp[36:5] : _038_;
+  assign _050_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:912.49-929.20|src/soc/greyhound_soc.sv:912.17-938.20" *) _048_ : warmboot_slot_o;
+  assign _051_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:912.49-929.20|src/soc/greyhound_soc.sv:912.17-938.20" *) _049_ : 1'h0;
+  assign _028_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:912.49-929.20|src/soc/greyhound_soc.sv:912.17-938.20" *) _027_ : bitstream_data_o;
+  assign _035_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:912.49-929.20|src/soc/greyhound_soc.sv:912.17-938.20" *) _034_ : 1'h0;
+  assign _040_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:907.44-939.16|src/soc/greyhound_soc.sv:907.13-939.16" *) _039_ : fabric_config_obi_rsp[36:5];
+  assign _037_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:907.44-939.16|src/soc/greyhound_soc.sv:907.13-939.16" *) 1'h1 : 1'h0;
+  assign _052_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:907.44-939.16|src/soc/greyhound_soc.sv:907.13-939.16" *) _050_ : warmboot_slot_o;
+  assign _053_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:907.44-939.16|src/soc/greyhound_soc.sv:907.13-939.16" *) _051_ : 1'h0;
+  assign _029_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:907.44-939.16|src/soc/greyhound_soc.sv:907.13-939.16" *) _028_ : bitstream_data_o;
+  assign _036_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:907.44-939.16|src/soc/greyhound_soc.sv:907.13-939.16" *) _035_ : 1'h0;
+  assign periph_idx = _021_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h7 : _046_;
+  assign _046_ = _018_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h1 : _045_;
+  assign _045_ = _015_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h2 : _044_;
+  assign _044_ = _012_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h3 : _043_;
+  assign _043_ = _009_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h4 : _042_;
+  assign _042_ = _006_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h5 : _041_;
+  assign _041_ = _003_ ? (* src = "src/soc/greyhound_soc.sv:500.108-500.144|src/soc/greyhound_soc.sv:499.9-500.144" *) 3'h6 : 3'h0;
+  assign debug_fabric_rdata = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:961.34-965.12|src/soc/greyhound_soc.sv:961.9-965.12" *) fabric_rdata_i : 32'd0;
+  assign debug_fabric_rvalid = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:961.34-965.12|src/soc/greyhound_soc.sv:961.9-965.12" *) fabric_rvalid_i : 1'h0;
+  assign debug_fabric_gnt = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:961.34-965.12|src/soc/greyhound_soc.sv:961.9-965.12" *) fabric_gnt_i : 1'h0;
+  assign fabric_result_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:139.34-147.12|src/soc/greyhound_soc.sv:139.9-147.12" *) fabric_result_i : 32'd0;
+  assign fabric_result_rd_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:139.34-147.12|src/soc/greyhound_soc.sv:139.9-147.12" *) fabric_result_rd_i : 5'h00;
+  assign fabric_result_id_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:139.34-147.12|src/soc/greyhound_soc.sv:139.9-147.12" *) fabric_result_id_i : 4'h0;
+  assign fabric_result_valid_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:139.34-147.12|src/soc/greyhound_soc.sv:139.9-147.12" *) fabric_result_valid_i : 1'h0;
+  assign fabric_issue_accept_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:139.34-147.12|src/soc/greyhound_soc.sv:139.9-147.12" *) fabric_issue_accept_i : 1'h0;
+  assign fabric_issue_ready_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:139.34-147.12|src/soc/greyhound_soc.sv:139.9-147.12" *) fabric_issue_ready_i : 1'h1;
   (* hdlname = "cv32e40x_core" *)
-  (* src = "src/soc/greyhound_soc.sv:357.7" *)
+  (* src = "src/soc/greyhound_soc.sv:358.7" *)
   \cv32e40x_core$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv32e40x_core  cv32e40x_core (
     .boot_addr_i(32'd128),
     .clic_irq_i(1'h0),
@@ -43482,7 +43501,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .\xif_result_if.result_valid (\ext_if.result_valid )
   );
   (* hdlname = "fabric_extension" *)
-  (* src = "src/soc/greyhound_soc.sv:149.22" *)
+  (* src = "src/soc/greyhound_soc.sv:150.22" *)
   \fabric_extension$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.fabric_extension  fabric_extension (
     .fabric_issue_accept_i(fabric_issue_accept_gated),
     .fabric_issue_id_o(fabric_issue_id_o),
@@ -43516,7 +43535,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .\xif_result.result_valid (\ext_if.result_valid )
   );
   (* hdlname = "i_EF_PSRAM_CTRL_AHBL" *)
-  (* src = "src/soc/greyhound_soc.sv:755.24" *)
+  (* src = "src/soc/greyhound_soc.sv:756.24" *)
   \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_PSRAM_CTRL_AHBL  i_EF_PSRAM_CTRL_AHBL (
     .HADDR(psram_HADDR),
     .HCLK(clk_i),
@@ -43536,7 +43555,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .sck(psram_sck)
   );
   (* hdlname = "i_EF_QSPI_XIP_CTRL_AHBL" *)
-  (* src = "src/soc/greyhound_soc.sv:597.5" *)
+  (* src = "src/soc/greyhound_soc.sv:598.5" *)
   \EF_QSPI_XIP_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_QSPI_XIP_CTRL_AHBL  i_EF_QSPI_XIP_CTRL_AHBL (
     .HADDR(flash_HADDR),
     .HCLK(clk_i),
@@ -43554,7 +43573,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .sck(flash_sck)
   );
   (* hdlname = "i_EF_UART_AHBL" *)
-  (* src = "src/soc/greyhound_soc.sv:831.18" *)
+  (* src = "src/soc/greyhound_soc.sv:832.18" *)
   \EF_UART_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_UART_AHBL  i_EF_UART_AHBL (
     .HADDR(uart0_HADDR),
     .HCLK(clk_i),
@@ -43571,7 +43590,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .tx(uart0_tx)
   );
   (* hdlname = "i_dm_top" *)
-  (* src = "src/soc/greyhound_soc.sv:1040.5" *)
+  (* src = "src/soc/greyhound_soc.sv:1046.5" *)
   \dm_obi_top$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dm_top  i_dm_top (
     .clk_i(clk_i),
     .debug_req_o(debug_req),
@@ -43608,7 +43627,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .unavailable_i(1'h0)
   );
   (* hdlname = "i_dmi_jtag" *)
-  (* src = "src/soc/greyhound_soc.sv:1015.5" *)
+  (* src = "src/soc/greyhound_soc.sv:1021.5" *)
   \dmi_jtag$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dmi_jtag  i_dmi_jtag (
     .clk_i(clk_i),
     .dmi_req_o(dmi_req),
@@ -43627,7 +43646,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .trst_ni(jtag_trst_ni)
   );
   (* hdlname = "i_obi2ahbm_adapter_flash" *)
-  (* src = "src/soc/greyhound_soc.sv:551.22" *)
+  (* src = "src/soc/greyhound_soc.sv:552.22" *)
   \obi2ahbm_adapter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi2ahbm_adapter_flash  i_obi2ahbm_adapter_flash (
     .data_addr_i(all_periph_obi_req[143:112]),
     .data_be_i(all_periph_obi_req[110:107]),
@@ -43650,7 +43669,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .priv_mode_i(1'h1)
   );
   (* hdlname = "i_obi2ahbm_adapter_psram" *)
-  (* src = "src/soc/greyhound_soc.sv:714.22" *)
+  (* src = "src/soc/greyhound_soc.sv:715.22" *)
   \obi2ahbm_adapter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi2ahbm_adapter_psram  i_obi2ahbm_adapter_psram (
     .data_addr_i(all_periph_obi_req[287:256]),
     .data_be_i(all_periph_obi_req[254:251]),
@@ -43675,7 +43694,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .priv_mode_i(1'h1)
   );
   (* hdlname = "i_obi2ahbm_adapter_uart0" *)
-  (* src = "src/soc/greyhound_soc.sv:791.22" *)
+  (* src = "src/soc/greyhound_soc.sv:792.22" *)
   \obi2ahbm_adapter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi2ahbm_adapter_uart0  i_obi2ahbm_adapter_uart0 (
     .data_addr_i(all_periph_obi_req[359:328]),
     .data_be_i(all_periph_obi_req[326:323]),
@@ -43700,7 +43719,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .priv_mode_i(1'h1)
   );
   (* hdlname = "i_obi_demux" *)
-  (* src = "src/soc/greyhound_soc.sv:512.5" *)
+  (* src = "src/soc/greyhound_soc.sv:513.5" *)
   \obi_demux$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi_demux  i_obi_demux (
     .clk_i(clk_i),
     .mgr_ports_req_o(all_periph_obi_req),
@@ -43711,7 +43730,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .sbr_port_select_i(periph_idx)
   );
   (* hdlname = "i_obi_mux" *)
-  (* src = "src/soc/greyhound_soc.sv:454.5" *)
+  (* src = "src/soc/greyhound_soc.sv:455.5" *)
   \obi_mux$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi_mux  i_obi_mux (
     .clk_i(clk_i),
     .mgr_port_req_o(mux_demux_obi_req),
@@ -43722,7 +43741,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .testmode_i(1'h0)
   );
   (* hdlname = "i_periph_err" *)
-  (* src = "src/soc/greyhound_soc.sv:531.5" *)
+  (* src = "src/soc/greyhound_soc.sv:532.5" *)
   \obi_err_sbr$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_periph_err  i_periph_err (
     .clk_i(clk_i),
     .obi_req_i(all_periph_obi_req[71:0]),
@@ -43731,7 +43750,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .testmode_i(1'h0)
   );
   (* hdlname = "i_sram_shim" *)
-  (* src = "src/soc/greyhound_soc.sv:682.7" *)
+  (* src = "src/soc/greyhound_soc.sv:683.7" *)
   \obi_sram_shim$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_sram_shim  i_sram_shim (
     .addr_o(bank_byte_addr),
     .be_o(bank_be_o),
@@ -43745,7 +43764,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .wdata_o(bank_wdata_o),
     .we_o(bank_we_o)
   );
-  assign _025_[31:1] = 31'h00000000;
+  assign _026_[31:1] = 31'h00000000;
   assign { all_periph_obi_rsp[262:261], all_periph_obi_rsp[258:185], all_periph_obi_rsp[152], all_periph_obi_rsp[150], all_periph_obi_rsp[115], all_periph_obi_rsp[113], all_periph_obi_rsp[110:74], all_periph_obi_rsp[41], all_periph_obi_rsp[39], all_periph_obi_rsp[36:0] } = { 2'h0, debug_fabric_rdata, all_periph_obi_req[434], 2'h0, debug_fabric_gnt, debug_fabric_rvalid, fabric_config_obi_rsp[36:5], all_periph_obi_req[362], 3'h1, fabric_config_obi_rsp[0], all_periph_obi_req[290], 1'h0, all_periph_obi_req[218], 1'h0, sram_obi_rsp, all_periph_obi_req[74], 1'h0, error_obi_rsp };
   assign bank_gnt = 1'h1;
   assign bank_word_addr_o = bank_byte_addr[12:2];

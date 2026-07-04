@@ -147,7 +147,7 @@ jtag_cpu = {
     'dump_waveforms': True,
 }
 
-enabled = hello_world
+enabled = jtag_cpu
 
 async def start_clock(clock, freq=50):
     """ Start the clock @ freq MHz """
@@ -1077,6 +1077,7 @@ async def test_jtag_cpu(dut):
 
     # Check if device is programmed
     await jtag.read("USERCODE", device=1)
+    assert(dut.io_core_sleep_PAD.value == 0x0)
     assert(jtag.ret_val == 0x1)
 
     # Reprogram device (only reprogram parts as to save sim time)
@@ -1092,6 +1093,7 @@ async def test_jtag_cpu(dut):
 
     await jtag.write("ISC_DISABLE", 0x1, device=1)
     await jtag.read("USERCODE", device=1)
+    assert(dut.io_core_sleep_PAD.value == 0x0)
     assert(jtag.ret_val == 0x2)
     if not gl:
         assert(dut.FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag_tap.tap_isc_state_q.value == 0x2) # ISC Operational
@@ -1100,7 +1102,13 @@ async def test_jtag_cpu(dut):
 
     # Keep running in system mode until fabric is reconfigured
     # Test if isc state changes when fabric is busy
-    for _ in range(100):
+    for _ in range(50):
+        await jtag.write("BYPASS", 0x1, device=1)
+        await jtag.write("ISC_NOOP", 0x1, device=1)
+
+    assert(dut.io_core_sleep_PAD.value == 0x0)
+
+    for _ in range(50):
         await jtag.write("BYPASS", 0x1, device=1)
         await jtag.write("ISC_NOOP", 0x1, device=1)
 
