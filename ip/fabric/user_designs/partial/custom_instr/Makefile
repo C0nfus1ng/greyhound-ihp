@@ -4,8 +4,9 @@ BASE_FOLDER = .build
 SLOT_GEN = ../slot_gen.py
 SLOT_CONFIG = slot_config.yaml
 FABRIC = ../../../../fabulous_fabric/fabric_ihp/fabric.csv
-FASM_FILES = Static=Static Slot1=Graycode,DirectOut,Crossover,Stage Slot2=XifLeftRoll,XifRightRoll,Peripheral,Counter
+FASM_FILES = Slot1=Graycode,DirectOut,Crossover,Stage Slot2=XifLeftRoll,XifRightRoll,Peripheral,Counter
 BOARD = board
+STATIC_USERCODE = 1
 
 # Make all slots
 all:
@@ -184,7 +185,7 @@ dynamic-gen:
 .PHONY: dynamic-gen
 
 bit-gen:
-	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)"
+	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)" --static_usercode $(STATIC_USERCODE)
 .PHONY: bit-gen
 
 open-config:

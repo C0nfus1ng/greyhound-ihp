@@ -433,7 +433,7 @@ async def test_partial(dut):
     # Start up
     await start_up(dut)
 
-    # Wait for firts 3 slots to upload
+    # Wait for first 3 slots to upload
     await FallingEdge(dut.io_config_busy_PAD)
     await FallingEdge(dut.io_config_busy_PAD)
     await FallingEdge(dut.io_config_busy_PAD)
@@ -473,15 +473,26 @@ async def test_partial(dut):
 
     # Wait for fourth Xif instr
     await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
-    assert(dut.io_gpio_PAD.value == 0x2_001E)
-    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    await FallingEdge(dut.io_clock_PAD)
+    await FallingEdge(dut.io_clock_PAD)
+    assert(dut.io_gpio_PAD.value == 0x07E5_E727)
+    await FallingEdge(dut.io_clock_PAD)
+    assert(dut.io_gpio_PAD.value == 0xE5E7_2702)
+    await FallingEdge(dut.io_clock_PAD)
+    assert(dut.io_gpio_PAD.value == 0xE727_0200)
+    await FallingEdge(dut.io_clock_PAD)
+    assert(dut.io_gpio_PAD.value == 0x2702_001E)
+    await FallingEdge(dut.io_clock_PAD)
     assert(dut.io_gpio_PAD.value == 0x0)
-    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    await FallingEdge(dut.io_clock_PAD)
     assert(dut.io_gpio_PAD.value == 0x2)
-    await ClockCycles(dut.io_clock_PAD, 1) # 20ns
+    await FallingEdge(dut.io_clock_PAD)
     assert(dut.io_gpio_PAD.value == 0x200)
-
+    await FallingEdge(dut.io_clock_PAD)
+    assert(dut.io_gpio_PAD.value == 0x2_001E)
+    await FallingEdge(dut.io_clock_PAD)
+    assert(dut.io_gpio_PAD.value == 0x0)
+    
     await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1us
 
 @cocotb.test(skip=enabled!=partial_2slots)

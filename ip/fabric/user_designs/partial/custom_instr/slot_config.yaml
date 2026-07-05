@@ -3,12 +3,6 @@ Height: 16
 Column length: 15
 Last color: 2
 Slots:
-- Name: Static
-  Format:
-    Specifier: "\e[31m"
-  Tiles:
-  - x: 0
-    y: 0
 - Name: Slot1
   Format:
     Specifier: "\e[32m"

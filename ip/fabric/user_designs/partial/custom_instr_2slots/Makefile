@@ -8,6 +8,8 @@ FABRIC = ../../../../fabulous_fabric/fabric_ihp/fabric.csv
 FASM_FILES = Static=Static Slot1_2=Reverse,Interleave
 BOARD = board
 BOARD_STANDALONE = board_static_counter
+STATIC_USERCODE = 1
+STATIC_STANDALONE_USERCODE = 2
 
 # Make all slots
 all:
@@ -58,7 +60,7 @@ all:
 	@echo '------------------------------------------------------'
 	@echo ''
 	$(MAKE) bit-gen
-	$(MAKE) bit-gen -e BASE_FOLDER=$(BASE_FOLDER_STANDALONE)
+	$(MAKE) bit-gen -e BASE_FOLDER=$(BASE_FOLDER_STANDALONE) STATIC_USERCODE=$(STATIC_STANDALONE_USERCODE)
 
 	@echo ''
 	@echo '------------------------------------------------------'
@@ -104,7 +106,7 @@ dynamic-gen:
 .PHONY: dynamic-gen
 
 bit-gen:
-	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)"
+	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)" --static_usercode $(STATIC_USERCODE)
 .PHONY: bit-gen
 
 open-config:
