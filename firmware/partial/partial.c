@@ -3,151 +3,42 @@
 #include <soc.h>
 #include <EF_UART.h>
 
-#include "static.h"
-#include "slot1_direct_out.h"
-#include "slot1_graycode.h"
-#include "slot2_left_shift.h"
-#include "slot2_right_shift.h"
-#include "slot3_crossover.h"
-#include "slot3_straight_through.h"
+#include "Static-Static.h"
+#include "Slot1-DirectOut.h"
+#include "Slot1-Graycode.h"
+#include "Slot2-LeftShift.h"
+#include "Slot2-RightShift.h"
+#include "Slot3-Crossover.h"
+#include "Slot3-StraightThrough.h"
 
 #define F_CPU 50000000
 #define BAUDRATE 115200
-#define SLOT_START 0xfab0fab1
-#define FRAME_PRE_HEADER 0x5e700000
-#define FPGA_HEIGHT 18
-#define FPGA_LENGTH 12
-#define FPGA_FRAMES_PER_TILE 24
-
-// Tiles below the dynamic slot
-uint32_t pseudo_bitstream(uint32_t bitstream_word, bool use_new_tile, int8_t fpga_y_coord, int8_t fpga_x_coord, uint32_t fpga_frame_strobe) {
-  bool use_frame = false;
-  uint32_t loaded_bitstream_word = 0;
-  uint32_t frame_strobe = fpga_frame_strobe;
-  uint32_t i_word = 0;
-  int8_t header_x_coord = 0;
-  uint32_t header_strobe = 0;
-
-  // Frame is not in the tile array
-  if (use_new_tile) { // Use new tile frame from bitstream
-    return bitstream_word;
-  } else { // Use old tile frame from bitstream
-    for (; i_word < sizeof(static_bitstream)/sizeof(uint32_t); i_word++) {
-      if (static_bitstream[i_word] == SLOT_START) {
-        i_word++;
-        break;
-      }
-    }
-
-    // Found slot start, iterate over the headers now
-    for (; i_word < sizeof(static_bitstream)/sizeof(uint32_t); i_word += (FPGA_HEIGHT+1)) {
-      // Check if X matches, then check for strobing and data
-      // Can break if X is larger than requested
-      header_x_coord = static_bitstream[i_word]>>27;
-      header_strobe = static_bitstream[i_word] & 0xfffff;
-
-      if (header_x_coord > fpga_x_coord) {
-        break;
-      }
-      
-      if (header_x_coord == fpga_x_coord) {
-        for (uint8_t fpga_frame = 0; fpga_frame < FPGA_FRAMES_PER_TILE; fpga_frame++) {
-          use_frame = ((frame_strobe&header_strobe) >> fpga_frame) & 0x1;
-          
-          if (use_frame) {
-            // Strobe must only have bits set were static frames are the same, otherwise static config may be changed
-            loaded_bitstream_word = static_bitstream[i_word+FPGA_HEIGHT-fpga_y_coord];
-            break;
-          }
-        }
-
-        frame_strobe &= ~header_strobe;
-      }
-    }
-
-    return loaded_bitstream_word;
-  }
-
-  return 0;
-}
-
-void write_bitstream(const uint32_t *bitstream, uint32_t length) {
-  uint32_t tile_lookup = 0x3ffff;
-  uint32_t bitstream_word = 0;
-  int32_t slot_bitstream_word = 0;
-  uint8_t frame_height = FPGA_HEIGHT;
-  int8_t frame_x_coord = 0;
-  int8_t frame_y_coord = 0;
-  uint32_t frame_strobe = 0;
-  bool slot_started = false;
-  bool use_new_tile = false;
-  bool use_frame_tiles = true;
-
-  for (uint32_t i = 0; i < length; i++) {
-    if (!slot_started) {
-      if (bitstream[i] == SLOT_START) {
-        slot_started = true;
-        use_frame_tiles = true;  
-        slot_bitstream_word = i-1;
-        tile_lookup = 0x3ffff;
-        frame_height = FPGA_HEIGHT+1;
-      }
-
-      *REG_BITSTREAM = bitstream[i];
-      continue;
-    }
-
-    // Slot started
-    frame_height--;
-
-    if (frame_height == FPGA_HEIGHT) { // Frame header
-      *REG_BITSTREAM = bitstream[i];
-      frame_x_coord = bitstream[i] >> 27;
-      frame_y_coord = i+FPGA_HEIGHT; // i+1
-
-      frame_strobe = bitstream[i]&0xfffff;
-
-      if (use_frame_tiles) { // Cnt down to another tile usage
-        tile_lookup = bitstream[slot_bitstream_word--];
-
-        if ((slot_bitstream_word < 0) || (tile_lookup & 0xfff00000) != FRAME_PRE_HEADER) {
-          tile_lookup = 0x3ffff;
-          use_frame_tiles = false;
-        }
-      }
-
-      continue;
-    }
-
-    use_new_tile = (tile_lookup >> frame_height) & 0x1;     //    i-frame_y_coord
-    bitstream_word = pseudo_bitstream(bitstream[i], use_new_tile, frame_y_coord-i, frame_x_coord, frame_strobe);
-
-    if (frame_height == 0) {
-      frame_height = FPGA_HEIGHT+1;
-    }
-
-    *REG_BITSTREAM = bitstream_word;
-  }
-}
 
 uint32_t left_shift(uint32_t op1, uint32_t op2) {
   uint32_t ret;
   
-  __asm__ volatile (".insn r 0x5b, 0, 13, %0, %1, %2" : "=r" (ret)
-                                                      : "r"  (op1),
-                                                        "r"  (op2));
+  //Instr: .insn <type> <opcode>, <func3>, <func 7>, rd, rs1, rs2
+  __asm__ volatile (".insn r 0x5b, 1, 0, %0, %1, %2" : "=r" (ret)
+                                                     : "r"  (op1),
+                                                       "r"  (op2));
 
-  return ret ;
+  return ret;
 }
 
 uint32_t right_shift(uint32_t op1, uint32_t op2) {
   uint32_t ret;
   
-  __asm__ volatile (".insn r 0x7b, 0, 13, %0, %1, %2" : "=r" (ret)
-                                                      : "r"  (op1),
-                                                        "r"  (op2));
+  __asm__ volatile (".insn r 0x5b, 2, 0, %0, %1, %2" : "=r" (ret)
+                                                     : "r"  (op1),
+                                                       "r"  (op2));
 
-  return ret ;
+  return ret;
+}
+
+void wait_nop(uint16_t wait) {
+  for (uint16_t  i = 0; i < wait; i++) {
+    asm volatile ("nop");
+  }
 }
 
 int main() {
@@ -168,50 +59,66 @@ int main() {
   printf("Start\n");
 
   // Write static bitstream
-  write_bitstream(static_bitstream, sizeof(static_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(static_static_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = static_static_bitstream[i];
+  }
   printf("Loaded Static\n");
 
   // Write Slot1 bitstream
-  write_bitstream(slot1_direct_out_bitstream, sizeof(slot1_direct_out_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot1_directOut_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot1_directOut_bitstream[i];
+  }
   printf("Loaded Slot1 direct out\n");
 
   // Write Slot2 bitstream
-  write_bitstream(slot2_left_shift_bitstream, sizeof(slot2_left_shift_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot2_leftShift_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot2_leftShift_bitstream[i];
+  }
   printf("Loaded Slot2 left shift\n");
 
   // Write Slot3 bitstream
-  write_bitstream(slot3_straight_through_bitstream, sizeof(slot3_straight_through_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot3_straightThrough_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot3_straightThrough_bitstream[i];
+  }
   printf("Loaded Slot3 straight through\n");
 
   // Test instr. and OBI
-  printf("IO out 1\n");
   uint32_t word = 0xcafecafe;
   uint8_t overflow = 0;
   for (uint8_t i = 0; i < sizeof(uint32_t)*2; i++) {
     overflow = word & 0xf;
     word = (word>>4)|(overflow<<28);
     *((int*)FABRIC_BASE) = word;
+    wait_nop(0x100);
   }
   printf("IO reg %x\n", *((int*)FABRIC_BASE));
 
   uint32_t test_left_shift = left_shift(0xdeadbeef, 0x10);
   printf("Left shift 1: %lx\n", test_left_shift);
-
+  
+  wait_nop(0x100);
   test_left_shift = left_shift(0xbeefdead, 0x5);
+  wait_nop(0x100);
   printf("Left shift 2: %lx\n", test_left_shift);
 
   // Write Slot2 bitstream
-  write_bitstream(slot2_right_shift_bitstream, sizeof(slot2_right_shift_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot2_rightShift_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot2_rightShift_bitstream[i];
+  }
   printf("Loaded Slot2 right shift\n");
 
   uint32_t test_right_shift = right_shift(0xdeadbeef, 0x3);
+  wait_nop(0x100);
   printf("Right shift 1: %lx\n", test_right_shift);
 
   test_right_shift = right_shift(0xdeadbeef, 0x10);
+  wait_nop(0x100);
   printf("Right shift 2: %lx\n", test_right_shift);
 
   // Write Slot3 bitstream
-  write_bitstream(slot3_crossover_bitstream, sizeof(slot3_crossover_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot3_crossover_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot3_crossover_bitstream[i];
+  }
   printf("Loaded Slot3 crossover\n");
 
   word = 0xcafecafe;
@@ -220,11 +127,14 @@ int main() {
     overflow = word & 0xf;
     word = (word>>4)|(overflow<<28);
     *((int*)FABRIC_BASE) = word;
+    wait_nop(0x100);
   }
   printf("IO reg %x\n", *((int*)FABRIC_BASE));
 
   // Write Slot1 bitstream
-  write_bitstream(slot1_graycode_bitstream, sizeof(slot1_graycode_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot1_graycode_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot1_graycode_bitstream[i];
+  }
   printf("Loaded Slot1 graycode\n");
   
   word = 0xcafecafe;
@@ -233,11 +143,14 @@ int main() {
     overflow = word & 0xf;
     word = (word>>4)|(overflow<<28);
     *((int*)FABRIC_BASE) = word;
+    wait_nop(0x100);
   }
   printf("IO reg %x\n", *((int*)FABRIC_BASE));
 
   // Write Slot3 bitstream
-  write_bitstream(slot3_straight_through_bitstream, sizeof(slot3_straight_through_bitstream)/sizeof(uint32_t));
+  for (uint32_t i = 0; i < sizeof(slot3_straightThrough_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot3_straightThrough_bitstream[i];
+  }
   printf("Loaded Slot3 straight through\n");
   
   word = 0xcafecafe;
@@ -246,6 +159,7 @@ int main() {
     overflow = word & 0xf;
     word = (word>>4)|(overflow<<28);
     *((int*)FABRIC_BASE) = word;
+    wait_nop(0x100);
   }
   printf("IO reg %x\n", *((int*)FABRIC_BASE));
 

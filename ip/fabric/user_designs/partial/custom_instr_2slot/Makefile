@@ -4,7 +4,9 @@ BASE_FOLDER = .build
 SLOT_GEN = ../slot_gen.py
 SLOT_CONFIG = slot_config.yaml
 FABRIC = ../../../fabric.csv
-FASM_FILES = "Static=Static Slot1_2=Interleave,Combine,Function"
+FASM_FILES = Static=Static Slot1_2=Interleave,Combine,Function
+BOARD = .board
+STATIC_USERCODE = 2
 
 # Make all slots
 all:
@@ -55,6 +57,13 @@ all:
 	@echo '------------------------------------------------------'
 	@echo ''
 	$(MAKE) bit-gen
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Copy bitstreams'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) board
 .PHONY: all
 
 # Slot sources
@@ -101,15 +110,15 @@ dynamic-gen:
 .PHONY: dynamic-gen
 
 bit-gen:
-	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
+	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)" --static_usercode $(STATIC_USERCODE)
 .PHONY: bit-gen
 
 open-config:
-	python3 $(SLOT_GEN) -if $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
+	python3 $(SLOT_GEN) -if $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)"
 .PHONY: open-config
 
 show-config:
-	@echo 'q' | python3 $(SLOT_GEN) -if $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm $(FASM_FILES)
+	@echo 'q' | python3 $(SLOT_GEN) -if $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)"
 .PHONY: show-config
 
 synth:
@@ -135,5 +144,31 @@ pnr:
 .PHONY: pnr
 
 clean:
-	rm -rf $(BASE_FOLDER)
+	rm -rf $(BASE_FOLDER) $(BOARD)
 .PHONY: clean
+
+board: # Parse config param and copy wanted files in priority order to board dir
+	mkdir -p $(BOARD)/bitstreams; \
+	for pair in $(FASM_FILES); do \
+		folder=$$(printf '%s' "$$pair" | cut -d= -f1); \
+		files=$$(printf '%s' "$$pair" | cut -d= -f2-); \
+		for file in $$(printf '%s' "$$files" | tr ',' '\n'); do \
+			for suffix in -slot-dedup -slot -dedup ""; do \
+				if [ -f "$(BASE_FOLDER)/$$folder/$$file$$suffix.bit" ]; then \
+					bitstream="$(BASE_FOLDER)/$$folder/$$file$$suffix.bit"; \
+					break; \
+				fi; \
+			done; \
+			if [ -z "$$bitstream" ]; then \
+				echo "No source file found for $(BASE_FOLDER)/$$folder/$$file"; \
+				exit 1; \
+			fi; \
+			echo "Copy $$bitstream into $(BOARD)/bitstreams/$$folder-$$file.bit"; \
+ 			cp "$$bitstream" "$(BOARD)/bitstreams/$$folder-$$file.bit"; \
+		done; \
+	done; \
+	if [ -f "$(BASE_FOLDER)/Static/Static.bit" ]; then \
+		echo "Copy $(BASE_FOLDER)/Static/Static.bit into $(BOARD)/bitstreams/Static-Full.bit"; \
+		cp "$(BASE_FOLDER)/Static/Static.bit" "$(BOARD)/bitstreams/Static-Full.bit"; \
+	fi ;
+.PHONY: board
