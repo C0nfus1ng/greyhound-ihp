@@ -11,9 +11,11 @@ OBJ = partial.o
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS) -I ../bsp -I ../bsp/drivers/EF_UART
 
 TARGET = partial
+SLOT_NAMES = Static-Static Slot1-Graycode Slot1-DirectOut Slot2-LeftShift Slot2-RightShift Slot3-StraightThrough Slot3-Crossover
+SLOT_HEADERS = $(addsuffix .h, $(SLOT_NAMES))
 ELF_TARGET = $(TARGET).elf
 BIN_TARGET = $(TARGET).bin
-HEX_TARGET= $(TARGET).hex
+HEX_TARGET = $(TARGET).hex
 
 BSP_PATH = ../bsp
 LINKER_SCRIPT = $(BSP_PATH)/link.ld
@@ -29,6 +31,11 @@ all: $(HEX_TARGET)
 %.o : %.S
 	$(RISCV_GCC) $(CFLAGS) -c $< -o $@
 
+%.h : ../../ip/fabric/user_designs/partial/custom_instr/.board/bitstreams/%.bit
+	$(PYTHON) build_lookup.py $< ../../ip/fabric/user_designs/partial/custom_instr/.board/bitstreams/Static-Full.bit $@
+
+$(OBJ): $(SLOT_HEADERS)
+
 $(ELF_TARGET): $(OBJ)
 	$(RISCV_GCC) $(CFLAGS) $< -L$(BSP_PATH) -l:bsp.a -o $@ $(LDFLAGS)
 
@@ -42,9 +49,8 @@ dump: $(ELF_TARGET)
 	$(RISCV_EXE_PREFIX)objdump -d -x $<
 .phony: dump
 
-
 clean:
-	rm -f $(OBJ) $(ELF_TARGET) $(BIN_TARGET) $(HEX_TARGET)
+	rm -f $(SLOT_HEADERS) $(OBJ) $(ELF_TARGET) $(BIN_TARGET) $(HEX_TARGET)
 .phony: clean
 
 vars:

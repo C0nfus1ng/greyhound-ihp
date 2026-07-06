@@ -55,12 +55,13 @@ module slot2_right_shift();
 
     // 0x0B, 0x2B, 0x5B and 0x7B
     // are free for custom use
-    localparam OPCODE_XIF = 7'h7B;
+    localparam OPCODE_XIF = 7'h5B;
+    localparam OPCODE_FUNC3 = 3'h2;
 
     // Use GCC .insn pseudo directive:
     // R type: .insn r opcode7, func3, func7, rd, rs1, rs2
 
-    assign issue_accept_o = opcode == OPCODE_XIF && issue_valid_i;
+    assign issue_accept_o = opcode == OPCODE_XIF && funct3 == OPCODE_FUNC3 && issue_valid_i;
     
     assign issue_ready_o = 1'b1;
     
