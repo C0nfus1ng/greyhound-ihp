@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: © 2025 Leo Moser <leo.moser@pm.me>
 // SPDX-License-Identifier: Apache-2.0
+// SPDX-FileContributor: Modified by Stefan Huwar <stefan.huwar@gmail.com>
 
 `default_nettype none
 
@@ -7,22 +8,17 @@
 This SPI controller reads a bitstream from an
 SPI Flash upon receiving a start_i pulse.
 The starting address can be changed using the
-slot_i input.
-Use the parameters to adjust for the correct
-bitstream length of your fabric.
+slot_chunk_addr_i input.
+The controller is for 16 warmboot slots and up to 16MB flash
 */
 
-module fabric_spi_controller #(
-    parameter BITSTREAM_LENGTH_WORDS = 100,
-    parameter SLOT_OFFSET_WORDS = 128,
-    parameter NUM_SLOTS = 16
-)(
+module fabric_spi_controller (
     input  logic  clk_i,
     input  logic  rst_ni,
     
     // Start reading data at selected slot
-    input logic   start_i,
-    input logic   [$clog2(NUM_SLOTS)-1:0] slot_i,
+    input logic        start_i,
+    input logic [12:0] slot_chunk_addr_i,
     
     // Bitstream data
     output logic [31:0] bitstream_data_o,
@@ -35,18 +31,34 @@ module fabric_spi_controller #(
     output logic sclk_o,
     output logic cs_no,
     output logic mosi_o,
-    input  logic miso_i
+    input  logic miso_i,
+    
+    // Control
+    input logic [5:0] slot_offset_i,
+    input logic bitstream_finish
 );
     // CPOL = 0, CPHA = 0
 
     localparam READ_CMD = 8'h03;
     
+    // Addr, generation
+    logic [12:0] slot_chunk_addr;
+    always_comb begin
+        case (slot_offset_i)
+            6'b000000: slot_chunk_addr = {9'h0, slot_chunk_addr_i[3:0]};
+            6'b?????1: slot_chunk_addr = {5'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[3:0]};
+            6'b????1?: slot_chunk_addr = {4'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[4:0]};
+            6'b???1??: slot_chunk_addr = {3'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[5:0]};
+            6'b??1???: slot_chunk_addr = {2'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[6:0]};
+            6'b?1????: slot_chunk_addr = {1'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[7:0]};
+            6'b1?????: slot_chunk_addr = {slot_chunk_addr_i[12:9], slot_chunk_addr_i[8:0]};
+        endcase
+    end
+
     logic [31:0] shift_register;
     logic [4:0] shift_cnt;
     logic [21:0] address_counter_words;
     
-    logic [$clog2(NUM_SLOTS)-1:0] slot;
-
     // States
     typedef enum {
         S_IDLE,
@@ -72,7 +84,7 @@ module fabric_spi_controller #(
             S_SHIFT_ADDR:
                 if (shift_cnt == '0 && sclk_o) next_state = S_LOAD_DATA;
             S_LOAD_DATA:
-                if (address_counter_words == SLOT_OFFSET_WORDS*slot+BITSTREAM_LENGTH_WORDS) next_state = S_IDLE;
+                if (bitstream_finish) next_state = S_IDLE;
                 else next_state = S_SHIFT_DATA;
             S_SHIFT_DATA:
                 if (shift_cnt == '0 && sclk_o) next_state = S_WRITE_DATA;
@@ -99,7 +111,6 @@ module fabric_spi_controller #(
             sclk_o <= 1'b0;
             bitstream_data_o <= '0;
             bitstream_valid_o <= '0;
-            slot <= '0;
             address_counter_words <= '0;
         end else begin
             bitstream_valid_o <= 1'b0;
@@ -107,8 +118,7 @@ module fabric_spi_controller #(
             case (curr_state)
                 S_IDLE: begin
                     if (start_i) begin
-                        address_counter_words <= SLOT_OFFSET_WORDS * slot_i;
-                        slot <= slot_i;
+                        address_counter_words <= {slot_chunk_addr, 9'h0};
                     end
                     
                     sclk_o <= 1'b0;

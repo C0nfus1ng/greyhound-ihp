@@ -25,7 +25,7 @@ module fabric_wrapper #(
 
     // WARMBOOT
     output        fabric_warmboot_boot_o,
-    output  [3:0] fabric_warmboot_slot_o,
+    output [12:0] fabric_warmboot_slot_o,
     input         fabric_warmboot_reset_i,
 
     // CPU_IRQ
@@ -192,6 +192,9 @@ module fabric_wrapper #(
     logic        fabric_bram3_b_tie_high_o;
     logic        fabric_bram3_b_tie_low_o;
 
+    // Offset for deduped sttaic slot
+    assign fabric_warmboot_slot_o[8:0] = 9'hA;
+
     eFPGA
     //#(
     //    .MaxFramesPerCol(MaxFramesPerCol),
@@ -335,10 +338,10 @@ module fabric_wrapper #(
         // WARMBOOT
         .Tile_X1Y17_RESET_top(fabric_warmboot_reset_i),
         .Tile_X1Y17_BOOT_top(fabric_warmboot_boot_o),
-        .Tile_X1Y17_SLOT_top0(fabric_warmboot_slot_o[0]),
-        .Tile_X1Y17_SLOT_top1(fabric_warmboot_slot_o[1]),
-        .Tile_X1Y17_SLOT_top2(fabric_warmboot_slot_o[2]),
-        .Tile_X1Y17_SLOT_top3(fabric_warmboot_slot_o[3]),
+        .Tile_X1Y17_SLOT_top0(fabric_warmboot_slot_o[9]),
+        .Tile_X1Y17_SLOT_top1(fabric_warmboot_slot_o[10]),
+        .Tile_X1Y17_SLOT_top2(fabric_warmboot_slot_o[11]),
+        .Tile_X1Y17_SLOT_top3(fabric_warmboot_slot_o[12]),
         .Tile_X1Y17_CONFIGURED_top(configured_i),
 
         // IRQ

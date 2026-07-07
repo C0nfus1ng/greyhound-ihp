@@ -139,7 +139,7 @@ module greyhound_ihp (
     logic spi_controller_miso_i;
     
     logic spi_controller_start_i;
-    logic [3:0] spi_controller_slot_i;
+    logic [12:0] spi_controller_slot_chunk_addr;
     
     // I/Os West
     wire [FABRIC_NUM_IO_WEST-1:0]      fabric_io_west_in_i;
@@ -147,9 +147,9 @@ module greyhound_ihp (
     wire [FABRIC_NUM_IO_WEST-1:0]      fabric_io_west_oe_o;
 
     // WARMBOOT
-    wire        fabric_warmboot_boot_o;
-    wire  [3:0] fabric_warmboot_slot_o;
-    wire        fabric_warmboot_reset_i;
+    wire         fabric_warmboot_boot_o;
+    wire  [12:0] fabric_warmboot_slot_o;
+    wire         fabric_warmboot_reset_i;
 
     // CPU_IRQ
     wire  [3:0] fabric_irq_soc;
@@ -200,7 +200,7 @@ module greyhound_ihp (
     
     // CPU trigger reconfiguration
     wire            cpu_warmboot_boot_o;
-    wire [3:0]      cpu_warmboot_slot_o;
+    wire [12:0]      cpu_warmboot_slot_o;
     
     // At startup, trigger configuration
     // when fpga_mode_sync == 1'b0
@@ -258,7 +258,7 @@ module greyhound_ihp (
             spi_bitstream_valid = '0;
             
             // Slot and trigger
-            spi_controller_slot_i   = '0;
+            spi_controller_slot_chunk_addr = '0:
             spi_controller_start_i  = '0;
 
             if (jtag_trst_ni_sync) begin
@@ -303,8 +303,7 @@ module greyhound_ihp (
                 
                 // Slot and trigger
                 spi_controller_start_i  = startup_trigger || ((fabric_warmboot_boot_o || cpu_warmboot_boot_o) && !(fabric_config_busy || fabric_spi_controller_busy));
-                spi_controller_slot_i   = startup_trigger ? '0 : cpu_warmboot_boot_o ? cpu_warmboot_slot_o : fabric_warmboot_slot_o;
-                
+                spi_controller_slot_chunk_addr = startup_trigger ? '0 : cpu_warmboot_boot_o ? cpu_warmboot_slot_o : fabric_warmboot_slot_o;
             end else begin
                 // SPI receiver
                 fpga_sclk_oe_o = 1'b0;
@@ -323,7 +322,7 @@ module greyhound_ihp (
                 
                 // Slot and trigger
                 spi_controller_start_i  = '0;
-                spi_controller_slot_i   = '0;
+                spi_controller_slot_chunk_addr = '0;
             end
         end
 
@@ -352,8 +351,8 @@ module greyhound_ihp (
             spi_bitstream_valid = '0;
             
             // Slot and trigger
-            spi_controller_slot_i   = '0;
             spi_controller_start_i  = '0;
+            spi_controller_slot_chunk_addr = '0;
         end
     end
     
@@ -462,18 +461,16 @@ module greyhound_ihp (
         .fabric_obi_rdata_i     ( fabric_rdata_dm         )
     );
 
-    // TODO adjust BITSTREAM_LENGTH_WORDS
-    fabric_spi_controller #(
-        .BITSTREAM_LENGTH_WORDS (32'h11D6),
-        .SLOT_OFFSET_WORDS      (32'h2000),
-        .NUM_SLOTS              (16)
-    ) fabric_spi_controller (
+    // Warmboot
+    logic [5:0] warmboot_offset;
+
+    fabric_spi_controller fabric_spi_controller (
         .clk_i  (clk),
         .rst_ni (rst_n_sync),
         
         // Start reading data at selected slot
-        .start_i    (spi_controller_start_i),
-        .slot_i     (spi_controller_slot_i),
+        .start_i           (spi_controller_start_i),
+        .slot_chunk_addr_i (spi_controller_slot_chunk_addr)
         
         // Bitstream data
         .bitstream_data_o    (spi_controller_bitstream_data_o),
@@ -486,7 +483,11 @@ module greyhound_ihp (
         .sclk_o     (spi_controller_sclk_o),
         .cs_no      (spi_controller_cs_no),
         .mosi_o     (spi_controller_mosi_o),
-        .miso_i     (spi_controller_miso_i)
+        .miso_i     (spi_controller_miso_i),
+
+        // Control
+        .slot_offset_i    (warmboot_offset),
+        .bitstream_finish (fabric_config_configured)
     );
     
     // Mux bitstreams: SPI (controller/receiver) <-> CPU    
@@ -629,6 +630,7 @@ module greyhound_ihp (
         // Trigger fabric reconfiguration
         .warmboot_boot_o    (cpu_warmboot_boot_o),
         .warmboot_slot_o    (cpu_warmboot_slot_o),
+        .warmboot_offset_o  (warmboot_offset),
         
         // Custom instruction interface to fabric
         .fabric_issue_ready_i   (fabric_issue_ready_soc),
