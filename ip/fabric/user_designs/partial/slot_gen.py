@@ -820,8 +820,11 @@ def split_pip_line(pips:[str]) -> {str:[(int, str)]}:
     for pip_pos, pip in enumerate(pips):
         split_pip = pip.split(",")
         
+        if pip[0] == "#":
+            continue
+
         if len(split_pip) > 6 or len(split_pip) < 6:
-            RuntimeError(f"PIP line is non conforming")
+            raise RuntimeError(f"PIP line {pip} is non conforming")
 
         if split_pip[0] not in split_pips.keys():
             split_pips[split_pip[0]] = []
@@ -1083,7 +1086,7 @@ def gen_dedup_bitstream(layout:FabricLayout, filename_in:str, filename_out:str, 
             seek_byte_counter += 1
             seek_byte = bitstream_file_in.read(1)
             if not seek_byte:
-                RuntimeError("Bitstream start sequence not found!")
+                raise RuntimeError("Bitstream start sequence not found!")
 
             seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
 
@@ -1091,7 +1094,7 @@ def gen_dedup_bitstream(layout:FabricLayout, filename_in:str, filename_out:str, 
         while FabricLayout.bit_start != static_seek_word:
             static_seek_byte = static_bitstream_file.read(1)
             if not static_seek_byte:
-                RuntimeError("Bitstream start sequence not found!")
+                raise RuntimeError("Bitstream start sequence not found!")
 
             static_seek_word = ((static_seek_word & 0xFFFFFF) << 8) | int.from_bytes(static_seek_byte, "big")
 
@@ -1229,7 +1232,7 @@ def gen_dedup_bitstream(layout:FabricLayout, filename_in:str, filename_out:str, 
         enabled_tiles_bitstream = reduce_enabled_tiles(enabled_tiles_bitstream, usercode)
         bitstream_file_out.write(b''.join(bitstream[:2] + enabled_tiles_bitstream + bitstream[2:]))
 
-def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_files:{str:[str]}, static_usercode:int) -> None:
+def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_files:{str:[str]}, usercodes:{str:int}) -> None:
     if not fasm_files or (fasm_files and "Static" not in fasm_files.keys()):
         static_prog = "Static"
     else:
@@ -1242,11 +1245,15 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
         while FabricLayout.stream_start != seek_word:
             seek_byte = static_bitstream_file.read(1)
             if not seek_byte:
-                RuntimeError("Bitstream start sequence not found!")
+                raise RuntimeError("Bitstream start sequence not found!")
 
             seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
         
-        static_usercode &= 0xF
+        if usercodes and f"Static/{static_prog}" in usercodes.keys():
+            static_usercode = usercodes[f"Static/{static_prog}"]<<15
+        else:
+            static_usercode = 1<<15
+        
         static_bitstream_file.write(static_usercode.to_bytes(4))
 
     bit_to_hex(f"{base_dir}/Static/{static_prog}.bit", f"{base_dir}/Static/{static_prog}.hex", bytes_per_word=1)
@@ -1263,11 +1270,7 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
         raise RuntimeError(f"Cannot use a single dynamic slot")
         return
 
-    static_slot_present = 1 if len(all_slots) > 0 and all_slots[0].name == "Static" else 0
-    usercode_bitsize = int(28/(len(all_slots)-static_slot_present))
-    print(f"There are up to 15 usercodes for the Static slot and up to {(1<<usercode_bitsize)-1} usercodes per dynamic slot available (Usercodes start at 1)")
-
-    for i_slot, slot in enumerate(all_slots, start=1-static_slot_present):
+    for slot in all_slots:
         if slot.name == "Static":
             continue
 
@@ -1280,12 +1283,12 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
         if not fasm_files:
             tmp_fasm_files = {slot.name: slot.name}
 
-        for i_fasm_file, fasm_file in enumerate(tmp_fasm_files[slot.name]):
+        for fasm_file in tmp_fasm_files[slot.name]:
             genBitstream(f"{base_dir}/{slot.name}/{fasm_file}-slot.fasm", f"{base_dir}/{slot.name}/bitStreamSpec.bin", f"{base_dir}/{slot.name}/{fasm_file}.bit")
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
             gen_dedup_bitstream(layout, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [slot])
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.hex", bytes_per_word=1)
-            usercode = ((i_fasm_file+1)<<(4+(usercode_bitsize*(i_slot-1)))) & 0xFFFFFFFF
+            usercode = usercodes[f"{slot.name}/{fasm_file}"]<<15 if usercodes else 1<<15
             print(f"{slot.name}/{fasm_file} has usercode: {usercode:08x}")
 
             # Create the slot only representation
@@ -1300,7 +1303,7 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
                 while(FabricLayout.bit_start != seek_word):
                     seek_byte = bitstream_file_in.read(1)
                     if not seek_byte:
-                        RuntimeError("Bitstream start sequence not found!")
+                        raise RuntimeError("Bitstream start sequence not found!")
 
                     seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
 
@@ -1321,7 +1324,6 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
                                     slot_enabled_tiles |= 1<<i_height
                         
                         slot_enabled_tiles_bitstream.append(slot_enabled_tiles.to_bytes(4))
-
                         slot_bitstream.append(data)
 
                     data = bitstream_file_in.read(bytes_per_frame)
@@ -1450,6 +1452,24 @@ def parse_prog(fasm_files:str) -> {str:[str]}:
 
     return slot_progs_dict
 
+def parse_usercode(fasm_files:{str:[str]}, arg_usercode:str) -> {str:int}:
+    if not fasm_files or not arg_usercode:
+        return None
+    
+    usercodes = [int(usercode_str) for usercode_str in arg_usercode.split(",")]
+
+    i_usercodes = 0
+    usercodes_dict = {}
+    for slot_name, fasm_files in fasm_files.items():
+        for fasm_file in fasm_files:
+            if i_usercodes < len(usercodes):
+                usercodes_dict[f"{slot_name}/{fasm_file}"] = usercodes[i_usercodes]
+                i_usercodes += 1
+            else:
+                usercodes_dict[f"{slot_name}/{fasm_file}"] = 1
+
+    return usercodes_dict
+
 # TODO fix producing empty tiles in bitstream spec (Workaround applied in bit_gen.py)
 # TODO allow slots to merge if size and tiles match but y coords don't
 # TODO dedup relies on bit_gen only ever setting 1 strobe bit at a time
@@ -1473,7 +1493,7 @@ if __name__ == "__main__":
             "5) Run yosys and nextpnr to generate the dynamic slot fasm files\n"\
             "6) Run -cf <conf_file> to merge the static fasm file into the dynamic fasm files\n"\
             "7) Run -bf <conf_file> to generate the bitstream and hex files for all slots\n"\
-            "--basedir, --fabric, --spec, --progdir, --nomerge, --static_usercode can be combined with all options and are used if applicable\n"\
+            "--basedir, --fabric, --spec, --progdir, --nomerge, --usercode can be combined with all options and are used if applicable\n"\
             "-i can be combined with -g <conf_file>, -c <conf_file>, -b <conf_file>, the functions are called on w command"
 
     arg_parser = argparse.ArgumentParser(description=usage)
@@ -1488,7 +1508,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
     arg_parser.add_argument("--fasm", help="FASM file to generate the bitstream for a slot, defaults to slot name=slot name. Use with specifiying the slot, like --fasm \"Slot1=Prog1,Prog2,.. Slot2=...\"")
     arg_parser.add_argument("--nomerge", action="store_true", help="Prevent merging of slots, may allow routing for static slot with high congestion by sacrificing slot interoperability")
-    arg_parser.add_argument("--static_usercode", type=int, default=1, help="15bit wide USERCODE to use for the static slot other usercodes are automatically generated")
+    arg_parser.add_argument("--usercode", help="17bit wide USERCODES to use for the slots delimited by a ','. Use like --usercode \"1,2,3,4,...\", will be padded with 1 until it haas the same length as bitstreaams specified")
 
     args = arg_parser.parse_args()
     
@@ -1497,6 +1517,7 @@ if __name__ == "__main__":
         exit
 
     fasm_files = parse_prog(args.fasm)
+    usercodes = parse_usercode(fasm_files, args.usercode)
 
     if not args.basedir:
         base_dir = ".build"
@@ -1509,7 +1530,7 @@ if __name__ == "__main__":
         fabric_path = args.fabric
 
     if args.interactive:
-        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, args.nomerge, base_dir, fabric_path, fasm_files, args.static_usercode)
+        slot_part(args.generate, args.file, args.static, args.combine, args.bitstream, args.nomerge, base_dir, fabric_path, fasm_files, usercodes)
         exit
 
     fabric_layout = None
@@ -1540,6 +1561,6 @@ if __name__ == "__main__":
                 fabric_layout = FabricLayout()
                 init_config(fabric_layout, args.file, fabric_path)
 
-            gen_bitstream(fabric_layout, args.nomerge, base_dir, fasm_files, args.static_usercode)
+            gen_bitstream(fabric_layout, args.nomerge, base_dir, fasm_files, usercodes)
         else:
             print("The -b parameter requires the -f parameter")
