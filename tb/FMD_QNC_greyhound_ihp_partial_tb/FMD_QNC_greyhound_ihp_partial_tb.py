@@ -42,7 +42,16 @@ partial_2slots_jtag = {
     'dump_waveforms': True,
 }
 
-enabled = partial_extension_cpu
+flash_image = {
+    'flash0_slot0': '../../../firmware/flash_image/flash_image.hex',
+    'flash0_slot1': '',
+    'flash1_slot0': '../../../ip/fabric/user_designs/partial/flash_image.hex',
+    'flash1_slot1': '',
+    'connect_flash1': True,
+    'dump_waveforms': True,
+}
+
+enabled = flash_image
 
 async def start_clock(clock, freq=50):
     """ Start the clock @ freq MHz """
@@ -91,7 +100,7 @@ async def write_bitstream_spi(filename, spi_master):
 
 @cocotb.test(skip=enabled!=partial_extension_cpu)
 async def test_partial_extension_cpu(dut):
-    """Run the "Partial Extension CPU" program (~4h)"""
+    """Run the "Partial Extension CPU" program (~8h)"""
     # Setup UART
     uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
     uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
@@ -624,6 +633,44 @@ async def test_partial_2slots_jtag(dut):
     assert(data2 == b'Slot1\nSlot2\nRet: 00d8\nRet: 007c\nRet: 00be\nRet: 00a6\nRet: 00c1\nEnd\n')
 
     cocotb.log.info("Uploaded all.")
+
+@cocotb.test(skip=enabled!=flash_image)
+async def test_flash_image(dut):
+    """Run the "Flash image" program"""
+    # Setup UART
+    uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
+    uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
+
+    # Static setup
+    dut.io_fetch_enable_PAD.value = 1
+
+    # Start up
+    await start_up(dut)
+    
+    # Static setup, apply after reset happened (fpga_mode and tap reset share a line)
+    dut.io_fpga_mode_PAD.value = 0 # Configure FPGA as controller
+
+    # Ignore x -> 0 rising edge
+    await ClockCycles(dut.io_clock_PAD, 10)
+
+    # Wait until core is sleeping
+    await RisingEdge(dut.io_core_sleep_PAD)
+
+    cocotb.log.info("Core is sleeping!")
+
+    # # Wait until core has woken up from the IRQ
+    # await FallingEdge(dut.io_core_sleep_PAD)
+
+    # cocotb.log.info("Core has woken up!")
+
+    # Wait for all messages
+    data = bytearray()
+    for i in range(1, 10):
+        await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
+        data += uart_sink.read_nowait(-1)
+        cocotb.log.info(f"Data thus far: {data}")
+
+    cocotb.log.info(f"Finished. UART:\n {data}")
 
 if __name__ == "__main__":
     testbench_path = Path(__file__).resolve().parent

@@ -258,7 +258,7 @@ module greyhound_ihp (
             spi_bitstream_valid = '0;
             
             // Slot and trigger
-            spi_controller_slot_chunk_addr = '0:
+            spi_controller_slot_chunk_addr = '0;
             spi_controller_start_i  = '0;
 
             if (jtag_trst_ni_sync) begin
@@ -470,7 +470,7 @@ module greyhound_ihp (
         
         // Start reading data at selected slot
         .start_i           (spi_controller_start_i),
-        .slot_chunk_addr_i (spi_controller_slot_chunk_addr)
+        .slot_chunk_addr_i (spi_controller_slot_chunk_addr),
         
         // Bitstream data
         .bitstream_data_o    (spi_controller_bitstream_data_o),

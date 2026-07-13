@@ -857,7 +857,7 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     localparam REG_BITSTREAM            = 5'd8;
     localparam REG_TRIGGER_SLOT         = 5'd12;
     localparam REG_USERCODE             = 5'd16; // Place usercode with fabric, as it represents what is loaded
-    localparam REG_WARMBOOT_OFFSET      = 5'd20
+    localparam REG_WARMBOOT_OFFSET      = 5'd20;
     
     `ifdef DEBUG
     logic [  32-1:0] debug_fabric_config_req;

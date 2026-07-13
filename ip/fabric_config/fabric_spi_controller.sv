@@ -84,10 +84,10 @@ module fabric_spi_controller (
             S_SHIFT_ADDR:
                 if (shift_cnt == '0 && sclk_o) next_state = S_LOAD_DATA;
             S_LOAD_DATA:
-                if (bitstream_finish) next_state = S_IDLE;
-                else next_state = S_SHIFT_DATA;
+                next_state = S_SHIFT_DATA;
             S_SHIFT_DATA:
-                if (shift_cnt == '0 && sclk_o) next_state = S_WRITE_DATA;
+                if (bitstream_finish) next_state = S_IDLE;
+                else if (shift_cnt == '0 && sclk_o) next_state = S_WRITE_DATA;
             S_WRITE_DATA:
                 next_state = S_LOAD_DATA;
         endcase
@@ -147,7 +147,7 @@ module fabric_spi_controller (
                     sclk_o <= !sclk_o;
 
                     // On falling edge of sclk
-                    if (sclk_o) begin
+                    if (!bitstream_finish & sclk_o) begin
                         shift_cnt <= shift_cnt-1;
                         shift_register <= {shift_register[30:0], miso_i};
                     end

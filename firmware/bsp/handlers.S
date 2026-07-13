@@ -50,6 +50,7 @@
 .global m_fast14_irq_handler
 .global m_fast15_irq_handler
 .global end_handler_ret
+.global end_handler_incr_mepc
 
 .weak __no_irq_handler
 .weak u_sw_irq_handler
@@ -75,6 +76,8 @@
 
 .weak handle_insn_access_fault
 .weak handle_insn_bus_fault
+
+.weak handle_illegal_insn
 
 /* exception handling */
 __no_irq_handler:
