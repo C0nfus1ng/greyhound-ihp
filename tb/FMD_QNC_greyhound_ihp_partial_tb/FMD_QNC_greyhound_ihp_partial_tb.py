@@ -450,7 +450,7 @@ async def wait_jtag(jtag, noops:int):
 async def test_partial_extension_jtag(dut):
     """Run the "Partial Extension over JTAG" program"""
     jtag = await setup_for_jtag(dut)
-    gl   = os.getenv("GL", False)
+    gl   = int(os.getenv("GL", 0))
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
     cocotb.log.info("Upload Static Slot.")
@@ -594,7 +594,7 @@ async def test_partial_2slots_jtag(dut):
     uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
 
     jtag = await setup_for_jtag(dut)
-    gl   = os.getenv("GL", False)
+    gl   = int(os.getenv("GL", 0))
 
     await jtag.write("ISC_ENABLE", 0x1, device=1)
     cocotb.log.info("Upload Static Slot.")
@@ -678,7 +678,7 @@ if __name__ == "__main__":
     pdk_root    = os.getenv("PDK_ROOT", testbench_path / '../../IHP-Open-PDK')
     pdk         = os.getenv("PDK", "ihp-sg13g2")
     scl         = os.getenv("SCL", "sg13g2_stdcell")
-    gl          = os.getenv("GL", False)
+    gl          = int(os.getenv("GL", 0))
     
     includes = [testbench_path / '../../rtl/include']
     

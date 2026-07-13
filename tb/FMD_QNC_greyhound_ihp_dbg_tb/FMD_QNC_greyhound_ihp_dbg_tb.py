@@ -58,7 +58,7 @@ async def start_up(dut):
     dut.reset_SimJTAG.value = True
 
     # Wait for jtag to be enabled
-    gl = os.getenv("GL", False)
+    gl = int(os.getenv("GL", 0))
     if gl:
         await ClockCycles(dut.io_clock_PAD, int(50*4)) # Wait for 4µs
     else:
@@ -101,7 +101,7 @@ async def test_hello_world(dut):
 @cocotb.test(skip=enabled!=bitstream_upload)
 async def test_bitstream_upload(dut):
     """Upload bitstream over jtag"""
-    gl = os.getenv("GL", False)
+    gl = int(os.getenv("GL", 0))
 
     # Static setup
     dut.io_fetch_enable_PAD.value = 1
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     pdk_root    = os.getenv("PDK_ROOT", testbench_path / '../../IHP-Open-PDK')
     pdk         = os.getenv("PDK", "ihp-sg13g2")
     scl         = os.getenv("SCL", "sg13g2_stdcell")
-    gl          = os.getenv("GL", False)
+    gl          = int(os.getenv("GL", 0))
     
     includes = [testbench_path / '../../rtl/include']
     
