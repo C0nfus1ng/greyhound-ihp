@@ -348,8 +348,7 @@ module \EF_PSRAM_CTRL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF
   wire [4:0] _057_;
   wire [3:0] _058_;
   wire [3:0] _059_;
-  (* unused_bits = "8" *)
-  wire [31:0] _060_;
+  wire [7:0] _060_;
   wire _061_;
   wire _062_;
   wire [7:0] _063_;
@@ -558,9 +557,9 @@ module \EF_PSRAM_CTRL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF
   assign _058_ = rd_wr ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:103.45-103.68" *) wait_states : 4'h0;
   assign data_start[6:0] = wait_start[5:0] + (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:103.31-103.69" *) _058_;
   assign _059_ = _036_ ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:104.32-104.52" *) 4'h2 : 4'h8;
-  assign data_count[6:0] = _059_ * (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:104.31-104.60" *) size;
-  assign _060_[7:0] = data_start[6:0] + (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:105.47-105.70" *) data_count[6:0];
-  assign final_count = short_cmd ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:105.31-105.70" *) 8'h08 : _060_[7:0];
+  assign data_count = { 28'h0000000, _059_ } * (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:104.31-104.60" *) size;
+  assign _060_ = data_start[6:0] + (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:105.47-105.70" *) data_count;
+  assign final_count = short_cmd ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:105.31-105.70" *) 8'h08 : _060_;
   assign done = counter == (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:107.24-107.46" *) final_count;
   assign _061_ = ~ (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:112.23-112.28" *) done;
   assign _062_ = sck & (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:112.17-112.28" *) _061_;
@@ -726,10 +725,8 @@ module \EF_PSRAM_CTRL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF
   assign _124_ = start ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:71.29-71.43|ip/EF_PSRAM_CTRL/hdl/rtl/EF_PSRAM_CTRL.v:71.19-71.63" *) 1'h1 : 1'h0;
   assign _043_[6:0] = { _043_[7], _043_[7], _043_[7], _043_[7], _043_[7], _043_[7], _043_[7] };
   assign _045_[6:0] = { _045_[7], _045_[7], _045_[7], _045_[7], _045_[7], _045_[7], _045_[7] };
-  assign _060_[31:9] = 23'h000000;
   assign _078_[30:8] = { _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31], _078_[31] };
   assign _084_[30:8] = { _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31], _084_[31] };
-  assign data_count[7] = 1'h0;
   assign data_start[7] = 1'h0;
   assign dout_spi[3:1] = 3'h0;
   assign douten_spi = 4'h1;
@@ -821,7 +818,7 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
   wire _013_;
   wire _014_;
   wire [7:0] _015_;
-  wire [7:0] _016_;
+  wire [6:0] _016_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:216.13-216.59" *)
   wire _017_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.14-220.12" *)
@@ -870,35 +867,36 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
   wire [7:0] _039_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.14-220.12" *)
   wire [7:0] _040_;
+  wire [7:0] _041_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:114.13-119.16" *)
-  wire [31:0] _041_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:128.18-133.16" *)
   wire [31:0] _042_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:125.18-133.16" *)
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:128.18-133.16" *)
   wire [31:0] _043_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:122.13-133.16" *)
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:125.18-133.16" *)
   wire [31:0] _044_;
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:122.13-133.16" *)
+  wire [31:0] _045_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:302.14-303.36" *)
-  wire _045_;
+  wire _046_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:294.17-295.38" *)
-  wire [31:0] _046_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:113.14-134.12" *)
   wire [31:0] _047_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *)
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:113.14-134.12" *)
   wire [31:0] _048_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *)
-  wire _049_;
+  wire [31:0] _049_;
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *)
+  wire _050_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:184.14-185.35" *)
-  wire [2:0] _050_;
+  wire [2:0] _051_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *)
-  wire [1:0] _051_;
+  wire [1:0] _052_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *)
-  wire _052_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:236.17-239.38" *)
   wire _053_;
-  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:242.17-245.38" *)
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:236.17-239.38" *)
   wire _054_;
+  (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:242.17-245.38" *)
   wire _055_;
+  wire _056_;
   (* hdlname = "ENTER_QPI_REG" *)
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:195.17" *)
   reg ENTER_QPI_REG;
@@ -1050,8 +1048,8 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
   assign _014_ = last_ahb_addr_phase | (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:257.25-257.59" *) ahb_addr_phase;
   assign rd_wr = ~ (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:269.25-269.37" *) last_HWRITE;
   assign _015_ = rd_wr_reg ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:277.25-278.35" *) RD_CMD_REG : WR_CMD_REG;
-  assign _016_ = EXIT_QPI_REG ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:276.25-278.35" *) XQPI_CMD_REG : _015_;
-  assign cmd = ENTER_QPI_REG ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:275.25-278.35" *) EQPI_CMD_REG : _016_;
+  assign { _041_[7], _016_ } = EXIT_QPI_REG ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:276.25-278.35" *) XQPI_CMD_REG : _015_;
+  assign cmd = ENTER_QPI_REG ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:275.25-278.35" *) EQPI_CMD_REG : { _041_[7], _016_ };
   assign short_cmd = ENTER_QPI_REG | (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:279.30-279.56" *) EXIT_QPI_REG;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:198.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
@@ -1092,30 +1090,30 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:299.9" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) data_cfg <= 1'h0;
-    else data_cfg <= _045_;
+    else data_cfg <= _046_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:293.13" *)
   always_ff @(posedge HCLK)
-    data_i <= _046_;
+    data_i <= _047_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:164.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) last_HADDR <= 32'd0;
-    else last_HADDR <= _048_;
+    else last_HADDR <= _049_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:164.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) last_HSEL <= 1'h0;
-    else last_HSEL <= _049_;
+    else last_HSEL <= _050_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:181.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) last_HSIZE <= 3'h0;
-    else last_HSIZE <= _050_;
+    else last_HSIZE <= _051_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:164.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) last_HTRANS <= 2'h0;
-    else last_HTRANS <= _051_;
+    else last_HTRANS <= _052_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:164.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) last_HWRITE <= 1'h0;
-    else last_HWRITE <= _052_;
+    else last_HWRITE <= _053_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:286.13" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) last_ahb_addr_phase <= 1'h0;
@@ -1123,15 +1121,15 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:270.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) rd_wr_reg <= 1'h0;
-    else rd_wr_reg <= _055_;
+    else rd_wr_reg <= _056_;
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:227.5" *)
   always_ff @(posedge HCLK, negedge HRESETn)
     if (!HRESETn) state <= 1'h0;
     else state <= nstate;
-  assign _045_ = ahb_addr_phase ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:303.13-303.36|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:302.14-303.36" *) _002_ : data_cfg;
-  assign _055_ = last_HTRANS[1] ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:274.13-274.32|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:273.14-274.32" *) rd_wr : rd_wr_reg;
+  assign _046_ = ahb_addr_phase ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:303.13-303.36|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:302.14-303.36" *) _002_ : data_cfg;
+  assign _056_ = last_HTRANS[1] ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:274.13-274.32|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:273.14-274.32" *) rd_wr : rd_wr_reg;
   assign _029_ = _012_ ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:264.25-264.43|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:263.21-266.43" *) 1'h1 : 1'h0;
-  function [0:0] _109_;
+  function [0:0] _110_;
     input [0:0] a;
     input [1:0] b;
     input [1:0] s;
@@ -1140,17 +1138,17 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
     (* parallel_case *)
     casez (s)
       2'b?1:
-        _109_ = b[0:0];
+        _110_ = b[0:0];
       2'b1?:
-        _109_ = b[1:1];
+        _110_ = b[1:1];
       default:
-        _109_ = a;
+        _110_ = a;
     endcase
   endfunction
-  assign _030_ = _109_(1'hx, { _028_, _029_ }, { _000_, state });
+  assign _030_ = _110_(1'hx, { _028_, _029_ }, { _000_, state });
   assign _028_ = _014_ ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:258.25-258.43|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:257.21-260.43" *) 1'h0 : 1'h1;
-  assign _054_ = _012_ ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:243.21-243.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:242.17-245.38" *) 1'h0 : 1'h1;
-  function [0:0] _112_;
+  assign _055_ = _012_ ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:243.21-243.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:242.17-245.38" *) 1'h0 : 1'h1;
+  function [0:0] _113_;
     input [0:0] a;
     input [1:0] b;
     input [1:0] s;
@@ -1159,16 +1157,16 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
     (* parallel_case *)
     casez (s)
       2'b?1:
-        _112_ = b[0:0];
+        _113_ = b[0:0];
       2'b1?:
-        _112_ = b[1:1];
+        _113_ = b[1:1];
       default:
-        _112_ = a;
+        _113_ = a;
     endcase
   endfunction
-  assign nstate = _112_(1'hx, { _053_, _054_ }, { _000_, state });
-  assign _053_ = start ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:237.21-237.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:236.17-239.38" *) 1'h1 : 1'h0;
-  assign _046_ = last_ahb_addr_phase ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:295.21-295.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:294.17-295.38" *) HWDATA : data_i;
+  assign nstate = _113_(1'hx, { _054_, _055_ }, { _000_, state });
+  assign _054_ = start ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:237.21-237.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:236.17-239.38" *) 1'h1 : 1'h0;
+  assign _047_ = last_ahb_addr_phase ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:295.21-295.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:294.17-295.38" *) HWDATA : data_i;
   assign _021_ = last_HADDR[15] ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:217.33-217.59|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:217.13-217.59" *) HWDATA[0] : EXIT_QPI_REG;
   assign _017_ = last_HADDR[14] ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:216.33-216.59|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:216.13-216.59" *) HWDATA[0] : ENTER_QPI_REG;
   assign _031_ = last_HADDR[13] ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:215.33-215.59|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:215.13-215.59" *) HWDATA[1:0] : MODE_REG;
@@ -1185,23 +1183,23 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
   assign _020_ = _011_ ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.76-220.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.14-220.12" *) _019_ : EQPI_CMD_REG;
   assign _038_ = _011_ ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.76-220.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.14-220.12" *) _037_ : WR_CMD_REG;
   assign _034_ = _011_ ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.76-220.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:209.14-220.12" *) _033_ : RD_CMD_REG;
-  assign _050_ = _008_ ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:185.17-185.35|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:184.14-185.35" *) HSIZE : last_HSIZE;
-  assign _051_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HTRANS : last_HTRANS;
-  assign _052_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HWRITE : last_HWRITE;
-  assign _048_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HADDR : last_HADDR;
-  assign _049_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HSEL : last_HSEL;
+  assign _051_ = _008_ ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:185.17-185.35|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:184.14-185.35" *) HSIZE : last_HSIZE;
+  assign _052_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HTRANS : last_HTRANS;
+  assign _053_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HWRITE : last_HWRITE;
+  assign _049_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HADDR : last_HADDR;
+  assign _050_ = HREADY ? (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.25-178.12|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:172.14-178.12" *) HSEL : last_HSEL;
   assign _024_ = byte_2 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:156.17-156.47|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:155.18-160.16" *) { 8'h00, data_o[7:0], 16'h0000 } : { data_o[7:0], 24'h000000 };
   assign _025_ = byte_1 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:153.17-153.46|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:152.18-160.16" *) { 16'h0000, data_o[7:0], 8'h00 } : _024_;
   assign _026_ = byte_0 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:150.17-150.38|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:149.13-160.16" *) { 24'h000000, data_o[7:0] } : _025_;
   assign _027_ = is_half ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:142.13-147.16|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:141.14-161.12" *) _023_ : _026_;
   assign _023_ = half_0 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:143.17-143.39|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:142.13-147.16" *) { 16'h0000, data_o[15:0] } : { data_o[15:0], 16'h0000 };
   assign HRDATA = is_word ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:139.13-139.29|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:138.9-161.12" *) data_o : _027_;
-  assign _042_[7:0] = byte_2 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:129.17-129.46|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:128.18-133.16" *) data_i[23:16] : data_i[31:24];
-  assign _043_[7:0] = byte_1 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:126.17-126.45|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:125.18-133.16" *) data_i[15:8] : _042_[7:0];
-  assign _044_[7:0] = byte_0 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:123.17-123.44|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:122.13-133.16" *) data_i[7:0] : _043_[7:0];
-  assign _047_ = is_half ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:114.13-119.16|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:113.14-134.12" *) { 16'h0000, _041_[15:0] } : { 24'h000000, _044_[7:0] };
-  assign _041_[15:0] = half_0 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:115.17-115.45|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:114.13-119.16" *) data_i[15:0] : data_i[31:16];
-  assign data_i_sized = is_word ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:111.13-111.35|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:110.9-134.12" *) data_i : _047_;
+  assign _043_[7:0] = byte_2 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:129.17-129.46|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:128.18-133.16" *) data_i[23:16] : data_i[31:24];
+  assign _044_[7:0] = byte_1 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:126.17-126.45|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:125.18-133.16" *) data_i[15:8] : _043_[7:0];
+  assign _045_[7:0] = byte_0 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:123.17-123.44|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:122.13-133.16" *) data_i[7:0] : _044_[7:0];
+  assign _048_ = is_half ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:114.13-119.16|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:113.14-134.12" *) { 16'h0000, _042_[15:0] } : { 24'h000000, _045_[7:0] };
+  assign _042_[15:0] = half_0 ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:115.17-115.45|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:114.13-119.16" *) data_i[15:0] : data_i[31:16];
+  assign data_i_sized = is_word ? (* full_case = 32'd1 *) (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:111.13-111.35|ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:110.9-134.12" *) data_i : _048_;
   (* hdlname = "MCTRL" *)
   (* src = "ip/EF_PSRAM_CTRL/hdl/rtl/bus_wrapper/EF_PSRAM_CTRL_AHBL.v:314.19" *)
   \EF_PSRAM_CTRL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_PSRAM_CTRL_AHBL.MCTRL  MCTRL (
@@ -1225,10 +1223,11 @@ module \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc
     .start(start),
     .wait_states(WAIT_STATES_REG)
   );
-  assign _041_[31:16] = 16'h0000;
-  assign _042_[31:8] = 24'h000000;
+  assign _041_[6:0] = _016_;
+  assign _042_[31:16] = 16'h0000;
   assign _043_[31:8] = 24'h000000;
   assign _044_[31:8] = 24'h000000;
+  assign _045_[31:8] = 24'h000000;
   assign control = HADDR[22];
   assign mctrl_addr = { 1'h0, last_HADDR[22:0] };
   assign qpi = MODE_REG[1];
@@ -11374,7 +11373,7 @@ module \cv32e40x_alu$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv32e
   wire _0311_;
   wire _0312_;
   wire _0313_;
-  wire [1:0] _0314_;
+  wire [31:0] _0314_;
   wire _0315_;
   wire _0316_;
   wire _0317_;
@@ -12532,7 +12531,7 @@ module \cv32e40x_alu$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv32e
   assign _0302_ = _0300_ ^ (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.31-314.82" *) _0301_;
   assign _0303_ = \clmul.clmul_op_a [2] & (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.50-314.81" *) \clmul.clmul_op_b [12];
   assign _0304_ = _0302_ ^ (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.31-314.82" *) _0303_;
-  assign _0314_ = _0305_ ? (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:207.43-207.114" *) 2'h1 : { 1'h1, _0294_ };
+  assign _0314_ = _0305_ ? (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:207.43-207.114" *) 32'd1 : { 31'h00000001, _0294_ };
   assign _0306_ = \clmul.clmul_op_a [1] & (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.50-314.81" *) \clmul.clmul_op_b [13];
   assign _0307_ = _0304_ ^ (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.31-314.82" *) _0306_;
   assign _0308_ = \clmul.clmul_op_a [0] & (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.50-314.81" *) \clmul.clmul_op_b [14];
@@ -12542,7 +12541,7 @@ module \cv32e40x_alu$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv32e
   assign _0311_ = _0309_ ^ (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.31-314.82" *) _0310_;
   assign _0312_ = \clmul.clmul_op_a [13] & (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.50-314.81" *) \clmul.clmul_op_b [2];
   assign _0313_ = _0311_ ^ (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.31-314.82" *) _0312_;
-  assign _0325_ = operand_a_i << (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:207.27-207.115" *) { 30'h00000000, _0314_ };
+  assign _0325_ = operand_a_i << (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:207.27-207.115" *) _0314_;
   assign _0315_ = \clmul.clmul_op_a [12] & (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.50-314.81" *) \clmul.clmul_op_b [3];
   assign _0316_ = _0313_ ^ (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.31-314.82" *) _0315_;
   assign _0317_ = \clmul.clmul_op_a [11] & (* src = "ip/cv32e40x/rtl/cv32e40x_alu.sv:314.50-314.81" *) \clmul.clmul_op_b [4];
@@ -24919,9 +24918,9 @@ module \cv32e40x_ff_one$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv
   assign sel_nodes[0] = sel_nodes[1] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[2];
   assign index_nodes[19:15] = sel_nodes[7] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) index_nodes[39:35] : index_nodes[44:40];
   assign sel_nodes[4] = sel_nodes[9] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[10];
-  assign index_nodes[24:20] = sel_nodes[9] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) index_nodes[49:45] : { 3'h3, index_nodes[51:50] };
+  assign index_nodes[24:20] = sel_nodes[9] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) index_nodes[49:45] : index_nodes[54:50];
   assign sel_nodes[5] = sel_nodes[11] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[12];
-  assign index_nodes[29:25] = sel_nodes[11] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) index_nodes[59:55] : index_nodes[64:60];
+  assign index_nodes[29:25] = sel_nodes[11] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) index_nodes[59:55] : { 3'h5, index_nodes[61:60] };
   assign sel_nodes[6] = sel_nodes[13] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[14];
   assign first_one_o = sel_nodes[1] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) index_nodes[9:5] : index_nodes[14:10];
   assign index_nodes[34:30] = sel_nodes[13] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 3'h6, index_nodes[66:65] } : { 3'h7, index_nodes[71:70] };
@@ -24933,11 +24932,11 @@ module \cv32e40x_ff_one$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv
   assign index_nodes[49:45] = sel_nodes[19] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 4'h4, index_nodes[95] } : { 4'h5, index_nodes[100] };
   assign sel_nodes[1] = sel_nodes[3] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[4];
   assign sel_nodes[10] = sel_nodes[21] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[22];
-  assign index_nodes[51:50] = sel_nodes[21] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 1'h0, index_nodes[105] } : { 1'h1, index_nodes[110] };
+  assign index_nodes[54:50] = sel_nodes[21] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 4'h6, index_nodes[105] } : { 4'h7, index_nodes[110] };
   assign sel_nodes[11] = sel_nodes[23] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[24];
   assign index_nodes[59:55] = sel_nodes[23] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 4'h8, index_nodes[115] } : { 4'h9, index_nodes[120] };
   assign sel_nodes[12] = sel_nodes[25] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[26];
-  assign index_nodes[64:60] = sel_nodes[25] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 4'ha, index_nodes[125] } : { 4'hb, index_nodes[130] };
+  assign index_nodes[61:60] = sel_nodes[25] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 1'h0, index_nodes[125] } : { 1'h1, index_nodes[130] };
   assign sel_nodes[13] = sel_nodes[27] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[28];
   assign index_nodes[66:65] = sel_nodes[27] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:66.44-67.111" *) { 1'h0, index_nodes[135] } : { 1'h1, index_nodes[140] };
   assign sel_nodes[14] = sel_nodes[29] | (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:65.44-65.107" *) sel_nodes[30];
@@ -24980,7 +24979,7 @@ module \cv32e40x_ff_one$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv
   assign index_nodes[150] = in_i[30] ? (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:76.46-76.101" *) 1'h0 : 1'h1;
   assign no_ones_o = ~ (* src = "ip/cv32e40x/rtl/cv32e40x_ff_one.sv:99.24-99.37" *) sel_nodes[0];
   assign index_lut = 160'hffbbcdeb38bdab49ca307b9ac5a928398a418820;
-  assign { index_nodes[154:151], index_nodes[149:146], index_nodes[144:141], index_nodes[139:136], index_nodes[134:131], index_nodes[129:126], index_nodes[124:121], index_nodes[119:116], index_nodes[114:111], index_nodes[109:106], index_nodes[104:101], index_nodes[99:96], index_nodes[94:91], index_nodes[89:86], index_nodes[84:81], index_nodes[79:76], index_nodes[74:72], index_nodes[69:67], index_nodes[54:52], index_nodes[4:0] } = { 73'h1fdb97530eca86421f3, first_one_o };
+  assign { index_nodes[154:151], index_nodes[149:146], index_nodes[144:141], index_nodes[139:136], index_nodes[134:131], index_nodes[129:126], index_nodes[124:121], index_nodes[119:116], index_nodes[114:111], index_nodes[109:106], index_nodes[104:101], index_nodes[99:96], index_nodes[94:91], index_nodes[89:86], index_nodes[84:81], index_nodes[79:76], index_nodes[74:72], index_nodes[69:67], index_nodes[64:62], index_nodes[4:0] } = { 73'h1fdb97530eca86421f5, first_one_o };
   assign sel_nodes[31] = 1'h0;
 endmodule
 
@@ -36023,7 +36022,7 @@ module \dmi_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dmi
   wire _001_;
   wire [1:0] _002_;
   wire [3:0] _003_;
-  wire [3:0] _004_;
+  wire _004_;
   wire [3:0] _005_;
   wire [3:0] _006_;
   wire [3:0] _007_;
@@ -36143,7 +36142,7 @@ module \dmi_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dmi
   assign _001_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:231.23-231.61" *) 1'h0 : 1'h1;
   assign _002_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:235.23-235.59" *) 2'h2 : 2'h1;
   assign _003_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:239.23-239.57" *) 4'h9 : 4'h3;
-  assign _004_[0] = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:243.23-243.50" *) 1'h1 : 1'h0;
+  assign _004_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:243.23-243.50" *) 1'h1 : 1'h0;
   assign _005_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:250.23-250.51" *) 4'h8 : 4'h6;
   assign _006_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:256.23-256.51" *) 4'h8 : 4'h4;
   assign _007_ = tms_i ? (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:264.23-264.59" *) 4'h0 : 4'ha;
@@ -36256,7 +36255,7 @@ module \dmi_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dmi
         _086_ = a;
     endcase
   endfunction
-  assign tap_state_d = _086_(4'hx, { 3'h0, _001_, _003_, 3'h2, _004_[0], _005_, 3'h3, _004_[0], _006_, _007_, 1'h1, _008_, 2'h3, _009_, 2'h3, _002_, 1'h1, _010_, 2'h0, _002_ }, { _045_, _043_, _014_, _040_, _039_, _038_, _036_, _013_, _033_, _032_, _031_, _012_ });
+  assign tap_state_d = _086_(4'hx, { 3'h0, _001_, _003_, 3'h2, _004_, _005_, 3'h3, _004_, _006_, _007_, 1'h1, _008_, 2'h3, _009_, 2'h3, _002_, 1'h1, _010_, 2'h0, _002_ }, { _045_, _043_, _014_, _040_, _039_, _038_, _036_, _013_, _033_, _032_, _031_, _012_ });
   assign _030_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:296.17-299.10|ip/riscv-dbg/src/dmi_jtag_tap.sv:229.5-301.12" *) 4'hf;
   assign _031_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:290.9-290.52|ip/riscv-dbg/src/dmi_jtag_tap.sv:229.5-301.12" *) 4'he;
   assign _032_ = tap_state_q == (* full_case = 32'd1 *) (* parallel_case = 32'd1 *) (* src = "ip/riscv-dbg/src/dmi_jtag_tap.sv:287.9-287.51|ip/riscv-dbg/src/dmi_jtag_tap.sv:229.5-301.12" *) 4'hd;
@@ -36299,7 +36298,6 @@ module \dmi_jtag_tap$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dmi
     .clk_i(tck_i),
     .clk_o(tck_ni)
   );
-  assign _004_[3:1] = 3'h2;
   assign capture_dr = capture_o;
   assign shift_o = shift_dr;
   assign tck_o = tck_i;
@@ -37613,7 +37611,7 @@ module \fabric_extension$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.f
 endmodule
 
 (* src = "ip/fabric_config/fabric_spi_controller.sv:15.8" *)
-module \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_controller (clk_i, rst_ni, bitstream_data_o, bitstream_valid_o, start_i, slot_chunk_addr_i, busy_o, sclk_o, cs_no, mosi_o, miso_i, slot_offset_i, bitstream_finish);
+module \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_controller (clk_i, rst_ni, bitstream_data_o, bitstream_valid_o, start_i, slot_chunk_addr_i, busy_o, sclk_o, cs_no, mosi_o, miso_i, slot_offset_i, bitstream_finish_i);
   (* hdlname = "clk_i" *)
   (* src = "ip/fabric_config/fabric_spi_controller.sv:16.19" *)
   input clk_i;
@@ -37662,64 +37660,65 @@ module \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_c
   (* src = "ip/fabric_config/fabric_spi_controller.sv:37.23" *)
   input [5:0] slot_offset_i;
   wire [5:0] slot_offset_i;
-  (* hdlname = "bitstream_finish" *)
+  (* hdlname = "bitstream_finish_i" *)
   (* src = "ip/fabric_config/fabric_spi_controller.sv:38.17" *)
-  input bitstream_finish;
-  wire bitstream_finish;
+  input bitstream_finish_i;
+  wire bitstream_finish_i;
   wire _00_;
-  wire [4:0] _01_;
+  wire _01_;
   wire _02_;
-  wire _03_;
-  wire [21:0] _04_;
+  wire [4:0] _03_;
+  wire _04_;
   wire _05_;
-  wire _06_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:120.21-122.24" *)
-  wire [21:0] _07_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
+  wire [21:0] _06_;
+  wire _07_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:132.21-134.24" *)
   wire [21:0] _08_;
-  wire _09_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
+  wire [21:0] _09_;
   wire _10_;
   wire _11_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:90.22-90.79" *)
-  wire [31:0] _12_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
+  wire _12_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
   wire [31:0] _13_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
   wire _14_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:89.17-90.79" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:96.17-96.73" *)
   wire [31:0] _15_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:81.17-81.55" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:100.17-100.74" *)
   wire [31:0] _16_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:85.17-85.73" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *)
   wire [31:0] _17_;
-  wire [4:0] _18_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:92.17-92.55" *)
+  wire [31:0] _18_;
   wire _19_;
-  wire [31:0] _20_;
-  wire [4:0] _21_;
+  wire _20_;
+  wire _21_;
   wire _22_;
-  wire [31:0] _23_;
+  wire _23_;
   wire _24_;
-  wire _25_;
-  wire [4:0] _26_;
-  wire _27_;
-  wire _28_;
-  wire [31:0] _29_;
-  wire _30_;
-  wire [12:0] _31_;
-  wire _32_;
+  wire [4:0] _25_;
+  wire [31:0] _26_;
+  wire [4:0] _27_;
+  wire [31:0] _28_;
+  wire [4:0] _29_;
+  wire [31:0] _30_;
+  wire _31_;
+  wire [12:0] _32_;
   wire [12:0] _33_;
-  wire _34_;
+  wire [12:0] _34_;
   wire [12:0] _35_;
-  wire _36_;
-  wire [12:0] _37_;
-  wire _38_;
-  wire [12:0] _39_;
-  wire _40_;
-  wire _41_;
-  wire _42_;
+  wire [12:0] _36_;
+  wire _37_;
   (* hdlname = "address_counter_words" *)
   (* src = "ip/fabric_config/fabric_spi_controller.sv:60.18" *)
   reg [21:0] address_counter_words;
+  (* hdlname = "bitstream_finish" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:75.31" *)
+  wire bitstream_finish;
+  (* hdlname = "bitstream_finish_q" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:75.11" *)
+  reg bitstream_finish_q;
   (* hdlname = "curr_state" *)
   (* src = "ip/fabric_config/fabric_spi_controller.sv:72.13" *)
   reg [31:0] curr_state = 32'd0;
@@ -37736,166 +37735,167 @@ module \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_c
   (* hdlname = "slot_chunk_addr" *)
   (* src = "ip/fabric_config/fabric_spi_controller.sv:45.18" *)
   wire [12:0] slot_chunk_addr;
-  assign busy_o = | (* src = "ip/fabric_config/fabric_spi_controller.sv:96.21-96.41" *) $signed(curr_state);
-  assign _00_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:132.31-132.38" *) sclk_o;
-  assign _01_ = shift_cnt - (* src = "ip/fabric_config/fabric_spi_controller.sv:136.38-136.49" *) 1'h1;
-  assign _02_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:150.25-150.42" *) bitstream_finish;
-  assign _03_ = _02_ & (* src = "ip/fabric_config/fabric_spi_controller.sv:150.25-150.51" *) sclk_o;
-  assign _04_ = address_counter_words + (* src = "ip/fabric_config/fabric_spi_controller.sv:156.46-156.71" *) 1'h1;
-  assign cs_no = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:169.20-169.43" *) busy_o;
-  assign _05_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:85.21-85.36" *) shift_cnt;
-  assign _06_ = _05_ && (* src = "ip/fabric_config/fabric_spi_controller.sv:85.21-85.46" *) sclk_o;
-  assign _09_ = | { _22_, _19_ };
-  assign _10_ = | { _28_, _27_, _24_ };
-  assign _11_ = | { _28_, _27_ };
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:107.5" *)
+  assign _00_ = _01_ && (* src = "ip/fabric_config/fabric_spi_controller.sv:96.21-96.46" *) sclk_o;
+  assign _01_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:100.21-100.36" *) shift_cnt;
+  assign busy_o = | (* src = "ip/fabric_config/fabric_spi_controller.sv:108.21-108.41" *) $signed(curr_state);
+  assign _02_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:144.31-144.38" *) sclk_o;
+  assign _03_ = shift_cnt - (* src = "ip/fabric_config/fabric_spi_controller.sv:148.38-148.49" *) 1'h1;
+  assign _04_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:162.25-162.42" *) bitstream_finish;
+  assign _05_ = _04_ & (* src = "ip/fabric_config/fabric_spi_controller.sv:162.25-162.51" *) sclk_o;
+  assign _06_ = address_counter_words + (* src = "ip/fabric_config/fabric_spi_controller.sv:168.46-168.71" *) 1'h1;
+  assign cs_no = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:181.20-181.43" *) busy_o;
+  assign _07_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:84.31-84.50" *) bitstream_finish_q;
+  assign bitstream_finish = _07_ & (* src = "ip/fabric_config/fabric_spi_controller.sv:84.31-84.71" *) bitstream_finish_i;
+  assign _10_ = | { _24_, _23_ };
+  assign _11_ = | { _20_, _19_ };
+  assign _12_ = | { _24_, _23_, _21_ };
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:119.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) address_counter_words <= 22'h000000;
-    else address_counter_words <= _08_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:107.5" *)
+    else address_counter_words <= _09_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:119.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) bitstream_data_o <= 32'd0;
     else bitstream_data_o <= _13_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:107.5" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:76.5" *)
+  always_ff @(posedge clk_i, negedge rst_ni)
+    if (!rst_ni) bitstream_finish_q <= 1'h0;
+    else bitstream_finish_q <= bitstream_finish_i;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:119.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) bitstream_valid_o <= 1'h0;
     else bitstream_valid_o <= _14_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:99.5" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:111.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) curr_state <= 32'd0;
     else curr_state <= next_state;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:107.5" *)
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:119.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) sclk_o <= 1'h0;
-    else sclk_o <= _30_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:107.5" *)
+    else sclk_o <= _31_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:119.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) shift_cnt <= 5'h00;
-    else shift_cnt <= _26_;
-  (* src = "ip/fabric_config/fabric_spi_controller.sv:107.5" *)
+    else shift_cnt <= _29_;
+  (* src = "ip/fabric_config/fabric_spi_controller.sv:119.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) shift_register <= 32'd0;
-    else shift_register <= _29_;
-  assign _18_ = _03_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:150.53-153.24|ip/fabric_config/fabric_spi_controller.sv:150.21-153.24" *) _01_ : shift_cnt;
-  assign _19_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:146.31-154.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) 3'h4;
-  assign _20_ = _03_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:150.53-153.24|ip/fabric_config/fabric_spi_controller.sv:150.21-153.24" *) { shift_register[30:0], miso_i } : shift_register;
-  assign _21_ = sclk_o ? (* src = "ip/fabric_config/fabric_spi_controller.sv:135.33-138.24|ip/fabric_config/fabric_spi_controller.sv:135.21-138.24" *) _01_ : shift_cnt;
-  assign _22_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:131.31-139.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) 2'h2;
-  assign _23_ = sclk_o ? (* src = "ip/fabric_config/fabric_spi_controller.sv:135.33-138.24|ip/fabric_config/fabric_spi_controller.sv:135.21-138.24" *) { shift_register[30:0], miso_i } : shift_register;
-  assign _07_ = start_i ? (* src = "ip/fabric_config/fabric_spi_controller.sv:121.25-121.74|ip/fabric_config/fabric_spi_controller.sv:120.21-122.24" *) { slot_chunk_addr, 9'h000 } : address_counter_words;
-  assign _24_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:119.25-125.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) curr_state;
-  function [21:0] _70_;
+    else shift_register <= _30_;
+  assign next_state = bitstream_finish ? (* src = "ip/fabric_config/fabric_spi_controller.sv:105.31-105.51|ip/fabric_config/fabric_spi_controller.sv:105.9-105.51" *) 32'd0 : _17_;
+  assign _16_ = _00_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:100.48-100.74|ip/fabric_config/fabric_spi_controller.sv:100.17-100.74" *) 32'd5 : curr_state;
+  assign _19_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:100.17-100.74|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *) 3'h4;
+  assign _15_ = _00_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:96.48-96.73|ip/fabric_config/fabric_spi_controller.sv:96.17-96.73" *) 32'd3 : curr_state;
+  assign _20_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:96.17-96.73|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *) 2'h2;
+  assign _18_ = start_i ? (* src = "ip/fabric_config/fabric_spi_controller.sv:92.30-92.55|ip/fabric_config/fabric_spi_controller.sv:92.17-92.55" *) 32'd1 : curr_state;
+  assign _21_ = ! (* src = "ip/fabric_config/fabric_spi_controller.sv:92.17-92.55|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *) curr_state;
+  function [31:0] _67_;
+    input [31:0] a;
+    input [191:0] b;
+    input [5:0] s;
+    (* src = "ip/fabric_config/fabric_spi_controller.sv:102.17-102.42|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *)
+    (* parallel_case *)
+    casez (s)
+      6'b?????1:
+        _67_ = b[31:0];
+      6'b????1?:
+        _67_ = b[63:32];
+      6'b???1??:
+        _67_ = b[95:64];
+      6'b??1???:
+        _67_ = b[127:96];
+      6'b?1????:
+        _67_ = b[159:128];
+      6'b1?????:
+        _67_ = b[191:160];
+      default:
+        _67_ = a;
+    endcase
+  endfunction
+  assign _17_ = _67_(curr_state, { _18_, 32'h00000002, _15_, 32'h00000004, _16_, 32'h00000003 }, { _21_, _24_, _20_, _23_, _19_, _22_ });
+  assign _22_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:102.17-102.42|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *) 3'h5;
+  assign _23_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:98.17-98.43|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *) 2'h3;
+  assign _24_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:94.17-94.43|ip/fabric_config/fabric_spi_controller.sv:90.9-103.16" *) 1'h1;
+  assign _25_ = _05_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:162.53-165.24|ip/fabric_config/fabric_spi_controller.sv:162.21-165.24" *) _03_ : shift_cnt;
+  assign _26_ = _05_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:162.53-165.24|ip/fabric_config/fabric_spi_controller.sv:162.21-165.24" *) { shift_register[30:0], miso_i } : shift_register;
+  assign _27_ = sclk_o ? (* src = "ip/fabric_config/fabric_spi_controller.sv:147.33-150.24|ip/fabric_config/fabric_spi_controller.sv:147.21-150.24" *) _03_ : shift_cnt;
+  assign _28_ = sclk_o ? (* src = "ip/fabric_config/fabric_spi_controller.sv:147.33-150.24|ip/fabric_config/fabric_spi_controller.sv:147.21-150.24" *) { shift_register[30:0], miso_i } : shift_register;
+  assign _08_ = start_i ? (* src = "ip/fabric_config/fabric_spi_controller.sv:133.25-133.74|ip/fabric_config/fabric_spi_controller.sv:132.21-134.24" *) { slot_chunk_addr, 9'h000 } : address_counter_words;
+  function [21:0] _76_;
     input [21:0] a;
     input [43:0] b;
     input [1:0] s;
-    (* src = "ip/fabric_config/fabric_spi_controller.sv:155.31-160.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
+    (* src = "ip/fabric_config/fabric_spi_controller.sv:167.31-172.20|ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
     (* parallel_case *)
     casez (s)
       2'b?1:
-        _70_ = b[21:0];
+        _76_ = b[21:0];
       2'b1?:
-        _70_ = b[43:22];
-      default:
-        _70_ = a;
-    endcase
-  endfunction
-  assign _08_ = _70_(address_counter_words, { _07_, _04_ }, { _24_, _25_ });
-  assign _25_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:155.31-160.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) 3'h5;
-  function [4:0] _72_;
-    input [4:0] a;
-    input [14:0] b;
-    input [2:0] s;
-    (* src = "ip/fabric_config/fabric_spi_controller.sv:146.31-154.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
-    (* parallel_case *)
-    casez (s)
-      3'b??1:
-        _72_ = b[4:0];
-      3'b?1?:
-        _72_ = b[9:5];
-      3'b1??:
-        _72_ = b[14:10];
-      default:
-        _72_ = a;
-    endcase
-  endfunction
-  assign _26_ = _72_(shift_cnt, { _21_, 5'h1f, _18_ }, { _22_, _11_, _19_ });
-  assign _27_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:141.30-145.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) 2'h3;
-  assign _28_ = curr_state == (* src = "ip/fabric_config/fabric_spi_controller.sv:126.30-130.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) 1'h1;
-  function [31:0] _75_;
-    input [31:0] a;
-    input [95:0] b;
-    input [2:0] s;
-    (* src = "ip/fabric_config/fabric_spi_controller.sv:146.31-154.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
-    (* parallel_case *)
-    casez (s)
-      3'b??1:
-        _75_ = b[31:0];
-      3'b?1?:
-        _75_ = b[63:32];
-      3'b1??:
-        _75_ = b[95:64];
-      default:
-        _75_ = a;
-    endcase
-  endfunction
-  assign _29_ = _75_(shift_register, { 8'h03, address_counter_words, 2'h0, _23_, _20_ }, { _28_, _22_, _19_ });
-  function [0:0] _76_;
-    input [0:0] a;
-    input [1:0] b;
-    input [1:0] s;
-    (* src = "ip/fabric_config/fabric_spi_controller.sv:146.31-154.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *)
-    (* parallel_case *)
-    casez (s)
-      2'b?1:
-        _76_ = b[0:0];
-      2'b1?:
-        _76_ = b[1:1];
+        _76_ = b[43:22];
       default:
         _76_ = a;
     endcase
   endfunction
-  assign _30_ = _76_(sclk_o, { 1'h0, _00_ }, { _10_, _09_ });
-  assign _14_ = _25_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:155.31-160.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) 1'h1 : 1'h0;
-  assign _13_ = _25_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:155.31-160.20|ip/fabric_config/fabric_spi_controller.sv:118.13-161.20" *) shift_register : bitstream_data_o;
-  assign _12_ = _06_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:90.53-90.79|ip/fabric_config/fabric_spi_controller.sv:90.22-90.79" *) 32'd5 : curr_state;
-  assign _15_ = bitstream_finish ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:89.39-89.59|ip/fabric_config/fabric_spi_controller.sv:89.17-90.79" *) 32'd0 : _12_;
-  assign _17_ = _06_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:85.48-85.73|ip/fabric_config/fabric_spi_controller.sv:85.17-85.73" *) 32'd3 : curr_state;
-  assign _16_ = start_i ? (* src = "ip/fabric_config/fabric_spi_controller.sv:81.30-81.55|ip/fabric_config/fabric_spi_controller.sv:81.17-81.55" *) 32'd1 : curr_state;
-  function [31:0] _83_;
-    input [31:0] a;
-    input [191:0] b;
-    input [5:0] s;
-    (* src = "ip/fabric_config/fabric_spi_controller.sv:92.17-92.42|ip/fabric_config/fabric_spi_controller.sv:79.9-93.16" *)
+  assign _09_ = _76_(address_counter_words, { _08_, _06_ }, { _21_, _22_ });
+  function [4:0] _77_;
+    input [4:0] a;
+    input [14:0] b;
+    input [2:0] s;
+    (* src = "ip/fabric_config/fabric_spi_controller.sv:158.31-166.20|ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
     (* parallel_case *)
     casez (s)
-      6'b?????1:
-        _83_ = b[31:0];
-      6'b????1?:
-        _83_ = b[63:32];
-      6'b???1??:
-        _83_ = b[95:64];
-      6'b??1???:
-        _83_ = b[127:96];
-      6'b?1????:
-        _83_ = b[159:128];
-      6'b1?????:
-        _83_ = b[191:160];
+      3'b??1:
+        _77_ = b[4:0];
+      3'b?1?:
+        _77_ = b[9:5];
+      3'b1??:
+        _77_ = b[14:10];
       default:
-        _83_ = a;
+        _77_ = a;
     endcase
   endfunction
-  assign next_state = _83_(curr_state, { _16_, 32'h00000002, _17_, 32'h00000004, _15_, 32'h00000003 }, { _24_, _28_, _22_, _27_, _19_, _25_ });
-  assign _31_ = _32_ ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:54.24-54.92|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) slot_chunk_addr_i : 13'hxxxx;
-  assign _32_ = slot_offset_i == (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:54.24-54.92|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) 6'b1zzzzz;
-  assign _33_ = _34_ ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:53.24-53.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 1'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[7:0] } : _31_;
-  assign _34_ = slot_offset_i == (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:53.24-53.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) 6'bz1zzzz;
-  assign _35_ = _36_ ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:52.24-52.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 2'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[6:0] } : _33_;
-  assign _36_ = slot_offset_i == (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:52.24-52.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) 6'bzz1zzz;
-  assign _37_ = _38_ ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:51.24-51.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 3'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[5:0] } : _35_;
-  assign _38_ = slot_offset_i == (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:51.24-51.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) 6'bzzz1zz;
-  assign _39_ = _40_ ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:50.24-50.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 4'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[4:0] } : _37_;
-  assign _40_ = slot_offset_i == (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:50.24-50.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) 6'bzzzz1z;
-  function [12:0] _94_;
+  assign _29_ = _77_(shift_cnt, { _27_, 5'h1f, _25_ }, { _20_, _10_, _19_ });
+  function [31:0] _78_;
+    input [31:0] a;
+    input [95:0] b;
+    input [2:0] s;
+    (* src = "ip/fabric_config/fabric_spi_controller.sv:158.31-166.20|ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
+    (* parallel_case *)
+    casez (s)
+      3'b??1:
+        _78_ = b[31:0];
+      3'b?1?:
+        _78_ = b[63:32];
+      3'b1??:
+        _78_ = b[95:64];
+      default:
+        _78_ = a;
+    endcase
+  endfunction
+  assign _30_ = _78_(shift_register, { 8'h03, address_counter_words, 2'h0, _28_, _26_ }, { _24_, _20_, _19_ });
+  function [0:0] _79_;
+    input [0:0] a;
+    input [1:0] b;
+    input [1:0] s;
+    (* src = "ip/fabric_config/fabric_spi_controller.sv:158.31-166.20|ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *)
+    (* parallel_case *)
+    casez (s)
+      2'b?1:
+        _79_ = b[0:0];
+      2'b1?:
+        _79_ = b[1:1];
+      default:
+        _79_ = a;
+    endcase
+  endfunction
+  assign _31_ = _79_(sclk_o, { 1'h0, _02_ }, { _12_, _11_ });
+  assign _14_ = _22_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:167.31-172.20|ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *) 1'h1 : 1'h0;
+  assign _13_ = _22_ ? (* src = "ip/fabric_config/fabric_spi_controller.sv:167.31-172.20|ip/fabric_config/fabric_spi_controller.sv:130.13-173.20" *) shift_register : bitstream_data_o;
+  assign _32_ = slot_offset_i[5] ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:54.24-54.92|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) slot_chunk_addr_i : 13'hxxxx;
+  assign _33_ = slot_offset_i[4] ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:53.24-53.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 1'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[7:0] } : _32_;
+  assign _34_ = slot_offset_i[3] ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:52.24-52.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 2'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[6:0] } : _33_;
+  assign _35_ = slot_offset_i[2] ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:51.24-51.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 3'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[5:0] } : _34_;
+  assign _36_ = slot_offset_i[1] ? (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:50.24-50.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) { 4'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[4:0] } : _35_;
+  function [12:0] _87_;
     input [12:0] a;
     input [25:0] b;
     input [1:0] s;
@@ -37904,16 +37904,15 @@ module \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_c
     (* parallel_case *)
     casez (s)
       2'b?1:
-        _94_ = b[12:0];
+        _87_ = b[12:0];
       2'b1?:
-        _94_ = b[25:13];
+        _87_ = b[25:13];
       default:
-        _94_ = a;
+        _87_ = a;
     endcase
   endfunction
-  assign slot_chunk_addr = _94_(_39_, { 9'h000, slot_chunk_addr_i[3:0], 5'h00, slot_chunk_addr_i[12:9], slot_chunk_addr_i[3:0] }, { _42_, _41_ });
-  assign _41_ = slot_offset_i == (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:49.24-49.98|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) 6'bzzzzz1;
-  assign _42_ = ! (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:48.24-48.73|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) slot_offset_i;
+  assign slot_chunk_addr = _87_(_36_, { 9'h000, slot_chunk_addr_i[3:0], 5'h00, slot_chunk_addr_i[12:9], slot_chunk_addr_i[3:0] }, { _37_, slot_offset_i[0] });
+  assign _37_ = ! (* full_case = 32'd1 *) (* src = "ip/fabric_config/fabric_spi_controller.sv:48.24-48.73|ip/fabric_config/fabric_spi_controller.sv:47.9-55.16" *) slot_offset_i;
   assign mosi_o = shift_register[31];
 endmodule
 
@@ -42430,7 +42429,7 @@ module \greyhound_ihp$FMD_QNC_greyhound_ihp.i_greyhound_ihp (clk_i, rst_ni, fabr
   (* src = "src/greyhound_ihp.sv:467.27" *)
   \fabric_spi_controller$FMD_QNC_greyhound_ihp.i_greyhound_ihp.fabric_spi_controller  fabric_spi_controller (
     .bitstream_data_o(spi_controller_bitstream_data_o),
-    .bitstream_finish(fabric_config_configured),
+    .bitstream_finish_i(fabric_config_configured),
     .bitstream_valid_o(spi_controller_bitstream_valid_o),
     .busy_o(fabric_spi_controller_busy),
     .clk_i(clk),
@@ -42673,7 +42672,7 @@ endmodule
 (* src = "src/soc/greyhound_soc.sv:7.8" *)
 module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk_i, rst_ni, fetch_enable_i, core_sleep_o, bitstream_data_o, bitstream_valid_o, fabric_configured_i, fabric_irq_i, fabric_issue_ready_i, fabric_issue_accept_i, fabric_issue_valid_o, fabric_issue_instr_o, fabric_issue_op0_o, fabric_issue_op1_o, fabric_issue_id_o, fabric_result_valid_i, fabric_result_id_i, fabric_result_rd_i, fabric_result_i, fabric_config_busy_i, warmboot_boot_o
 , warmboot_slot_o, warmboot_offset_o, fabric_gnt_i, fabric_req_o, fabric_rvalid_i, fabric_we_o, fabric_be_o, fabric_addr_o, fabric_wdata_o, fabric_rdata_i, bank_rdata_i, bank_word_addr_o, bank_be_o, bank_wdata_o, bank_req_o, bank_we_o, flash_sck, flash_ce_n, flash_din, flash_dout, flash_douten
-, psram_sck, psram_ce_n, psram_din, psram_dout, psram_douten, uart0_rx, uart0_tx, jtag_tck_i, jtag_tdi_i, jtag_tdo_o, jtag_tms_i, jtag_trst_ni, usercode_i);
+, psram_sck, psram_ce_n, psram_din, psram_dout, psram_douten, uart0_rx, uart0_tx, jtag_tck_i, jtag_tdi_i, jtag_tdo_o, jtag_tms_i, jtag_trst_ni, usercode_i, fabric_config_o);
   (* hdlname = "clk_i" *)
   (* src = "src/soc/greyhound_soc.sv:15.29" *)
   input clk_i;
@@ -42683,11 +42682,11 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   input rst_ni;
   wire rst_ni;
   (* hdlname = "fetch_enable_i" *)
-  (* src = "src/soc/greyhound_soc.sv:88.29" *)
+  (* src = "src/soc/greyhound_soc.sv:89.29" *)
   input fetch_enable_i;
   wire fetch_enable_i;
   (* hdlname = "core_sleep_o" *)
-  (* src = "src/soc/greyhound_soc.sv:89.29" *)
+  (* src = "src/soc/greyhound_soc.sv:90.29" *)
   output core_sleep_o;
   wire core_sleep_o;
   (* hdlname = "bitstream_data_o" *)
@@ -42707,47 +42706,47 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   input [3:0] fabric_irq_i;
   wire [3:0] fabric_irq_i;
   (* hdlname = "fabric_issue_ready_i" *)
-  (* src = "src/soc/greyhound_soc.sv:38.25" *)
+  (* src = "src/soc/greyhound_soc.sv:39.25" *)
   input fabric_issue_ready_i;
   wire fabric_issue_ready_i;
   (* hdlname = "fabric_issue_accept_i" *)
-  (* src = "src/soc/greyhound_soc.sv:39.25" *)
+  (* src = "src/soc/greyhound_soc.sv:40.25" *)
   input fabric_issue_accept_i;
   wire fabric_issue_accept_i;
   (* hdlname = "fabric_issue_valid_o" *)
-  (* src = "src/soc/greyhound_soc.sv:40.25" *)
+  (* src = "src/soc/greyhound_soc.sv:41.25" *)
   output fabric_issue_valid_o;
   wire fabric_issue_valid_o;
   (* hdlname = "fabric_issue_instr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:41.25" *)
+  (* src = "src/soc/greyhound_soc.sv:42.25" *)
   output [31:0] fabric_issue_instr_o;
   wire [31:0] fabric_issue_instr_o;
   (* hdlname = "fabric_issue_op0_o" *)
-  (* src = "src/soc/greyhound_soc.sv:42.25" *)
+  (* src = "src/soc/greyhound_soc.sv:43.25" *)
   output [31:0] fabric_issue_op0_o;
   wire [31:0] fabric_issue_op0_o;
   (* hdlname = "fabric_issue_op1_o" *)
-  (* src = "src/soc/greyhound_soc.sv:43.25" *)
+  (* src = "src/soc/greyhound_soc.sv:44.25" *)
   output [31:0] fabric_issue_op1_o;
   wire [31:0] fabric_issue_op1_o;
   (* hdlname = "fabric_issue_id_o" *)
-  (* src = "src/soc/greyhound_soc.sv:44.25" *)
+  (* src = "src/soc/greyhound_soc.sv:45.25" *)
   output [3:0] fabric_issue_id_o;
   wire [3:0] fabric_issue_id_o;
   (* hdlname = "fabric_result_valid_i" *)
-  (* src = "src/soc/greyhound_soc.sv:46.25" *)
+  (* src = "src/soc/greyhound_soc.sv:47.25" *)
   input fabric_result_valid_i;
   wire fabric_result_valid_i;
   (* hdlname = "fabric_result_id_i" *)
-  (* src = "src/soc/greyhound_soc.sv:47.25" *)
+  (* src = "src/soc/greyhound_soc.sv:48.25" *)
   input [3:0] fabric_result_id_i;
   wire [3:0] fabric_result_id_i;
   (* hdlname = "fabric_result_rd_i" *)
-  (* src = "src/soc/greyhound_soc.sv:48.25" *)
+  (* src = "src/soc/greyhound_soc.sv:49.25" *)
   input [4:0] fabric_result_rd_i;
   wire [4:0] fabric_result_rd_i;
   (* hdlname = "fabric_result_i" *)
-  (* src = "src/soc/greyhound_soc.sv:49.25" *)
+  (* src = "src/soc/greyhound_soc.sv:50.25" *)
   input [31:0] fabric_result_i;
   wire [31:0] fabric_result_i;
   (* hdlname = "fabric_config_busy_i" *)
@@ -42767,133 +42766,137 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   output [5:0] warmboot_offset_o;
   reg [5:0] warmboot_offset_o;
   (* hdlname = "fabric_gnt_i" *)
-  (* src = "src/soc/greyhound_soc.sv:52.29" *)
+  (* src = "src/soc/greyhound_soc.sv:53.29" *)
   input fabric_gnt_i;
   wire fabric_gnt_i;
   (* hdlname = "fabric_req_o" *)
-  (* src = "src/soc/greyhound_soc.sv:53.29" *)
+  (* src = "src/soc/greyhound_soc.sv:54.29" *)
   output fabric_req_o;
   wire fabric_req_o;
   (* hdlname = "fabric_rvalid_i" *)
-  (* src = "src/soc/greyhound_soc.sv:54.29" *)
+  (* src = "src/soc/greyhound_soc.sv:55.29" *)
   input fabric_rvalid_i;
   wire fabric_rvalid_i;
   (* hdlname = "fabric_we_o" *)
-  (* src = "src/soc/greyhound_soc.sv:55.29" *)
+  (* src = "src/soc/greyhound_soc.sv:56.29" *)
   output fabric_we_o;
   wire fabric_we_o;
   (* hdlname = "fabric_be_o" *)
-  (* src = "src/soc/greyhound_soc.sv:56.29" *)
+  (* src = "src/soc/greyhound_soc.sv:57.29" *)
   output [3:0] fabric_be_o;
   wire [3:0] fabric_be_o;
   (* hdlname = "fabric_addr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:57.29" *)
+  (* src = "src/soc/greyhound_soc.sv:58.29" *)
   output [23:0] fabric_addr_o;
   wire [23:0] fabric_addr_o;
   (* hdlname = "fabric_wdata_o" *)
-  (* src = "src/soc/greyhound_soc.sv:58.29" *)
+  (* src = "src/soc/greyhound_soc.sv:59.29" *)
   output [31:0] fabric_wdata_o;
   wire [31:0] fabric_wdata_o;
   (* hdlname = "fabric_rdata_i" *)
-  (* src = "src/soc/greyhound_soc.sv:59.29" *)
+  (* src = "src/soc/greyhound_soc.sv:60.29" *)
   input [31:0] fabric_rdata_i;
   wire [31:0] fabric_rdata_i;
   (* hdlname = "bank_rdata_i" *)
-  (* src = "src/soc/greyhound_soc.sv:62.29" *)
+  (* src = "src/soc/greyhound_soc.sv:63.29" *)
   input [31:0] bank_rdata_i;
   wire [31:0] bank_rdata_i;
   (* hdlname = "bank_word_addr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:63.29" *)
+  (* src = "src/soc/greyhound_soc.sv:64.29" *)
   output [10:0] bank_word_addr_o;
   wire [10:0] bank_word_addr_o;
   (* hdlname = "bank_be_o" *)
-  (* src = "src/soc/greyhound_soc.sv:64.29" *)
+  (* src = "src/soc/greyhound_soc.sv:65.29" *)
   output [3:0] bank_be_o;
   wire [3:0] bank_be_o;
   (* hdlname = "bank_wdata_o" *)
-  (* src = "src/soc/greyhound_soc.sv:65.29" *)
+  (* src = "src/soc/greyhound_soc.sv:66.29" *)
   output [31:0] bank_wdata_o;
   wire [31:0] bank_wdata_o;
   (* hdlname = "bank_req_o" *)
-  (* src = "src/soc/greyhound_soc.sv:66.29" *)
+  (* src = "src/soc/greyhound_soc.sv:67.29" *)
   output bank_req_o;
   wire bank_req_o;
   (* hdlname = "bank_we_o" *)
-  (* src = "src/soc/greyhound_soc.sv:67.29" *)
+  (* src = "src/soc/greyhound_soc.sv:68.29" *)
   output bank_we_o;
   wire bank_we_o;
   (* hdlname = "flash_sck" *)
-  (* src = "src/soc/greyhound_soc.sv:70.29" *)
+  (* src = "src/soc/greyhound_soc.sv:71.29" *)
   output flash_sck;
   wire flash_sck;
   (* hdlname = "flash_ce_n" *)
-  (* src = "src/soc/greyhound_soc.sv:71.29" *)
+  (* src = "src/soc/greyhound_soc.sv:72.29" *)
   output flash_ce_n;
   wire flash_ce_n;
   (* hdlname = "flash_din" *)
-  (* src = "src/soc/greyhound_soc.sv:72.29" *)
+  (* src = "src/soc/greyhound_soc.sv:73.29" *)
   input [3:0] flash_din;
   wire [3:0] flash_din;
   (* hdlname = "flash_dout" *)
-  (* src = "src/soc/greyhound_soc.sv:73.29" *)
+  (* src = "src/soc/greyhound_soc.sv:74.29" *)
   output [3:0] flash_dout;
   wire [3:0] flash_dout;
   (* hdlname = "flash_douten" *)
-  (* src = "src/soc/greyhound_soc.sv:74.29" *)
+  (* src = "src/soc/greyhound_soc.sv:75.29" *)
   output [3:0] flash_douten;
   wire [3:0] flash_douten;
   (* hdlname = "psram_sck" *)
-  (* src = "src/soc/greyhound_soc.sv:77.29" *)
+  (* src = "src/soc/greyhound_soc.sv:78.29" *)
   output psram_sck;
   wire psram_sck;
   (* hdlname = "psram_ce_n" *)
-  (* src = "src/soc/greyhound_soc.sv:78.29" *)
+  (* src = "src/soc/greyhound_soc.sv:79.29" *)
   output psram_ce_n;
   wire psram_ce_n;
   (* hdlname = "psram_din" *)
-  (* src = "src/soc/greyhound_soc.sv:79.29" *)
+  (* src = "src/soc/greyhound_soc.sv:80.29" *)
   input [3:0] psram_din;
   wire [3:0] psram_din;
   (* hdlname = "psram_dout" *)
-  (* src = "src/soc/greyhound_soc.sv:80.29" *)
+  (* src = "src/soc/greyhound_soc.sv:81.29" *)
   output [3:0] psram_dout;
   wire [3:0] psram_dout;
   (* hdlname = "psram_douten" *)
-  (* src = "src/soc/greyhound_soc.sv:81.29" *)
+  (* src = "src/soc/greyhound_soc.sv:82.29" *)
   output [3:0] psram_douten;
   wire [3:0] psram_douten;
   (* hdlname = "uart0_rx" *)
-  (* src = "src/soc/greyhound_soc.sv:84.28" *)
+  (* src = "src/soc/greyhound_soc.sv:85.27" *)
   input uart0_rx;
   wire uart0_rx;
   (* hdlname = "uart0_tx" *)
-  (* src = "src/soc/greyhound_soc.sv:85.25" *)
+  (* src = "src/soc/greyhound_soc.sv:86.25" *)
   output uart0_tx;
   wire uart0_tx;
   (* hdlname = "jtag_tck_i" *)
-  (* src = "src/soc/greyhound_soc.sv:92.23" *)
+  (* src = "src/soc/greyhound_soc.sv:93.23" *)
   input jtag_tck_i;
   wire jtag_tck_i;
   (* hdlname = "jtag_tdi_i" *)
-  (* src = "src/soc/greyhound_soc.sv:93.23" *)
+  (* src = "src/soc/greyhound_soc.sv:94.23" *)
   input jtag_tdi_i;
   wire jtag_tdi_i;
   (* hdlname = "jtag_tdo_o" *)
-  (* src = "src/soc/greyhound_soc.sv:94.23" *)
+  (* src = "src/soc/greyhound_soc.sv:95.23" *)
   output jtag_tdo_o;
   wire jtag_tdo_o;
   (* hdlname = "jtag_tms_i" *)
-  (* src = "src/soc/greyhound_soc.sv:95.23" *)
+  (* src = "src/soc/greyhound_soc.sv:96.23" *)
   input jtag_tms_i;
   wire jtag_tms_i;
   (* hdlname = "jtag_trst_ni" *)
-  (* src = "src/soc/greyhound_soc.sv:96.23" *)
+  (* src = "src/soc/greyhound_soc.sv:97.23" *)
   input jtag_trst_ni;
   wire jtag_trst_ni;
   (* hdlname = "usercode_i" *)
-  (* src = "src/soc/greyhound_soc.sv:97.25" *)
+  (* src = "src/soc/greyhound_soc.sv:98.25" *)
   input [31:0] usercode_i;
   wire [31:0] usercode_i;
+  (* hdlname = "fabric_config_o" *)
+  (* src = "src/soc/greyhound_soc.sv:36.29" *)
+  output [5:0] fabric_config_o;
+  reg [5:0] fabric_config_o;
   wire [63:0] _000_;
   wire _001_;
   wire _002_;
@@ -42921,242 +42924,257 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   wire _024_;
   wire _025_;
   wire _026_;
-  (* src = "src/soc/greyhound_soc.sv:939.21-941.24" *)
-  wire [31:0] _027_;
-  (* src = "src/soc/greyhound_soc.sv:917.21-924.24" *)
+  wire _027_;
+  (* src = "src/soc/greyhound_soc.sv:960.21-962.24" *)
   wire [31:0] _028_;
-  (* src = "src/soc/greyhound_soc.sv:915.17-950.20" *)
+  (* src = "src/soc/greyhound_soc.sv:934.21-941.24" *)
   wire [31:0] _029_;
-  (* src = "src/soc/greyhound_soc.sv:910.13-951.16" *)
+  (* src = "src/soc/greyhound_soc.sv:933.17-971.20" *)
   wire [31:0] _030_;
-  (* src = "src/soc/greyhound_soc.sv:919.25-919.124" *)
-  wire [7:0] _031_;
-  (* src = "src/soc/greyhound_soc.sv:920.25-920.124" *)
+  (* src = "src/soc/greyhound_soc.sv:928.13-972.16" *)
+  wire [31:0] _031_;
+  (* src = "src/soc/greyhound_soc.sv:936.25-936.124" *)
   wire [7:0] _032_;
-  (* src = "src/soc/greyhound_soc.sv:921.25-921.124" *)
+  (* src = "src/soc/greyhound_soc.sv:937.25-937.124" *)
   wire [7:0] _033_;
-  (* src = "src/soc/greyhound_soc.sv:918.25-918.124" *)
+  (* src = "src/soc/greyhound_soc.sv:938.25-938.124" *)
   wire [7:0] _034_;
-  (* src = "src/soc/greyhound_soc.sv:917.21-924.24" *)
-  wire _035_;
-  (* src = "src/soc/greyhound_soc.sv:915.17-950.20" *)
+  (* src = "src/soc/greyhound_soc.sv:935.25-935.124" *)
+  wire [7:0] _035_;
+  (* src = "src/soc/greyhound_soc.sv:934.21-941.24" *)
   wire _036_;
-  (* src = "src/soc/greyhound_soc.sv:910.13-951.16" *)
+  (* src = "src/soc/greyhound_soc.sv:933.17-971.20" *)
   wire _037_;
-  (* src = "src/soc/greyhound_soc.sv:910.13-951.16" *)
+  (* src = "src/soc/greyhound_soc.sv:928.13-972.16" *)
   wire _038_;
-  (* src = "src/soc/greyhound_soc.sv:943.21-945.24" *)
-  wire [31:0] _039_;
-  (* src = "src/soc/greyhound_soc.sv:947.21-949.24" *)
-  wire [31:0] _040_;
-  (* src = "src/soc/greyhound_soc.sv:915.17-950.20" *)
-  wire [31:0] _041_;
-  (* src = "src/soc/greyhound_soc.sv:910.13-951.16" *)
-  wire [31:0] _042_;
-  (* src = "src/soc/greyhound_soc.sv:500.9-501.144" *)
-  wire [2:0] _043_;
-  (* src = "src/soc/greyhound_soc.sv:500.9-501.144" *)
-  wire [2:0] _044_;
-  (* src = "src/soc/greyhound_soc.sv:500.9-501.144" *)
-  wire [2:0] _045_;
-  (* src = "src/soc/greyhound_soc.sv:500.9-501.144" *)
-  wire [2:0] _046_;
-  (* src = "src/soc/greyhound_soc.sv:500.9-501.144" *)
-  wire [2:0] _047_;
-  (* src = "src/soc/greyhound_soc.sv:500.9-501.144" *)
-  wire [2:0] _048_;
-  wire [5:0] _049_;
-  wire [5:0] _050_;
-  wire [4:0] _051_;
-  wire [7:0] _052_;
-  wire [12:0] _053_;
-  wire _054_;
-  wire [5:0] _055_;
-  wire [12:0] _056_;
-  wire _057_;
+  (* src = "src/soc/greyhound_soc.sv:351.18-351.70" *)
+  wire _039_;
+  (* src = "src/soc/greyhound_soc.sv:350.13-351.70" *)
+  wire _040_;
+  (* src = "src/soc/greyhound_soc.sv:926.13-926.58" *)
+  wire [5:0] _041_;
+  (* src = "src/soc/greyhound_soc.sv:955.25-955.114" *)
+  wire [5:0] _042_;
+  (* src = "src/soc/greyhound_soc.sv:954.21-956.24" *)
+  wire [5:0] _043_;
+  (* src = "src/soc/greyhound_soc.sv:933.17-971.20" *)
+  wire [5:0] _044_;
+  (* src = "src/soc/greyhound_soc.sv:928.13-972.16" *)
+  wire [5:0] _045_;
+  (* src = "src/soc/greyhound_soc.sv:928.13-972.16" *)
+  wire _046_;
+  (* src = "src/soc/greyhound_soc.sv:928.13-972.16" *)
+  wire [31:0] _047_;
+  (* src = "src/soc/greyhound_soc.sv:964.21-966.24" *)
+  wire [31:0] _048_;
+  (* src = "src/soc/greyhound_soc.sv:968.21-970.24" *)
+  wire [31:0] _049_;
+  (* src = "src/soc/greyhound_soc.sv:933.17-971.20" *)
+  wire [31:0] _050_;
+  (* src = "src/soc/greyhound_soc.sv:515.9-516.144" *)
+  wire [2:0] _051_;
+  (* src = "src/soc/greyhound_soc.sv:515.9-516.144" *)
+  wire [2:0] _052_;
+  (* src = "src/soc/greyhound_soc.sv:515.9-516.144" *)
+  wire [2:0] _053_;
+  (* src = "src/soc/greyhound_soc.sv:515.9-516.144" *)
+  wire [2:0] _054_;
+  (* src = "src/soc/greyhound_soc.sv:515.9-516.144" *)
+  wire [2:0] _055_;
+  (* src = "src/soc/greyhound_soc.sv:515.9-516.144" *)
+  wire [2:0] _056_;
+  wire [5:0] _057_;
   wire [5:0] _058_;
-  wire [12:0] _059_;
-  wire _060_;
+  wire [4:0] _059_;
+  wire [7:0] _060_;
+  wire [12:0] _061_;
+  wire _062_;
+  wire [5:0] _063_;
+  wire [12:0] _064_;
+  wire _065_;
+  wire [5:0] _066_;
+  wire [12:0] _067_;
+  wire _068_;
   (* hdlname = "all_periph_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:237.36" *)
+  (* src = "src/soc/greyhound_soc.sv:238.36" *)
   (* unused_bits = "73 217 289 361 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 425 426 427 428 429 430 431 433 496 497 498 499 500 501 502 503 505" *)
   wire [575:0] all_periph_obi_req;
   (* hdlname = "all_periph_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:238.36" *)
+  (* src = "src/soc/greyhound_soc.sv:239.36" *)
   wire [295:0] all_periph_obi_rsp;
   (* hdlname = "bank_byte_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:678.37" *)
+  (* src = "src/soc/greyhound_soc.sv:693.37" *)
   (* unused_bits = "0 1 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31" *)
   wire [31:0] bank_byte_addr;
   (* hdlname = "bank_gnt" *)
-  (* src = "src/soc/greyhound_soc.sv:677.11" *)
+  (* src = "src/soc/greyhound_soc.sv:692.11" *)
   wire bank_gnt;
   (* hdlname = "core_data_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:197.19" *)
+  (* src = "src/soc/greyhound_soc.sv:198.19" *)
   wire [71:0] core_data_obi_req;
   (* hdlname = "core_data_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:198.19" *)
+  (* src = "src/soc/greyhound_soc.sv:199.19" *)
   (* unused_bits = "2 4" *)
   wire [36:0] core_data_obi_rsp;
   (* hdlname = "core_instr_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:188.19" *)
+  (* src = "src/soc/greyhound_soc.sv:189.19" *)
   wire [71:0] core_instr_obi_req;
   (* hdlname = "core_instr_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:189.19" *)
+  (* src = "src/soc/greyhound_soc.sv:190.19" *)
   (* unused_bits = "2 4" *)
   wire [36:0] core_instr_obi_rsp;
   (* hdlname = "data_addr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:310.36" *)
+  (* src = "src/soc/greyhound_soc.sv:311.36" *)
   wire [31:0] data_addr_o;
   (* hdlname = "data_be_o" *)
-  (* src = "src/soc/greyhound_soc.sv:311.36" *)
+  (* src = "src/soc/greyhound_soc.sv:312.36" *)
   wire [3:0] data_be_o;
   (* hdlname = "data_err_i" *)
-  (* src = "src/soc/greyhound_soc.sv:315.36" *)
+  (* src = "src/soc/greyhound_soc.sv:316.36" *)
   wire data_err_i;
   (* hdlname = "data_gnt_i" *)
-  (* src = "src/soc/greyhound_soc.sv:308.36" *)
+  (* src = "src/soc/greyhound_soc.sv:309.36" *)
   wire data_gnt_i;
   (* hdlname = "data_rdata_i" *)
-  (* src = "src/soc/greyhound_soc.sv:314.36" *)
+  (* src = "src/soc/greyhound_soc.sv:315.36" *)
   wire [31:0] data_rdata_i;
   (* hdlname = "data_req_o" *)
-  (* src = "src/soc/greyhound_soc.sv:307.36" *)
+  (* src = "src/soc/greyhound_soc.sv:308.36" *)
   wire data_req_o;
   (* hdlname = "data_rvalid_i" *)
-  (* src = "src/soc/greyhound_soc.sv:309.36" *)
+  (* src = "src/soc/greyhound_soc.sv:310.36" *)
   wire data_rvalid_i;
   (* hdlname = "data_wdata_o" *)
-  (* src = "src/soc/greyhound_soc.sv:313.36" *)
+  (* src = "src/soc/greyhound_soc.sv:314.36" *)
   wire [31:0] data_wdata_o;
   (* hdlname = "data_we_o" *)
-  (* src = "src/soc/greyhound_soc.sv:312.36" *)
+  (* src = "src/soc/greyhound_soc.sv:313.36" *)
   wire data_we_o;
   (* hdlname = "dbg_mem_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:269.19" *)
+  (* src = "src/soc/greyhound_soc.sv:270.19" *)
   (* unused_bits = "1" *)
   wire [71:0] dbg_mem_obi_req;
   (* hdlname = "dbg_mem_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:270.19" *)
+  (* src = "src/soc/greyhound_soc.sv:271.19" *)
   wire [36:0] dbg_mem_obi_rsp;
   (* hdlname = "dbg_req_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:203.19" *)
+  (* src = "src/soc/greyhound_soc.sv:204.19" *)
   wire [71:0] dbg_req_obi_req;
   (* hdlname = "dbg_req_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:204.19" *)
+  (* src = "src/soc/greyhound_soc.sv:205.19" *)
   (* unused_bits = "2 4" *)
   wire [36:0] dbg_req_obi_rsp;
   (* hdlname = "debug_fabric_a_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:1000.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1021.22" *)
   (* unused_bits = "0" *)
   wire debug_fabric_a_optional;
   (* hdlname = "debug_fabric_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:995.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1016.22" *)
   (* unused_bits = "24 25 26 27 28 29 30 31" *)
   wire [31:0] debug_fabric_addr;
   (* hdlname = "debug_fabric_aid" *)
-  (* src = "src/soc/greyhound_soc.sv:999.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1020.22" *)
   wire debug_fabric_aid;
   (* hdlname = "debug_fabric_be" *)
-  (* src = "src/soc/greyhound_soc.sv:997.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1018.22" *)
   wire [3:0] debug_fabric_be;
   (* hdlname = "debug_fabric_config_a_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:869.22" *)
+  (* src = "src/soc/greyhound_soc.sv:884.22" *)
   (* unused_bits = "0" *)
   wire debug_fabric_config_a_optional;
   (* hdlname = "debug_fabric_config_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:864.22" *)
+  (* src = "src/soc/greyhound_soc.sv:879.22" *)
   (* unused_bits = "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31" *)
   wire [31:0] debug_fabric_config_addr;
   (* hdlname = "debug_fabric_config_aid" *)
-  (* src = "src/soc/greyhound_soc.sv:868.22" *)
+  (* src = "src/soc/greyhound_soc.sv:883.22" *)
   wire debug_fabric_config_aid;
   (* hdlname = "debug_fabric_config_be" *)
-  (* src = "src/soc/greyhound_soc.sv:866.22" *)
+  (* src = "src/soc/greyhound_soc.sv:881.22" *)
   wire [3:0] debug_fabric_config_be;
   (* hdlname = "debug_fabric_config_err" *)
-  (* src = "src/soc/greyhound_soc.sv:883.20" *)
+  (* src = "src/soc/greyhound_soc.sv:898.20" *)
   wire debug_fabric_config_err;
   (* hdlname = "debug_fabric_config_gnt" *)
-  (* src = "src/soc/greyhound_soc.sv:879.20" *)
+  (* src = "src/soc/greyhound_soc.sv:894.20" *)
   wire debug_fabric_config_gnt;
   (* hdlname = "debug_fabric_config_r_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:884.20" *)
+  (* src = "src/soc/greyhound_soc.sv:899.20" *)
   wire debug_fabric_config_r_optional;
   (* hdlname = "debug_fabric_config_rdata" *)
-  (* src = "src/soc/greyhound_soc.sv:881.20" *)
+  (* src = "src/soc/greyhound_soc.sv:896.20" *)
   wire [31:0] debug_fabric_config_rdata;
   (* hdlname = "debug_fabric_config_req" *)
-  (* src = "src/soc/greyhound_soc.sv:863.22" *)
+  (* src = "src/soc/greyhound_soc.sv:878.22" *)
   wire [31:0] debug_fabric_config_req;
   (* hdlname = "debug_fabric_config_rid" *)
-  (* src = "src/soc/greyhound_soc.sv:882.20" *)
+  (* src = "src/soc/greyhound_soc.sv:897.20" *)
   wire debug_fabric_config_rid;
   (* hdlname = "debug_fabric_config_rvalid" *)
-  (* src = "src/soc/greyhound_soc.sv:880.20" *)
+  (* src = "src/soc/greyhound_soc.sv:895.20" *)
   wire debug_fabric_config_rvalid;
   (* hdlname = "debug_fabric_config_wdata" *)
-  (* src = "src/soc/greyhound_soc.sv:867.22" *)
+  (* src = "src/soc/greyhound_soc.sv:882.22" *)
   wire [31:0] debug_fabric_config_wdata;
   (* hdlname = "debug_fabric_config_we" *)
-  (* src = "src/soc/greyhound_soc.sv:865.22" *)
+  (* src = "src/soc/greyhound_soc.sv:880.22" *)
   wire debug_fabric_config_we;
   (* hdlname = "debug_fabric_err" *)
-  (* src = "src/soc/greyhound_soc.sv:1014.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1035.20" *)
   wire debug_fabric_err;
   (* hdlname = "debug_fabric_gnt" *)
-  (* src = "src/soc/greyhound_soc.sv:1010.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1031.20" *)
   wire debug_fabric_gnt;
   (* hdlname = "debug_fabric_r_optional" *)
-  (* src = "src/soc/greyhound_soc.sv:1015.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1036.20" *)
   wire debug_fabric_r_optional;
   (* hdlname = "debug_fabric_rdata" *)
-  (* src = "src/soc/greyhound_soc.sv:1012.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1033.20" *)
   wire [31:0] debug_fabric_rdata;
   (* hdlname = "debug_fabric_req" *)
-  (* src = "src/soc/greyhound_soc.sv:994.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1015.22" *)
   wire [31:0] debug_fabric_req;
   (* hdlname = "debug_fabric_rid" *)
-  (* src = "src/soc/greyhound_soc.sv:1013.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1034.20" *)
   wire debug_fabric_rid;
   (* hdlname = "debug_fabric_rvalid" *)
-  (* src = "src/soc/greyhound_soc.sv:1011.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1032.20" *)
   wire debug_fabric_rvalid;
   (* hdlname = "debug_fabric_wdata" *)
-  (* src = "src/soc/greyhound_soc.sv:998.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1019.22" *)
   wire [31:0] debug_fabric_wdata;
   (* hdlname = "debug_fabric_we" *)
-  (* src = "src/soc/greyhound_soc.sv:996.22" *)
+  (* src = "src/soc/greyhound_soc.sv:1017.22" *)
   wire debug_fabric_we;
   (* hdlname = "debug_req" *)
-  (* src = "src/soc/greyhound_soc.sv:338.11" *)
+  (* src = "src/soc/greyhound_soc.sv:339.11" *)
   wire debug_req;
   (* hdlname = "dmi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:1028.17" *)
+  (* src = "src/soc/greyhound_soc.sv:1049.17" *)
   wire [40:0] dmi_req;
   (* hdlname = "dmi_req_ready" *)
-  (* src = "src/soc/greyhound_soc.sv:1027.35" *)
+  (* src = "src/soc/greyhound_soc.sv:1048.35" *)
   wire dmi_req_ready;
   (* hdlname = "dmi_req_valid" *)
-  (* src = "src/soc/greyhound_soc.sv:1027.20" *)
+  (* src = "src/soc/greyhound_soc.sv:1048.20" *)
   wire dmi_req_valid;
   (* hdlname = "dmi_resp" *)
-  (* src = "src/soc/greyhound_soc.sv:1029.18" *)
+  (* src = "src/soc/greyhound_soc.sv:1050.18" *)
   wire [33:0] dmi_resp;
   (* hdlname = "dmi_resp_ready" *)
-  (* src = "src/soc/greyhound_soc.sv:1027.66" *)
+  (* src = "src/soc/greyhound_soc.sv:1048.66" *)
   wire dmi_resp_ready;
   (* hdlname = "dmi_resp_valid" *)
-  (* src = "src/soc/greyhound_soc.sv:1027.50" *)
+  (* src = "src/soc/greyhound_soc.sv:1048.50" *)
   wire dmi_resp_valid;
   (* hdlname = "dmi_rst_n" *)
-  (* src = "src/soc/greyhound_soc.sv:1027.9" *)
+  (* src = "src/soc/greyhound_soc.sv:1048.9" *)
   wire dmi_rst_n;
   (* hdlname = "error_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:241.19" *)
+  (* src = "src/soc/greyhound_soc.sv:242.19" *)
   wire [71:0] error_obi_req;
   (* hdlname = "error_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:242.19" *)
+  (* src = "src/soc/greyhound_soc.sv:243.19" *)
   wire [36:0] error_obi_rsp;
   (* hdlname = "ext_if commit" *)
   (* src = "ip/cv32e40x/rtl/cv32e40x_if_xif.sv:134.23" *)
@@ -43215,308 +43233,334 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   (* hdlname = "ext_if result_valid" *)
   (* src = "ip/cv32e40x/rtl/cv32e40x_if_xif.sv:147.23" *)
   wire \ext_if.result_valid ;
+  (* hdlname = "fabric_config_ack" *)
+  (* src = "src/soc/greyhound_soc.sv:342.11" *)
+  wire fabric_config_ack;
+  (* hdlname = "fabric_config_ack_q" *)
+  (* src = "src/soc/greyhound_soc.sv:342.30" *)
+  reg fabric_config_ack_q;
   (* hdlname = "fabric_config_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:261.19" *)
+  (* src = "src/soc/greyhound_soc.sv:262.19" *)
   (* unused_bits = "1 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71" *)
   wire [71:0] fabric_config_obi_req;
   (* hdlname = "fabric_config_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:262.19" *)
+  (* src = "src/soc/greyhound_soc.sv:263.19" *)
   wire [36:0] fabric_config_obi_rsp;
+  (* hdlname = "fabric_configured_irq" *)
+  (* src = "src/soc/greyhound_soc.sv:342.51" *)
+  wire fabric_configured_irq;
   (* hdlname = "fabric_gnt_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:965.22" *)
+  (* src = "src/soc/greyhound_soc.sv:986.22" *)
   wire fabric_gnt_gated;
   (* hdlname = "fabric_issue_accept_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:125.18" *)
+  (* src = "src/soc/greyhound_soc.sv:126.18" *)
   wire fabric_issue_accept_gated;
   (* hdlname = "fabric_issue_ready_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:124.18" *)
+  (* src = "src/soc/greyhound_soc.sv:125.18" *)
   wire fabric_issue_ready_gated;
   (* hdlname = "fabric_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:265.19" *)
+  (* src = "src/soc/greyhound_soc.sv:266.19" *)
   (* unused_bits = "1 64 65 66 67 68 69 70 71" *)
   wire [71:0] fabric_obi_req;
   (* hdlname = "fabric_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:266.19" *)
+  (* src = "src/soc/greyhound_soc.sv:267.19" *)
   wire [36:0] fabric_obi_rsp;
   (* hdlname = "fabric_rdata_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:967.22" *)
+  (* src = "src/soc/greyhound_soc.sv:988.22" *)
   wire [31:0] fabric_rdata_gated;
   (* hdlname = "fabric_result_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:130.18" *)
+  (* src = "src/soc/greyhound_soc.sv:131.18" *)
   wire [31:0] fabric_result_gated;
   (* hdlname = "fabric_result_id_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:128.18" *)
+  (* src = "src/soc/greyhound_soc.sv:129.18" *)
   wire [3:0] fabric_result_id_gated;
   (* hdlname = "fabric_result_rd_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:129.18" *)
+  (* src = "src/soc/greyhound_soc.sv:130.18" *)
   wire [4:0] fabric_result_rd_gated;
   (* hdlname = "fabric_result_valid_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:127.18" *)
+  (* src = "src/soc/greyhound_soc.sv:128.18" *)
   wire fabric_result_valid_gated;
   (* hdlname = "fabric_rvalid_gated" *)
-  (* src = "src/soc/greyhound_soc.sv:966.22" *)
+  (* src = "src/soc/greyhound_soc.sv:987.22" *)
   wire fabric_rvalid_gated;
   (* hdlname = "flash_HADDR" *)
-  (* src = "src/soc/greyhound_soc.sv:546.26" *)
+  (* src = "src/soc/greyhound_soc.sv:561.26" *)
   wire [31:0] flash_HADDR;
   (* hdlname = "flash_HRDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:551.26" *)
+  (* src = "src/soc/greyhound_soc.sv:566.26" *)
   wire [31:0] flash_HRDATA;
   (* hdlname = "flash_HREADY" *)
-  (* src = "src/soc/greyhound_soc.sv:549.26" *)
+  (* src = "src/soc/greyhound_soc.sv:564.26" *)
   wire flash_HREADY;
   (* hdlname = "flash_HREADYOUT" *)
-  (* src = "src/soc/greyhound_soc.sv:550.26" *)
+  (* src = "src/soc/greyhound_soc.sv:565.26" *)
   wire flash_HREADYOUT;
   (* hdlname = "flash_HSEL" *)
-  (* src = "src/soc/greyhound_soc.sv:545.26" *)
+  (* src = "src/soc/greyhound_soc.sv:560.26" *)
   wire flash_HSEL;
   (* hdlname = "flash_HTRANS" *)
-  (* src = "src/soc/greyhound_soc.sv:547.26" *)
+  (* src = "src/soc/greyhound_soc.sv:562.26" *)
   wire [1:0] flash_HTRANS;
   (* hdlname = "flash_HWRITE" *)
-  (* src = "src/soc/greyhound_soc.sv:548.26" *)
+  (* src = "src/soc/greyhound_soc.sv:563.26" *)
   wire flash_HWRITE;
   (* hdlname = "flash_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:245.19" *)
+  (* src = "src/soc/greyhound_soc.sv:246.19" *)
   (* unused_bits = "1" *)
   wire [71:0] flash_obi_req;
   (* hdlname = "flash_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:246.19" *)
+  (* src = "src/soc/greyhound_soc.sv:247.19" *)
   wire [36:0] flash_obi_rsp;
   (* hdlname = "instr_addr_o" *)
-  (* src = "src/soc/greyhound_soc.sv:302.36" *)
+  (* src = "src/soc/greyhound_soc.sv:303.36" *)
   wire [31:0] instr_addr_o;
   (* hdlname = "instr_err_i" *)
-  (* src = "src/soc/greyhound_soc.sv:304.36" *)
+  (* src = "src/soc/greyhound_soc.sv:305.36" *)
   wire instr_err_i;
   (* hdlname = "instr_gnt_i" *)
-  (* src = "src/soc/greyhound_soc.sv:300.36" *)
+  (* src = "src/soc/greyhound_soc.sv:301.36" *)
   wire instr_gnt_i;
   (* hdlname = "instr_rdata_i" *)
-  (* src = "src/soc/greyhound_soc.sv:303.36" *)
+  (* src = "src/soc/greyhound_soc.sv:304.36" *)
   wire [31:0] instr_rdata_i;
   (* hdlname = "instr_req_o" *)
-  (* src = "src/soc/greyhound_soc.sv:299.36" *)
+  (* src = "src/soc/greyhound_soc.sv:300.36" *)
   wire instr_req_o;
   (* hdlname = "instr_rvalid_i" *)
-  (* src = "src/soc/greyhound_soc.sv:301.36" *)
+  (* src = "src/soc/greyhound_soc.sv:302.36" *)
   wire instr_rvalid_i;
   (* hdlname = "irq" *)
-  (* src = "src/soc/greyhound_soc.sv:341.18" *)
+  (* src = "src/soc/greyhound_soc.sv:356.18" *)
   wire [31:0] irq;
   (* hdlname = "mgrs_mux_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:219.37" *)
+  (* src = "src/soc/greyhound_soc.sv:220.37" *)
   wire [215:0] mgrs_mux_obi_req;
   (* hdlname = "mgrs_mux_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:220.37" *)
+  (* src = "src/soc/greyhound_soc.sv:221.37" *)
   (* unused_bits = "2 4 39 41 76 78" *)
   wire [110:0] mgrs_mux_obi_rsp;
   (* hdlname = "mux_demux_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:212.19" *)
+  (* src = "src/soc/greyhound_soc.sv:213.19" *)
   wire [71:0] mux_demux_obi_req;
   (* hdlname = "mux_demux_obi_req_a_addr" *)
-  (* src = "src/soc/greyhound_soc.sv:505.16" *)
+  (* src = "src/soc/greyhound_soc.sv:520.16" *)
   wire [31:0] mux_demux_obi_req_a_addr;
   (* hdlname = "mux_demux_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:213.19" *)
+  (* src = "src/soc/greyhound_soc.sv:214.19" *)
   wire [36:0] mux_demux_obi_rsp;
   (* hdlname = "periph_idx" *)
-  (* src = "src/soc/greyhound_soc.sv:473.50" *)
+  (* src = "src/soc/greyhound_soc.sv:488.50" *)
   wire [2:0] periph_idx;
   (* hdlname = "psram_HADDR" *)
-  (* src = "src/soc/greyhound_soc.sv:707.26" *)
+  (* src = "src/soc/greyhound_soc.sv:722.26" *)
   wire [31:0] psram_HADDR;
   (* hdlname = "psram_HRDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:714.26" *)
+  (* src = "src/soc/greyhound_soc.sv:729.26" *)
   wire [31:0] psram_HRDATA;
   (* hdlname = "psram_HREADY" *)
-  (* src = "src/soc/greyhound_soc.sv:712.26" *)
+  (* src = "src/soc/greyhound_soc.sv:727.26" *)
   wire psram_HREADY;
   (* hdlname = "psram_HREADYOUT" *)
-  (* src = "src/soc/greyhound_soc.sv:713.26" *)
+  (* src = "src/soc/greyhound_soc.sv:728.26" *)
   wire psram_HREADYOUT;
   (* hdlname = "psram_HSEL" *)
-  (* src = "src/soc/greyhound_soc.sv:706.26" *)
+  (* src = "src/soc/greyhound_soc.sv:721.26" *)
   wire psram_HSEL;
   (* hdlname = "psram_HSIZE" *)
-  (* src = "src/soc/greyhound_soc.sv:709.26" *)
+  (* src = "src/soc/greyhound_soc.sv:724.26" *)
   wire [2:0] psram_HSIZE;
   (* hdlname = "psram_HTRANS" *)
-  (* src = "src/soc/greyhound_soc.sv:708.26" *)
+  (* src = "src/soc/greyhound_soc.sv:723.26" *)
   wire [1:0] psram_HTRANS;
   (* hdlname = "psram_HWDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:710.26" *)
+  (* src = "src/soc/greyhound_soc.sv:725.26" *)
   wire [31:0] psram_HWDATA;
   (* hdlname = "psram_HWRITE" *)
-  (* src = "src/soc/greyhound_soc.sv:711.26" *)
+  (* src = "src/soc/greyhound_soc.sv:726.26" *)
   wire psram_HWRITE;
   (* hdlname = "psram_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:253.19" *)
+  (* src = "src/soc/greyhound_soc.sv:254.19" *)
   (* unused_bits = "1" *)
   wire [71:0] psram_obi_req;
   (* hdlname = "psram_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:254.19" *)
+  (* src = "src/soc/greyhound_soc.sv:255.19" *)
   wire [36:0] psram_obi_rsp;
   (* hdlname = "sram_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:249.19" *)
+  (* src = "src/soc/greyhound_soc.sv:250.19" *)
   wire [71:0] sram_obi_req;
   (* hdlname = "sram_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:250.19" *)
+  (* src = "src/soc/greyhound_soc.sv:251.19" *)
   wire [36:0] sram_obi_rsp;
   (* hdlname = "time_counter" *)
-  (* src = "src/soc/greyhound_soc.sv:174.18" *)
+  (* src = "src/soc/greyhound_soc.sv:175.18" *)
   reg [63:0] time_counter;
   (* hdlname = "uart0_HADDR" *)
-  (* src = "src/soc/greyhound_soc.sv:784.26" *)
+  (* src = "src/soc/greyhound_soc.sv:799.26" *)
   wire [31:0] uart0_HADDR;
   (* hdlname = "uart0_HRDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:791.26" *)
+  (* src = "src/soc/greyhound_soc.sv:806.26" *)
   wire [31:0] uart0_HRDATA;
   (* hdlname = "uart0_HREADY" *)
-  (* src = "src/soc/greyhound_soc.sv:789.26" *)
+  (* src = "src/soc/greyhound_soc.sv:804.26" *)
   wire uart0_HREADY;
   (* hdlname = "uart0_HREADYOUT" *)
-  (* src = "src/soc/greyhound_soc.sv:790.26" *)
+  (* src = "src/soc/greyhound_soc.sv:805.26" *)
   wire uart0_HREADYOUT;
   (* hdlname = "uart0_HSEL" *)
-  (* src = "src/soc/greyhound_soc.sv:783.26" *)
+  (* src = "src/soc/greyhound_soc.sv:798.26" *)
   wire uart0_HSEL;
   (* hdlname = "uart0_HSIZE" *)
-  (* src = "src/soc/greyhound_soc.sv:786.26" *)
+  (* src = "src/soc/greyhound_soc.sv:801.26" *)
   (* unused_bits = "0 1 2" *)
   wire [2:0] uart0_HSIZE;
   (* hdlname = "uart0_HTRANS" *)
-  (* src = "src/soc/greyhound_soc.sv:785.26" *)
+  (* src = "src/soc/greyhound_soc.sv:800.26" *)
   wire [1:0] uart0_HTRANS;
   (* hdlname = "uart0_HWDATA" *)
-  (* src = "src/soc/greyhound_soc.sv:787.26" *)
+  (* src = "src/soc/greyhound_soc.sv:802.26" *)
   wire [31:0] uart0_HWDATA;
   (* hdlname = "uart0_HWRITE" *)
-  (* src = "src/soc/greyhound_soc.sv:788.26" *)
+  (* src = "src/soc/greyhound_soc.sv:803.26" *)
   wire uart0_HWRITE;
   (* hdlname = "uart0_irq" *)
-  (* src = "src/soc/greyhound_soc.sv:342.11" *)
+  (* src = "src/soc/greyhound_soc.sv:357.11" *)
   wire uart0_irq;
   (* hdlname = "uart0_obi_req" *)
-  (* src = "src/soc/greyhound_soc.sv:257.19" *)
+  (* src = "src/soc/greyhound_soc.sv:258.19" *)
   (* unused_bits = "1" *)
   wire [71:0] uart0_obi_req;
   (* hdlname = "uart0_obi_rsp" *)
-  (* src = "src/soc/greyhound_soc.sv:258.19" *)
+  (* src = "src/soc/greyhound_soc.sv:259.19" *)
   wire [36:0] uart0_obi_rsp;
-  assign _000_ = time_counter + (* src = "src/soc/greyhound_soc.sv:179.29-179.45" *) 1'h1;
-  assign _001_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 31'h50000000;
-  assign _002_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 31'h51000000;
-  assign _003_ = _001_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _002_;
-  assign _004_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 31'h40000000;
-  assign _005_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 31'h40000100;
-  assign _006_ = _004_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _005_;
-  assign _007_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 30'h30000000;
-  assign _008_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 30'h30010000;
-  assign _009_ = _007_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _008_;
-  assign _010_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 30'h20000000;
-  assign _011_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 30'h21000000;
-  assign _012_ = _010_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _011_;
-  assign _013_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 29'h10000000;
-  assign _014_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 29'h10002000;
-  assign _015_ = _013_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _014_;
-  assign _016_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 1'h0;
-  assign _017_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 25'h1000000;
-  assign _018_ = _016_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _017_;
-  assign _019_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:500.14-500.71" *) 31'h60000000;
-  assign _020_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:501.11-501.65" *) 31'h60001000;
-  assign _021_ = _019_ && (* src = "src/soc/greyhound_soc.sv:500.13-501.106" *) _020_;
-  assign flash_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:587.25-587.50" *) 1'h1;
-  assign psram_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:750.25-750.50" *) 2'h3;
-  assign uart0_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:827.25-827.50" *) 3'h4;
-  assign _022_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:917.25-917.75" *) 4'h8;
-  assign _023_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:926.25-926.78" *) 4'hc;
-  assign _024_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:933.25-933.81" *) 5'h14;
-  assign _025_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:939.25-939.84" *) 3'h4;
-  assign _026_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:943.25-943.74" *) 5'h10;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+  assign _000_ = time_counter + (* src = "src/soc/greyhound_soc.sv:180.29-180.45" *) 1'h1;
+  assign _001_ = ! (* src = "src/soc/greyhound_soc.sv:344.58-344.78" *) fabric_config_ack_q;
+  assign fabric_configured_irq = fabric_configured_i & (* src = "src/soc/greyhound_soc.sv:344.36-344.78" *) _001_;
+  assign _002_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 31'h50000000;
+  assign _003_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 31'h51000000;
+  assign _004_ = _002_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _003_;
+  assign _005_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 31'h40000000;
+  assign _006_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 31'h40000100;
+  assign _007_ = _005_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _006_;
+  assign _008_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 30'h30000000;
+  assign _009_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 30'h30010000;
+  assign _010_ = _008_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _009_;
+  assign _011_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 30'h20000000;
+  assign _012_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 30'h21000000;
+  assign _013_ = _011_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _012_;
+  assign _014_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 29'h10000000;
+  assign _015_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 29'h10002000;
+  assign _016_ = _014_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _015_;
+  assign _017_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 1'h0;
+  assign _018_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 25'h1000000;
+  assign _019_ = _017_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _018_;
+  assign _020_ = mux_demux_obi_req[71:40] >= (* src = "src/soc/greyhound_soc.sv:515.14-515.71" *) 31'h60000000;
+  assign _021_ = mux_demux_obi_req[71:40] < (* src = "src/soc/greyhound_soc.sv:516.11-516.65" *) 31'h60001000;
+  assign _022_ = _020_ && (* src = "src/soc/greyhound_soc.sv:515.13-516.106" *) _021_;
+  assign flash_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:602.25-602.50" *) 1'h1;
+  assign psram_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:765.25-765.50" *) 2'h3;
+  assign uart0_HSEL = periph_idx == (* src = "src/soc/greyhound_soc.sv:842.25-842.50" *) 3'h4;
+  assign _023_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:934.25-934.75" *) 4'h8;
+  assign _024_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:943.25-943.78" *) 4'hc;
+  assign _025_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:950.25-950.81" *) 5'h14;
+  assign _026_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:954.25-954.79" *) 3'h4;
+  assign _027_ = all_periph_obi_req[404:400] == (* src = "src/soc/greyhound_soc.sv:964.25-964.74" *) 5'h10;
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) bitstream_data_o <= 32'd0;
-    else bitstream_data_o <= _030_;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+    else bitstream_data_o <= _031_;
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) bitstream_valid_o <= 1'h0;
-    else bitstream_valid_o <= _037_;
-  reg [31:0] _093_;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+    else bitstream_valid_o <= _038_;
+  (* src = "src/soc/greyhound_soc.sv:346.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
-    if (!rst_ni) _093_ <= 32'd0;
-    else _093_ <= _042_;
-  assign fabric_config_obi_rsp[36:5] = _093_;
+    if (!rst_ni) fabric_config_ack_q <= 1'h0;
+    else fabric_config_ack_q <= _040_;
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
+  always_ff @(posedge clk_i, negedge rst_ni)
+    if (!rst_ni) fabric_config_o <= 6'h00;
+    else fabric_config_o <= _045_;
+  reg [31:0] _105_;
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
+  always_ff @(posedge clk_i, negedge rst_ni)
+    if (!rst_ni) _105_ <= 32'd0;
+    else _105_ <= _047_;
+  assign fabric_config_obi_rsp[36:5] = _105_;
   reg \fabric_config_obi_rsp_reg[0] ;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) \fabric_config_obi_rsp_reg[0]  <= 1'h0;
-    else \fabric_config_obi_rsp_reg[0]  <= _038_;
+    else \fabric_config_obi_rsp_reg[0]  <= _046_;
   assign fabric_config_obi_rsp[0] = \fabric_config_obi_rsp_reg[0] ;
-  (* src = "src/soc/greyhound_soc.sv:175.5" *)
+  (* src = "src/soc/greyhound_soc.sv:176.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) time_counter <= 64'h0000000000000000;
     else time_counter <= _000_;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) warmboot_boot_o <= 1'h0;
-    else warmboot_boot_o <= _060_;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+    else warmboot_boot_o <= _068_;
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) warmboot_offset_o <= 6'h00;
-    else warmboot_offset_o <= _058_;
-  (* src = "src/soc/greyhound_soc.sv:894.5" *)
+    else warmboot_offset_o <= _066_;
+  (* src = "src/soc/greyhound_soc.sv:909.5" *)
   always_ff @(posedge clk_i, negedge rst_ni)
     if (!rst_ni) warmboot_slot_o <= 13'h0000;
-    else warmboot_slot_o <= _059_;
-  assign _040_ = _024_ ? (* src = "src/soc/greyhound_soc.sv:948.25-948.85|src/soc/greyhound_soc.sv:947.21-949.24" *) { 26'h0000000, warmboot_offset_o } : _039_;
-  assign _039_ = _026_ ? (* src = "src/soc/greyhound_soc.sv:944.25-944.69|src/soc/greyhound_soc.sv:943.21-945.24" *) usercode_i : { 31'h00000000, _027_[0] };
-  assign _027_[0] = _025_ ? (* src = "src/soc/greyhound_soc.sv:940.25-940.88|src/soc/greyhound_soc.sv:939.21-941.24" *) fabric_config_busy_i : 1'h0;
-  assign _049_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:934.60-934.116|src/soc/greyhound_soc.sv:934.25-934.116" *) all_periph_obi_req[368:363] : warmboot_offset_o;
-  assign _050_ = _024_ ? (* src = "src/soc/greyhound_soc.sv:934.25-934.116|src/soc/greyhound_soc.sv:933.21-935.24" *) _049_ : warmboot_offset_o;
-  assign _051_ = all_periph_obi_req[396] ? (* src = "src/soc/greyhound_soc.sv:928.60-928.123|src/soc/greyhound_soc.sv:928.25-928.123" *) all_periph_obi_req[375:371] : warmboot_slot_o[12:8];
-  assign _052_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:927.60-927.123|src/soc/greyhound_soc.sv:927.25-927.123" *) { 4'h0, all_periph_obi_req[366:363] } : warmboot_slot_o[7:0];
-  assign _053_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:926.80-931.24|src/soc/greyhound_soc.sv:926.21-931.24" *) { _051_, _052_ } : warmboot_slot_o;
-  assign _054_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:926.80-931.24|src/soc/greyhound_soc.sv:926.21-931.24" *) 1'h1 : 1'h0;
-  assign _033_ = all_periph_obi_req[398] ? (* src = "src/soc/greyhound_soc.sv:921.60-921.124|src/soc/greyhound_soc.sv:921.25-921.124" *) all_periph_obi_req[394:387] : bitstream_data_o[31:24];
-  assign _032_ = all_periph_obi_req[397] ? (* src = "src/soc/greyhound_soc.sv:920.60-920.124|src/soc/greyhound_soc.sv:920.25-920.124" *) all_periph_obi_req[386:379] : bitstream_data_o[23:16];
-  assign _031_ = all_periph_obi_req[396] ? (* src = "src/soc/greyhound_soc.sv:919.60-919.124|src/soc/greyhound_soc.sv:919.25-919.124" *) all_periph_obi_req[378:371] : bitstream_data_o[15:8];
-  assign _034_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:918.60-918.124|src/soc/greyhound_soc.sv:918.25-918.124" *) all_periph_obi_req[370:363] : bitstream_data_o[7:0];
-  assign _028_ = _022_ ? (* src = "src/soc/greyhound_soc.sv:917.77-924.24|src/soc/greyhound_soc.sv:917.21-924.24" *) { _033_, _032_, _031_, _034_ } : bitstream_data_o;
-  assign _035_ = _022_ ? (* src = "src/soc/greyhound_soc.sv:917.77-924.24|src/soc/greyhound_soc.sv:917.21-924.24" *) 1'h1 : 1'h0;
-  assign _041_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:915.49-937.20|src/soc/greyhound_soc.sv:915.17-950.20" *) fabric_config_obi_rsp[36:5] : _040_;
-  assign _055_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:915.49-937.20|src/soc/greyhound_soc.sv:915.17-950.20" *) _050_ : warmboot_offset_o;
-  assign _056_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:915.49-937.20|src/soc/greyhound_soc.sv:915.17-950.20" *) _053_ : warmboot_slot_o;
-  assign _057_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:915.49-937.20|src/soc/greyhound_soc.sv:915.17-950.20" *) _054_ : 1'h0;
-  assign _029_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:915.49-937.20|src/soc/greyhound_soc.sv:915.17-950.20" *) _028_ : bitstream_data_o;
-  assign _036_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:915.49-937.20|src/soc/greyhound_soc.sv:915.17-950.20" *) _035_ : 1'h0;
-  assign _042_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) _041_ : fabric_config_obi_rsp[36:5];
-  assign _038_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) 1'h1 : 1'h0;
-  assign _058_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) _055_ : warmboot_offset_o;
-  assign _059_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) _056_ : warmboot_slot_o;
-  assign _060_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) _057_ : 1'h0;
-  assign _030_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) _029_ : bitstream_data_o;
-  assign _037_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:910.44-951.16|src/soc/greyhound_soc.sv:910.13-951.16" *) _036_ : 1'h0;
-  assign periph_idx = _021_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h7 : _048_;
-  assign _048_ = _018_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h1 : _047_;
-  assign _047_ = _015_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h2 : _046_;
-  assign _046_ = _012_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h3 : _045_;
-  assign _045_ = _009_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h4 : _044_;
-  assign _044_ = _006_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h5 : _043_;
-  assign _043_ = _003_ ? (* src = "src/soc/greyhound_soc.sv:501.108-501.144|src/soc/greyhound_soc.sv:500.9-501.144" *) 3'h6 : 3'h0;
-  assign debug_fabric_rdata = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:973.34-977.12|src/soc/greyhound_soc.sv:973.9-977.12" *) fabric_rdata_i : 32'd0;
-  assign debug_fabric_rvalid = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:973.34-977.12|src/soc/greyhound_soc.sv:973.9-977.12" *) fabric_rvalid_i : 1'h0;
-  assign debug_fabric_gnt = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:973.34-977.12|src/soc/greyhound_soc.sv:973.9-977.12" *) fabric_gnt_i : 1'h0;
-  assign fabric_result_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:140.34-148.12|src/soc/greyhound_soc.sv:140.9-148.12" *) fabric_result_i : 32'd0;
-  assign fabric_result_rd_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:140.34-148.12|src/soc/greyhound_soc.sv:140.9-148.12" *) fabric_result_rd_i : 5'h00;
-  assign fabric_result_id_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:140.34-148.12|src/soc/greyhound_soc.sv:140.9-148.12" *) fabric_result_id_i : 4'h0;
-  assign fabric_result_valid_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:140.34-148.12|src/soc/greyhound_soc.sv:140.9-148.12" *) fabric_result_valid_i : 1'h0;
-  assign fabric_issue_accept_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:140.34-148.12|src/soc/greyhound_soc.sv:140.9-148.12" *) fabric_issue_accept_i : 1'h0;
-  assign fabric_issue_ready_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:140.34-148.12|src/soc/greyhound_soc.sv:140.9-148.12" *) fabric_issue_ready_i : 1'h1;
+    else warmboot_slot_o <= _067_;
+  assign _049_ = _025_ ? (* src = "src/soc/greyhound_soc.sv:969.25-969.85|src/soc/greyhound_soc.sv:968.21-970.24" *) { 26'h0000000, warmboot_offset_o } : _048_;
+  assign _048_ = _027_ ? (* src = "src/soc/greyhound_soc.sv:965.25-965.69|src/soc/greyhound_soc.sv:964.21-966.24" *) usercode_i : { 25'h0000000, _028_[6:0] };
+  assign _028_[6:0] = _026_ ? (* src = "src/soc/greyhound_soc.sv:961.25-961.105|src/soc/greyhound_soc.sv:960.21-962.24" *) { fabric_config_o, fabric_config_busy_i } : 7'h00;
+  assign _042_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:955.60-955.114|src/soc/greyhound_soc.sv:955.25-955.114" *) all_periph_obi_req[369:364] : _041_;
+  assign _043_ = _026_ ? (* src = "src/soc/greyhound_soc.sv:955.25-955.114|src/soc/greyhound_soc.sv:954.21-956.24" *) _042_ : _041_;
+  assign _057_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:951.60-951.116|src/soc/greyhound_soc.sv:951.25-951.116" *) all_periph_obi_req[368:363] : warmboot_offset_o;
+  assign _058_ = _025_ ? (* src = "src/soc/greyhound_soc.sv:951.25-951.116|src/soc/greyhound_soc.sv:950.21-952.24" *) _057_ : warmboot_offset_o;
+  assign _059_ = all_periph_obi_req[396] ? (* src = "src/soc/greyhound_soc.sv:945.60-945.123|src/soc/greyhound_soc.sv:945.25-945.123" *) all_periph_obi_req[375:371] : warmboot_slot_o[12:8];
+  assign _060_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:944.60-944.123|src/soc/greyhound_soc.sv:944.25-944.123" *) all_periph_obi_req[370:363] : warmboot_slot_o[7:0];
+  assign _061_ = _024_ ? (* src = "src/soc/greyhound_soc.sv:943.80-948.24|src/soc/greyhound_soc.sv:943.21-948.24" *) { _059_, _060_ } : warmboot_slot_o;
+  assign _062_ = _024_ ? (* src = "src/soc/greyhound_soc.sv:943.80-948.24|src/soc/greyhound_soc.sv:943.21-948.24" *) 1'h1 : 1'h0;
+  assign _034_ = all_periph_obi_req[398] ? (* src = "src/soc/greyhound_soc.sv:938.60-938.124|src/soc/greyhound_soc.sv:938.25-938.124" *) all_periph_obi_req[394:387] : bitstream_data_o[31:24];
+  assign _033_ = all_periph_obi_req[397] ? (* src = "src/soc/greyhound_soc.sv:937.60-937.124|src/soc/greyhound_soc.sv:937.25-937.124" *) all_periph_obi_req[386:379] : bitstream_data_o[23:16];
+  assign _032_ = all_periph_obi_req[396] ? (* src = "src/soc/greyhound_soc.sv:936.60-936.124|src/soc/greyhound_soc.sv:936.25-936.124" *) all_periph_obi_req[378:371] : bitstream_data_o[15:8];
+  assign _035_ = all_periph_obi_req[395] ? (* src = "src/soc/greyhound_soc.sv:935.60-935.124|src/soc/greyhound_soc.sv:935.25-935.124" *) all_periph_obi_req[370:363] : bitstream_data_o[7:0];
+  assign _029_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:934.77-941.24|src/soc/greyhound_soc.sv:934.21-941.24" *) { _034_, _033_, _032_, _035_ } : bitstream_data_o;
+  assign _036_ = _023_ ? (* src = "src/soc/greyhound_soc.sv:934.77-941.24|src/soc/greyhound_soc.sv:934.21-941.24" *) 1'h1 : 1'h0;
+  assign _050_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) fabric_config_obi_rsp[36:5] : _049_;
+  assign _044_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) _043_ : _041_;
+  assign _063_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) _058_ : warmboot_offset_o;
+  assign _064_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) _061_ : warmboot_slot_o;
+  assign _065_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) _062_ : 1'h0;
+  assign _030_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) _029_ : bitstream_data_o;
+  assign _037_ = all_periph_obi_req[399] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:933.49-958.20|src/soc/greyhound_soc.sv:933.17-971.20" *) _036_ : 1'h0;
+  assign _047_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _050_ : fabric_config_obi_rsp[36:5];
+  assign _046_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) 1'h1 : 1'h0;
+  assign _045_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _044_ : _041_;
+  assign _066_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _063_ : warmboot_offset_o;
+  assign _067_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _064_ : warmboot_slot_o;
+  assign _068_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _065_ : 1'h0;
+  assign _031_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _030_ : bitstream_data_o;
+  assign _038_ = all_periph_obi_req[360] ? (* src = "src/soc/greyhound_soc.sv:928.44-972.16|src/soc/greyhound_soc.sv:928.13-972.16" *) _037_ : 1'h0;
+  assign _041_ = fabric_config_o[0] ? (* src = "src/soc/greyhound_soc.sv:926.36-926.58|src/soc/greyhound_soc.sv:926.13-926.58" *) 6'h00 : { fabric_config_o[5:1], 1'h0 };
+  assign periph_idx = _022_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h7 : _056_;
+  assign _056_ = _019_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h1 : _055_;
+  assign _055_ = _016_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h2 : _054_;
+  assign _054_ = _013_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h3 : _053_;
+  assign _053_ = _010_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h4 : _052_;
+  assign _052_ = _007_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h5 : _051_;
+  assign _051_ = _004_ ? (* src = "src/soc/greyhound_soc.sv:516.108-516.144|src/soc/greyhound_soc.sv:515.9-516.144" *) 3'h6 : 3'h0;
+  assign _039_ = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:351.44-351.70|src/soc/greyhound_soc.sv:351.18-351.70" *) fabric_config_ack_q : 1'h0;
+  assign _040_ = fabric_config_o[0] ? (* full_case = 32'd1 *) (* src = "src/soc/greyhound_soc.sv:350.36-350.62|src/soc/greyhound_soc.sv:350.13-351.70" *) 1'h1 : _039_;
+  assign debug_fabric_rdata = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:994.34-998.12|src/soc/greyhound_soc.sv:994.9-998.12" *) fabric_rdata_i : 32'd0;
+  assign debug_fabric_rvalid = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:994.34-998.12|src/soc/greyhound_soc.sv:994.9-998.12" *) fabric_rvalid_i : 1'h0;
+  assign debug_fabric_gnt = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:994.34-998.12|src/soc/greyhound_soc.sv:994.9-998.12" *) fabric_gnt_i : 1'h0;
+  assign fabric_result_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:141.34-149.12|src/soc/greyhound_soc.sv:141.9-149.12" *) fabric_result_i : 32'd0;
+  assign fabric_result_rd_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:141.34-149.12|src/soc/greyhound_soc.sv:141.9-149.12" *) fabric_result_rd_i : 5'h00;
+  assign fabric_result_id_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:141.34-149.12|src/soc/greyhound_soc.sv:141.9-149.12" *) fabric_result_id_i : 4'h0;
+  assign fabric_result_valid_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:141.34-149.12|src/soc/greyhound_soc.sv:141.9-149.12" *) fabric_result_valid_i : 1'h0;
+  assign fabric_issue_accept_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:141.34-149.12|src/soc/greyhound_soc.sv:141.9-149.12" *) fabric_issue_accept_i : 1'h0;
+  assign fabric_issue_ready_gated = fabric_configured_i ? (* src = "src/soc/greyhound_soc.sv:141.34-149.12|src/soc/greyhound_soc.sv:141.9-149.12" *) fabric_issue_ready_i : 1'h1;
   (* hdlname = "cv32e40x_core" *)
-  (* src = "src/soc/greyhound_soc.sv:359.7" *)
+  (* src = "src/soc/greyhound_soc.sv:374.7" *)
   \cv32e40x_core$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.cv32e40x_core  cv32e40x_core (
     .boot_addr_i(32'd128),
     .clic_irq_i(1'h0),
@@ -43547,7 +43591,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .instr_rdata_i(mgrs_mux_obi_rsp[36:5]),
     .instr_req_o(instr_req_o),
     .instr_rvalid_i(mgrs_mux_obi_rsp[0]),
-    .irq_i({ 10'h000, fabric_configured_i, uart0_irq, fabric_irq_i, 16'h0000 }),
+    .irq_i({ 10'h000, fabric_configured_irq, uart0_irq, fabric_irq_i, 16'h0000 }),
     .mhartid_i(32'd0),
     .mimpid_patch_i(4'h0),
     .mtvec_addr_i(32'd0),
@@ -43576,7 +43620,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .\xif_result_if.result_valid (\ext_if.result_valid )
   );
   (* hdlname = "fabric_extension" *)
-  (* src = "src/soc/greyhound_soc.sv:151.22" *)
+  (* src = "src/soc/greyhound_soc.sv:152.22" *)
   \fabric_extension$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.fabric_extension  fabric_extension (
     .fabric_issue_accept_i(fabric_issue_accept_gated),
     .fabric_issue_id_o(fabric_issue_id_o),
@@ -43610,7 +43654,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .\xif_result.result_valid (\ext_if.result_valid )
   );
   (* hdlname = "i_EF_PSRAM_CTRL_AHBL" *)
-  (* src = "src/soc/greyhound_soc.sv:757.24" *)
+  (* src = "src/soc/greyhound_soc.sv:772.24" *)
   \EF_PSRAM_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_PSRAM_CTRL_AHBL  i_EF_PSRAM_CTRL_AHBL (
     .HADDR(psram_HADDR),
     .HCLK(clk_i),
@@ -43630,7 +43674,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .sck(psram_sck)
   );
   (* hdlname = "i_EF_QSPI_XIP_CTRL_AHBL" *)
-  (* src = "src/soc/greyhound_soc.sv:599.5" *)
+  (* src = "src/soc/greyhound_soc.sv:614.5" *)
   \EF_QSPI_XIP_CTRL_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_QSPI_XIP_CTRL_AHBL  i_EF_QSPI_XIP_CTRL_AHBL (
     .HADDR(flash_HADDR),
     .HCLK(clk_i),
@@ -43648,7 +43692,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .sck(flash_sck)
   );
   (* hdlname = "i_EF_UART_AHBL" *)
-  (* src = "src/soc/greyhound_soc.sv:833.18" *)
+  (* src = "src/soc/greyhound_soc.sv:848.18" *)
   \EF_UART_AHBL$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_EF_UART_AHBL  i_EF_UART_AHBL (
     .HADDR(uart0_HADDR),
     .HCLK(clk_i),
@@ -43665,7 +43709,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .tx(uart0_tx)
   );
   (* hdlname = "i_dm_top" *)
-  (* src = "src/soc/greyhound_soc.sv:1058.5" *)
+  (* src = "src/soc/greyhound_soc.sv:1079.5" *)
   \dm_obi_top$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dm_top  i_dm_top (
     .clk_i(clk_i),
     .debug_req_o(debug_req),
@@ -43702,7 +43746,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .unavailable_i(1'h0)
   );
   (* hdlname = "i_dmi_jtag" *)
-  (* src = "src/soc/greyhound_soc.sv:1033.5" *)
+  (* src = "src/soc/greyhound_soc.sv:1054.5" *)
   \dmi_jtag$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_dmi_jtag  i_dmi_jtag (
     .clk_i(clk_i),
     .dmi_req_o(dmi_req),
@@ -43721,7 +43765,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .trst_ni(jtag_trst_ni)
   );
   (* hdlname = "i_obi2ahbm_adapter_flash" *)
-  (* src = "src/soc/greyhound_soc.sv:553.22" *)
+  (* src = "src/soc/greyhound_soc.sv:568.22" *)
   \obi2ahbm_adapter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi2ahbm_adapter_flash  i_obi2ahbm_adapter_flash (
     .data_addr_i(all_periph_obi_req[143:112]),
     .data_be_i(all_periph_obi_req[110:107]),
@@ -43744,7 +43788,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .priv_mode_i(1'h1)
   );
   (* hdlname = "i_obi2ahbm_adapter_psram" *)
-  (* src = "src/soc/greyhound_soc.sv:716.22" *)
+  (* src = "src/soc/greyhound_soc.sv:731.22" *)
   \obi2ahbm_adapter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi2ahbm_adapter_psram  i_obi2ahbm_adapter_psram (
     .data_addr_i(all_periph_obi_req[287:256]),
     .data_be_i(all_periph_obi_req[254:251]),
@@ -43769,7 +43813,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .priv_mode_i(1'h1)
   );
   (* hdlname = "i_obi2ahbm_adapter_uart0" *)
-  (* src = "src/soc/greyhound_soc.sv:793.22" *)
+  (* src = "src/soc/greyhound_soc.sv:808.22" *)
   \obi2ahbm_adapter$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi2ahbm_adapter_uart0  i_obi2ahbm_adapter_uart0 (
     .data_addr_i(all_periph_obi_req[359:328]),
     .data_be_i(all_periph_obi_req[326:323]),
@@ -43794,7 +43838,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .priv_mode_i(1'h1)
   );
   (* hdlname = "i_obi_demux" *)
-  (* src = "src/soc/greyhound_soc.sv:514.5" *)
+  (* src = "src/soc/greyhound_soc.sv:529.5" *)
   \obi_demux$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi_demux  i_obi_demux (
     .clk_i(clk_i),
     .mgr_ports_req_o(all_periph_obi_req),
@@ -43805,7 +43849,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .sbr_port_select_i(periph_idx)
   );
   (* hdlname = "i_obi_mux" *)
-  (* src = "src/soc/greyhound_soc.sv:456.5" *)
+  (* src = "src/soc/greyhound_soc.sv:471.5" *)
   \obi_mux$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_obi_mux  i_obi_mux (
     .clk_i(clk_i),
     .mgr_port_req_o(mux_demux_obi_req),
@@ -43816,7 +43860,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .testmode_i(1'h0)
   );
   (* hdlname = "i_periph_err" *)
-  (* src = "src/soc/greyhound_soc.sv:533.5" *)
+  (* src = "src/soc/greyhound_soc.sv:548.5" *)
   \obi_err_sbr$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_periph_err  i_periph_err (
     .clk_i(clk_i),
     .obi_req_i(all_periph_obi_req[71:0]),
@@ -43825,7 +43869,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .testmode_i(1'h0)
   );
   (* hdlname = "i_sram_shim" *)
-  (* src = "src/soc/greyhound_soc.sv:684.7" *)
+  (* src = "src/soc/greyhound_soc.sv:699.7" *)
   \obi_sram_shim$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc.i_sram_shim  i_sram_shim (
     .addr_o(bank_byte_addr),
     .be_o(bank_be_o),
@@ -43839,7 +43883,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
     .wdata_o(bank_wdata_o),
     .we_o(bank_we_o)
   );
-  assign _027_[31:1] = 31'h00000000;
+  assign _028_[31:7] = 25'h0000000;
   assign { all_periph_obi_rsp[262:261], all_periph_obi_rsp[258:185], all_periph_obi_rsp[152], all_periph_obi_rsp[150], all_periph_obi_rsp[115], all_periph_obi_rsp[113], all_periph_obi_rsp[110:74], all_periph_obi_rsp[41], all_periph_obi_rsp[39], all_periph_obi_rsp[36:0] } = { 2'h0, debug_fabric_rdata, all_periph_obi_req[434], 2'h0, debug_fabric_gnt, debug_fabric_rvalid, fabric_config_obi_rsp[36:5], all_periph_obi_req[362], 3'h1, fabric_config_obi_rsp[0], all_periph_obi_req[290], 1'h0, all_periph_obi_req[218], 1'h0, sram_obi_rsp, all_periph_obi_req[74], 1'h0, error_obi_rsp };
   assign bank_gnt = 1'h1;
   assign bank_word_addr_o = bank_byte_addr[12:2];
@@ -43881,6 +43925,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   assign error_obi_req = all_periph_obi_req[71:0];
   assign fabric_addr_o = all_periph_obi_req[495:472];
   assign fabric_be_o = all_periph_obi_req[470:467];
+  assign fabric_config_ack = fabric_config_o[0];
   assign fabric_config_obi_req = all_periph_obi_req[431:360];
   assign fabric_config_obi_rsp[4:1] = { all_periph_obi_req[362], 3'h1 };
   assign fabric_gnt_gated = debug_fabric_gnt;
@@ -43898,7 +43943,7 @@ module \greyhound_soc$FMD_QNC_greyhound_ihp.i_greyhound_ihp.i_greyhound_soc (clk
   assign instr_gnt_i = mgrs_mux_obi_rsp[1];
   assign instr_rdata_i = mgrs_mux_obi_rsp[36:5];
   assign instr_rvalid_i = mgrs_mux_obi_rsp[0];
-  assign irq = { 10'h000, fabric_configured_i, uart0_irq, fabric_irq_i, 16'h0000 };
+  assign irq = { 10'h000, fabric_configured_irq, uart0_irq, fabric_irq_i, 16'h0000 };
   assign mgrs_mux_obi_req = { dbg_req_obi_req[71:3], 2'h0, dbg_req_obi_req[0], data_addr_o, data_we_o, data_be_o, data_wdata_o, 2'h0, data_req_o, instr_addr_o, 39'h3c00000000, instr_req_o };
   assign mux_demux_obi_req_a_addr = mux_demux_obi_req[71:40];
   assign psram_HREADYOUT = psram_HREADY;

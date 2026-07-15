@@ -1,12 +1,3 @@
-// 0x0B, 0x2B, 0x5B and 0x7B are free for custom use
-typedef enum logic [6:0]
-{
-    INSTR1 = 7'h0B,
-    INSTR2 = 7'h2B,
-    INSTR3 = 7'h5B,
-    INSTR4 = 7'h7B,
-} OPCODE_XIF_BASE;
-
 module static_slot();
     // CLK
     logic clk;
@@ -66,11 +57,17 @@ module static_slot();
     // Slot selecting
     logic [6:0]  opcode;
     logic [4:0]  rd;
+    logic [1:0]  funct7;
 
     assign opcode = issue_instr_i[6:0];
     assign rd     = issue_instr_i[11:7];
+    assign funct7 = issue_instr_i[26:25];
 
-    assign issue_accept_o = issue_valid_i && (opcode == INSTR3);
+    localparam OPCODE_XIF = 7'h5B;
+
+    logic [1:0] running_funct7 [2];
+
+    assign issue_accept_o = issue_valid_i && (opcode == OPCODE_XIF) && ((funct7 == 2'h3) || funct7 == running_funct7[0] || funct7 == running_funct7[1]);
     assign issue_ready_o  = 1'b1;
 
     logic [2:0] op0_d;
@@ -90,6 +87,11 @@ module static_slot();
                 rd_d  <= rd;
                 op0_d <= issue_op0_i[2:0];
                 op1_d <= issue_op1_i[3:0];
+
+                if (funct7 == 2'h3) begin
+                    running_funct7[0] <= issue_op0_i[1:0];
+                    running_funct7[1] <= issue_op1_i[1:0];
+                end
             end
         end
     end

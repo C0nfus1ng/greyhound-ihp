@@ -35,7 +35,7 @@ module fabric_spi_controller (
     
     // Control
     input logic [5:0] slot_offset_i,
-    input logic bitstream_finish
+    input logic bitstream_finish_i
 );
     // CPOL = 0, CPHA = 0
 
@@ -44,7 +44,7 @@ module fabric_spi_controller (
     // Addr, generation
     logic [12:0] slot_chunk_addr;
     always_comb begin
-        case (slot_offset_i)
+        casez (slot_offset_i)
             6'b000000: slot_chunk_addr = {9'h0, slot_chunk_addr_i[3:0]};
             6'b?????1: slot_chunk_addr = {5'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[3:0]};
             6'b????1?: slot_chunk_addr = {4'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[4:0]};
@@ -72,6 +72,17 @@ module fabric_spi_controller (
     state_t curr_state;
     state_t next_state;
 
+    logic bitstream_finish_q, bitstream_finish;
+    always_ff @(posedge clk_i, negedge rst_ni) begin
+        if (!rst_ni) begin
+            bitstream_finish_q <= '0;
+        end else begin
+            bitstream_finish_q <= bitstream_finish_i;
+        end
+    end
+
+    assign bitstream_finish = !bitstream_finish_q & bitstream_finish_i;
+
     // Next state logic
     always_comb begin
         next_state = curr_state;
@@ -86,11 +97,12 @@ module fabric_spi_controller (
             S_LOAD_DATA:
                 next_state = S_SHIFT_DATA;
             S_SHIFT_DATA:
-                if (bitstream_finish) next_state = S_IDLE;
-                else if (shift_cnt == '0 && sclk_o) next_state = S_WRITE_DATA;
+                if (shift_cnt == '0 && sclk_o) next_state = S_WRITE_DATA;
             S_WRITE_DATA:
                 next_state = S_LOAD_DATA;
         endcase
+
+        if (bitstream_finish) next_state = S_IDLE;
     end
 
     assign busy_o = curr_state != S_IDLE;

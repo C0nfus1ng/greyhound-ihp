@@ -6,10 +6,33 @@
 #define F_CPU 50000000
 #define BAUDRATE 115200
 
-volatile uint32_t loaded_slots[4] = {0};
-volatile uint8_t  merged_slot = 1; // TODO add controller functionality, look how to use it
+#define WARMBOOT0_STATIC_FULL_USERCODE 0x00010000
+#define WARMBOOT0_STATIC_USERCODE 0x00010009
+#define WARMBOOT0_DIRECTOUT_USERCODE 0x0001000b
+#define WARMBOOT0_GRAYCODE_USERCODE 0x0001000e
+#define WARMBOOT0_LEFTSHIFT_USERCODE 0x00010011
+#define WARMBOOT0_RIGHTSHIFT_USERCODE 0x00010014
+#define WARMBOOT0_CROSSOVER_USERCODE 0x00010017
+#define WARMBOOT0_STRAIGHTTHROUGH_USERCODE 0x00010019
+#define WARMBOOT1_STATIC_FULL_USERCODE 0x00010200
+#define WARMBOOT1_STATIC_USERCODE 0x00010209
+#define WARMBOOT1_COMBINE_USERCODE 0x0001020d
+#define WARMBOOT1_FUNCTION_USERCODE 0x0001020f
+#define WARMBOOT1_INTERLEAVE_USERCODE 0x00010211
+#define WARMBOOT2_ALLZEROS 0x00000400
 
-uint32_t left_shift(uint32_t op1, uint32_t op2) {
+#define SLOT_OPCODE 0x5b
+#define WARMBOOT0_LEFTSHIFT_FUNC3 0x1
+#define WARMBOOT0_RIGHTSHIFT_FUNC3 0x2
+#define WARMBOOT1_COMBINE_FUNC7 0x0
+#define WARMBOOT1_FUNCTION_FUNC7 0x1
+#define WARMBOOT1_INTERLEAVE_FUNC7 0x2
+
+volatile uint32_t loaded_slots[4] = {0};
+volatile uint8_t  merged_slot = 1;
+volatile uint8_t  triggered_irq = 0;
+
+uint32_t warmboot0_left_shift(uint32_t op1, uint32_t op2) {
   uint32_t ret;
   
   //Instr: .insn <type> <opcode>, <func3>, <func 7>, rd, rs1, rs2
@@ -20,7 +43,7 @@ uint32_t left_shift(uint32_t op1, uint32_t op2) {
   return ret;
 }
 
-uint32_t right_shift(uint32_t op1, uint32_t op2) {
+uint32_t warmboot0_right_shift(uint32_t op1, uint32_t op2) {
   uint32_t ret;
   
   __asm__ volatile (".insn r 0x5b, 2, 0, %0, %1, %2" : "=r" (ret)
@@ -30,25 +53,91 @@ uint32_t right_shift(uint32_t op1, uint32_t op2) {
   return ret;
 }
 
+void warmboot1_set_provided(uint32_t op0, uint32_t op1, uint8_t set_mask) {
+  static uint32_t op0_q = 0x3;
+  static uint32_t op1_q = 0x3;
+  
+  switch (set_mask)
+  {
+    case 1:
+      op0_q = op0;
+      break;
+  
+    case 2:
+      op1_q = op1;
+      break;
+
+    default:
+      op0_q = op0;
+      op1_q = op1;
+      break;
+  }
+  
+  __asm__ volatile (".insn r 0x5b, 0, 0x3, x0, %0, %1" :: "r"  (op0_q),
+                                                          "r"  (op1_q));
+}
+
+uint8_t warmboot1_combine(uint32_t op0, uint32_t op1) {
+  uint32_t ret;
+  
+  __asm__ volatile (".insn r 0x5b, 0, 0x0, %0, %1, %2" : "=r" (ret)
+                                                      : "r"  (op0),
+                                                        "r"  (op1));
+
+  if (loaded_slots[2] == WARMBOOT1_COMBINE_USERCODE) {
+    return ret&0xf;
+  }
+
+  return (ret>>4)&0xf;
+}
+
+uint8_t warmboot1_function(uint32_t op0, uint32_t op1) {
+  uint32_t ret;
+  
+  __asm__ volatile (".insn r 0x5b, 0, 0x1, %0, %1, %2" : "=r" (ret)
+                                                      : "r"  (op0),
+                                                        "r"  (op1));
+
+  if (loaded_slots[2] == WARMBOOT1_FUNCTION_USERCODE) {
+    return ret&0xf;
+  }
+
+  return (ret>>4)&0xf;
+}
+
+uint8_t warmboot1_interleave(uint32_t op0, uint32_t op1) {
+  uint32_t ret;
+  
+  __asm__ volatile (".insn r 0x5b, 0, 0x2, %0, %1, %2" : "=r" (ret)
+                                                      : "r"  (op0),
+                                                        "r"  (op1));
+
+  if (loaded_slots[2] == WARMBOOT1_INTERLEAVE_USERCODE) {
+    return ret&0xf;
+  }
+
+  return (ret>>4)&0xf;
+}
+
 void wait_nop(uint16_t wait) {
   for (uint16_t  i = 0; i < wait; i++) {
     __asm__ volatile ("nop");
   }
 }
 
-// USERCODE for custom_instr/.board/bitstreams/Static-Full.bit changed to 0x00010000
-// USERCODE for custom_instr/.board/bitstreams/Static-Static.bit changed to 0x00010009
-// USERCODE for custom_instr/.board/bitstreams/Slot1-DirectOut.bit changed to 0x0001000b
-// USERCODE for custom_instr/.board/bitstreams/Slot1-Graycode.bit changed to 0x0001000e
-// USERCODE for custom_instr/.board/bitstreams/Slot2-LeftShift.bit changed to 0x00010011
-// USERCODE for custom_instr/.board/bitstreams/Slot2-RightShift.bit changed to 0x00010014
-// USERCODE for custom_instr/.board/bitstreams/Slot3-Crossover.bit changed to 0x00010017
-// USERCODE for custom_instr/.board/bitstreams/Slot3-StraightThrough.bit changed to 0x00010019
-// USERCODE for custom_instr_2slot/.board/bitstreams/Static-Full.bit changed to 0x00010200
-// USERCODE for custom_instr_2slot/.board/bitstreams/Static-Static.bit changed to 0x00010209
-// USERCODE for custom_instr_2slot/.board/bitstreams/Slot1_2-Combine.bit changed to 0x0001020d
-// USERCODE for custom_instr_2slot/.board/bitstreams/Slot1_2-Function.bit changed to 0x0001020f
-// USERCODE for custom_instr_2slot/.board/bitstreams/Slot1_2-Interleave.bit changed to 0x00010211
+void test_io() {
+  uint32_t word = 0xcafecafe;
+  uint8_t overflow = 0;
+
+  for (uint8_t i = 0; i < sizeof(uint32_t)*2; i++) {
+    overflow = word & 0xf;
+    word = (word>>4)|(overflow<<28);
+    *((int*)FABRIC_BASE) = word;
+    wait_nop(0x100);
+  }
+
+  printf("IO %x\n", *((int*)FABRIC_BASE));
+}
 
 // System trap handler
 inline __attribute__((always_inline)) uint32_t get_reg_value(uint8_t reg) {
@@ -265,61 +354,60 @@ inline __attribute__((always_inline)) void return_reg_value(uint8_t reg, uint32_
 void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
   uint32_t rd = 0;
   uint32_t rd_valid = 1;
-
-  printf("INSN: 0x%08lx\n", insn);
+  uint32_t mip;
+  __asm__ volatile ("csrr %0, mip" : "=r" (mip));
+  bool fabric_irq_pending = mip&(1<<FABRIC_IRQ);
+  bool fabric_busy = (*REG_FABRIC_CONFIG&(1<<FABRIC_CONFIG_BUSY)) | fabric_irq_pending;
 
   switch (insn&0x707f)
   {
-    case 0x105b: // Slot 2 Left shift
-      if (!*REG_FABRIC_CONFIG_BUSY) {
-        *REG_TRIGGER_SLOT = 0x11;
+    case ((WARMBOOT0_LEFTSHIFT_FUNC3<<12)|SLOT_OPCODE): // Slot 2 Left shift
+      if (!fabric_busy && ((loaded_slots[0] == WARMBOOT0_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT0_STATIC_USERCODE))) {
+          *REG_TRIGGER_SLOT = WARMBOOT0_LEFTSHIFT_USERCODE;
       }
 
       rd = rs1 << rs2;
       break;
 
-    case 0x205b:  // Slot 2 Right shift
-      if (!*REG_FABRIC_CONFIG_BUSY) {
-        *REG_TRIGGER_SLOT = 0x14;
+    case ((WARMBOOT0_RIGHTSHIFT_FUNC3<<12)|SLOT_OPCODE):  // Slot 2 Right shift
+      if (!fabric_busy && ((loaded_slots[0] == WARMBOOT0_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT0_STATIC_USERCODE))) {
+        *REG_TRIGGER_SLOT = WARMBOOT0_RIGHTSHIFT_USERCODE;
       }
 
       rd = rs1 >> rs2;
       break;
 
-    case 0x305b: // Slot 1_2 combine
-      if (!*REG_FABRIC_CONFIG_BUSY) {
-        if (merged_slot == 1) {
-          merged_slot = 2;
-        } else if (merged_slot == 2){
-          merged_slot = 1;
+    case ((WARMBOOT1_COMBINE_FUNC7<<25)|SLOT_OPCODE): // Slot 1_2 combine
+      if (!fabric_busy) {
+        if ((loaded_slots[0] == WARMBOOT1_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT1_STATIC_USERCODE)) {
+          if (merged_slot == 1) {
+            merged_slot = 2;
+            *REG_FABRIC_CONFIG = 0x1c<<FABRIC_CONFIG_OFFSET; // -4
+          } else if (merged_slot == 2){
+            merged_slot = 1;
+          }
+          *REG_TRIGGER_SLOT = WARMBOOT1_COMBINE_USERCODE;
+        } else {
+          *REG_TRIGGER_SLOT = WARMBOOT1_STATIC_USERCODE;
         }
-        *REG_TRIGGER_SLOT = 0x20d;
       }
 
       rd = ((rs1&0x3)<<2) | (rs2&0x3);
       break;
 
-    case 0x405b: // Slot 1_2 interleave
-      if (!*REG_FABRIC_CONFIG_BUSY) {
-        if (merged_slot == 1) {
-          merged_slot = 2;
-        } else if (merged_slot == 2){
-          merged_slot = 1;
+    case ((WARMBOOT1_FUNCTION_FUNC7<<25)|SLOT_OPCODE): // Slot 1_2 function
+      if (!fabric_busy) {
+        if ((loaded_slots[0] == WARMBOOT1_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT1_STATIC_USERCODE)) {
+          if (merged_slot == 1) {
+            merged_slot = 2;
+            *REG_FABRIC_CONFIG = 0x1c<<FABRIC_CONFIG_OFFSET; // -4
+          } else if (merged_slot == 2){
+            merged_slot = 1;
+          }
+          *REG_TRIGGER_SLOT = WARMBOOT1_FUNCTION_USERCODE;
+        } else {
+          *REG_TRIGGER_SLOT = WARMBOOT1_STATIC_USERCODE;
         }
-        *REG_TRIGGER_SLOT = 0x20f;
-      }
-      
-      rd = ((rs1&0x2)<<2) | ((rs2&0x2)<<1) | ((rs1&0x1)<<1) | ((rs2&0x1));
-      break;
-
-    case 0x505b: // Slot 1_2 function
-      if (!*REG_FABRIC_CONFIG_BUSY) {
-        if (merged_slot == 1) {
-          merged_slot = 2;
-        } else if (merged_slot == 2){
-          merged_slot = 1;
-        }
-        *REG_TRIGGER_SLOT = 0x211;
       }
       
       switch(rs1&0x7) {
@@ -350,6 +438,24 @@ void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
       }
       break;
 
+    case ((WARMBOOT1_INTERLEAVE_FUNC7<<25)|SLOT_OPCODE): // Slot 1_2 interleave
+      if (!fabric_busy) {
+        if ((loaded_slots[0] == WARMBOOT1_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT1_STATIC_USERCODE)) {
+          if (merged_slot == 1) {
+            merged_slot = 2;
+            *REG_FABRIC_CONFIG = 0x1c<<FABRIC_CONFIG_OFFSET; // -4
+          } else if (merged_slot == 2){
+            merged_slot = 1;
+          }
+          *REG_TRIGGER_SLOT = WARMBOOT1_INTERLEAVE_USERCODE;
+        } else {
+          *REG_TRIGGER_SLOT = WARMBOOT1_STATIC_USERCODE;
+        }
+      }
+      
+      rd = ((rs1&0x2)<<2) | ((rs2&0x2)<<1) | ((rs1&0x1)<<1) | ((rs2&0x1));
+      break;
+
     default:
       printf("Illegal instruction!\n");
       rd_valid = 0;
@@ -375,7 +481,7 @@ __attribute__((naked)) void handle_illegal_insn() {
   register uint32_t* insn_addr asm ("s1"); // Use callee saved reg, can be used after function call
   __asm__ volatile ("csrr %0, mepc" : "=r" (insn_addr));
 
-  if (((*insn_addr)&0x7f) == 0x5b) {
+  if (((*insn_addr)&0x7f) == SLOT_OPCODE) {
     register uint32_t rs1 asm ("a0") = get_reg_value((*insn_addr&0xf8000) >> 14);
     register uint32_t rs2 asm ("a1") = get_reg_value((*insn_addr&0x1f00000) >> 19);
     // Use a0 and a1 to return values, so no stack is used
@@ -401,16 +507,21 @@ __attribute__((naked)) void handle_illegal_insn() {
 }
 
 // FPGA config handler
-void m_fast5_irq_handler() {
-  printf("Interrupt!\n");
+__attribute__ ((interrupt ("machine"))) void m_fast5_irq_handler() {
+  *REG_FABRIC_CONFIG = (1<<FABRIC_CONFIG_ACK);
+  triggered_irq++;
+  printf("IRQ\n");
+
+  uint8_t slot1_2_func7 = 0x3;
 
   switch (*REG_USERCODE&0x7fff)
   {
     // Static Slot
-    case 0x0:
-    case 0x9:
-    case 0x200:
-    case 0x209:
+    case (WARMBOOT1_STATIC_FULL_USERCODE&0x7fff):
+    case (WARMBOOT1_STATIC_USERCODE&0x7fff):
+      warmboot1_set_provided(0x3, 0x3, 0x3);
+    case (WARMBOOT0_STATIC_FULL_USERCODE&0x7fff):
+    case (WARMBOOT0_STATIC_USERCODE&0x7fff):
       loaded_slots[0] = *REG_USERCODE;
       loaded_slots[1] = 0;
       loaded_slots[2] = 0;
@@ -418,33 +529,39 @@ void m_fast5_irq_handler() {
       break;
   
     // Slot1
-    case 0xb:
-    case 0xe:
+    case (WARMBOOT0_DIRECTOUT_USERCODE&0x7fff):
+    case (WARMBOOT0_GRAYCODE_USERCODE&0x7fff):
       loaded_slots[1] = *REG_USERCODE;
       break;
 
     // Slot2
-    case 0x11:
-    case 0x14:
+    case (WARMBOOT0_LEFTSHIFT_USERCODE&0x7fff):
+    case (WARMBOOT0_RIGHTSHIFT_USERCODE&0x7fff):
       loaded_slots[2] = *REG_USERCODE;
       break;
 
     // Slot3
-    case 0x17:
-    case 0x19:
+    case (WARMBOOT0_CROSSOVER_USERCODE&0x7fff):
+    case (WARMBOOT0_STRAIGHTTHROUGH_USERCODE&0x7fff):
       loaded_slots[3] = *REG_USERCODE;
       break;
 
     // Slot1_2
-    case 0x20d:
-    case 0x20f:
-    case 0x211:
+    case (WARMBOOT1_COMBINE_USERCODE&0x7fff):
+      slot1_2_func7--;
+    case (WARMBOOT1_FUNCTION_USERCODE&0x7fff):
+      slot1_2_func7--;
+    case (WARMBOOT1_INTERLEAVE_USERCODE&0x7fff):
+      slot1_2_func7--;
+
       if (merged_slot == 1) {
         loaded_slots[1] = *REG_USERCODE;
+        warmboot1_set_provided(slot1_2_func7, 0x3, 0x1);
       } else if (merged_slot == 2) {
         loaded_slots[2] = *REG_USERCODE;
+        warmboot1_set_provided(0x3, slot1_2_func7, 0x2);
       } else {
-        printf("No such slot merged\n");
+        printf("No such merged slot\n");
       }
       break;
 
@@ -476,39 +593,108 @@ int main() {
   // enable machine mode interrupts, mstatus.mie
   __asm__ volatile ("csrs mstatus, 0x8");
 
-  // enable fast interrupts 0-3
-  int enable_fpga_configured_interrupt = 0x00200000;
+  // enable fabric interrupt
+  int enable_fpga_configured_interrupt = (1<<FABRIC_IRQ);
   __asm__ volatile ("csrs mie, %0" :: "r" (enable_fpga_configured_interrupt));
 
-  for (uint8_t i = 0; i < 8; i++) { // TODO
+  for (uint8_t i = 0; i < 13; i++) { // TODO retest and recheckout 2 slots must set funct3 in interrupt
     switch (i)
     {
-      case 0:
+      default:
         // Wait for Static slot
         break;
       
-      case 1:
-        *REG_TRIGGER_SLOT = 0x0001000b;
+      case 1: // TODO Test waited
+        *REG_TRIGGER_SLOT = WARMBOOT0_DIRECTOUT_USERCODE;
         break;
         
-      case 2:
-        *REG_TRIGGER_SLOT = 0x00010019;
+      case 2: // TODO Test waited
+        *REG_TRIGGER_SLOT = WARMBOOT0_STRAIGHTTHROUGH_USERCODE;
         break;
 
-      case 3:
-        left_shift(0xdeadbeef, 0x10);
+      case 3: // XIF must be initialized, to prevent stalling and force illegal instruction exceptions // TODO Test waited
+        *REG_TRIGGER_SLOT = WARMBOOT0_LEFTSHIFT_USERCODE;
         break;
 
-      default:
+      case 4: // TODO Test IO out and left shift printf
+        test_io();
+        *REG_TRIGGER_SLOT = WARMBOOT0_CROSSOVER_USERCODE;
+
+        printf("L1: %lx\n", warmboot0_left_shift(0xdeadbeef, 0x10));
+        wait_nop(0x10);
+        printf("L2: %lx\n", warmboot0_left_shift(0xbeefdead, 0x5));
+        break;
+
+      case 5: // TODO Test IO out and software substitution
+        test_io();
+
+        printf("R1: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3));
+        wait_nop(0x10);
+        printf("R2: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x10));
+        break;
+
+      case 6: // TODO Test right shift print and software substitution
+        printf("R3: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3));
+        wait_nop(0x10);
+        printf("L3: %lx\n", warmboot0_left_shift(0xbeefdead, 0x10));
+        break;
+
+      case 7: // TODO IO
+        *REG_TRIGGER_SLOT = WARMBOOT0_GRAYCODE_USERCODE;
+        break;
+
+      case 8: // TODO IO and software substitution
+        test_io();
+        printf("I1: %x\n", warmboot1_interleave(0x3, 0x1));
+        break;
+
+      case 9: // TODO check software substitution
+        printf("L4: %lx\n", warmboot0_left_shift(0xbeefdead, 0x10));
+        wait_nop(0x10);
+        printf("C1: %x\n", warmboot1_combine(0x1, 0x3));
+        break;
+
+      case 10: // TODO check combine and software substitution
+        printf("C2: %x\n", warmboot1_combine(0x1, 0x3));
+        wait_nop(0x10);
+        printf("I2: %x\n", warmboot1_interleave(0x3, 0x1));
+        break;
+
+      case 11: // TODO check combine, interleave, function software substitution and if interleave works while other slot reconfigures
+        printf("C3: %x\n", warmboot1_combine(0x1, 0x3));
+        wait_nop(0x10);
+        printf("I3: %x\n", warmboot1_interleave(0x3, 0x1));
+        wait_nop(0x10);
+        printf("F1: %x\n", warmboot1_function(0x3, 0x1));
+        wait_nop(0x10);
+        printf("I4: %x\n", warmboot1_interleave(0x3, 0x1));
+        break;
+
+      case 12: // TODO check function, interleave, right_shift software substitution
+        printf("F2: %x\n", warmboot1_function(0x1, 0x3));
+        wait_nop(0x10);
+        printf("F3: %x\n", warmboot1_function(0x2, 0x7));
+        wait_nop(0x10);
+        printf("F4: %x\n", warmboot1_function(0x2, 0x6));
+        wait_nop(0x10);
+        printf("F5: %x\n", warmboot1_function(0xb, 0x4));
+        wait_nop(0x10);
+        printf("I5: %x\n", warmboot1_interleave(0x3, 0x1));
+        wait_nop(0x10);
+        printf("R4: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3));
         break;
     }
 
-    printf("Slots - 0:0x%08lx 1:0x%08lx 2:0x%08lx 3:0x%08lx\n", loaded_slots[0], loaded_slots[1], loaded_slots[2], loaded_slots[3]);
+    printf("S- %lx %lx %lx %lx\n", loaded_slots[0], loaded_slots[1], loaded_slots[2], loaded_slots[3]);
 
-    // Wait for slot is configured interrupt
-    __asm__ volatile ("wfi");
+    if (triggered_irq <= i) {
+      // Wait for slot is configured interrupt
+      __asm__ volatile ("wfi");
+    }
   }
 
+  // Trigger IOs zero TODO test if IOs are zero
+  *REG_TRIGGER_SLOT = WARMBOOT2_ALLZEROS;
   printf("Finished\n");
 
   return 0;

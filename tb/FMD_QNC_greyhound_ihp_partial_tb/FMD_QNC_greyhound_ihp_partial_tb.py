@@ -614,6 +614,7 @@ async def test_partial_2slots_jtag(dut):
     # Wait for all messages
     await wait_jtag(jtag, int(4*1000/0.7)) # Wait 4ms
     data1 = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"Data1: {data1}")
 
     assert(data1 == b'Init\nStatic\nSlot1\nSlot2\nRet: 00bd\nRet: 0077\n')
 
@@ -629,7 +630,8 @@ async def test_partial_2slots_jtag(dut):
 
     await wait_jtag(jtag, int(9*1000/0.7)) # Wait 9ms
     data2 = uart_sink.read_nowait(-1)
-
+    cocotb.log.info(f"Data2: {data2}")
+    
     assert(data2 == b'Slot1\nSlot2\nRet: 00d8\nRet: 007c\nRet: 00be\nRet: 00a6\nRet: 00c1\nEnd\n')
 
     cocotb.log.info("Uploaded all.")
@@ -654,9 +656,9 @@ async def test_flash_image(dut):
     await ClockCycles(dut.io_clock_PAD, 10)
 
     # Wait until core is sleeping
-    await RisingEdge(dut.io_core_sleep_PAD)
+    # await RisingEdge(dut.io_core_sleep_PAD)
 
-    cocotb.log.info("Core is sleeping!")
+    # cocotb.log.info("Core is sleeping!")
 
     # # Wait until core has woken up from the IRQ
     # await FallingEdge(dut.io_core_sleep_PAD)
@@ -665,7 +667,7 @@ async def test_flash_image(dut):
 
     # Wait for all messages
     data = bytearray()
-    for i in range(1, 10):
+    for i in range(1, 31):
         await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
         data += uart_sink.read_nowait(-1)
         cocotb.log.info(f"Data thus far: {data}")

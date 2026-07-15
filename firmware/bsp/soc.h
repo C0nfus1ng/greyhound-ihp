@@ -12,10 +12,15 @@
 
 #define REG_XIF_OR_PERIPH       (volatile int*)(FABRIC_CONFIG_BASE + 0)
 #define REG_FABRIC_CONFIG_BUSY  (volatile int*)(FABRIC_CONFIG_BASE + 4)
+#define REG_FABRIC_CONFIG       (volatile int*)(FABRIC_CONFIG_BASE + 4)
 #define REG_BITSTREAM           (volatile int*)(FABRIC_CONFIG_BASE + 8)
 #define REG_TRIGGER_SLOT        (volatile int*)(FABRIC_CONFIG_BASE + 12)
 #define REG_USERCODE            (volatile int*)(FABRIC_CONFIG_BASE + 16)
 #define REG_WARMBOOT_OFFSET     (volatile int*)(FABRIC_CONFIG_BASE + 20)
+#define FABRIC_CONFIG_BUSY      0
+#define FABRIC_CONFIG_ACK       1
+#define FABRIC_CONFIG_OFFSET    2
+#define FABRIC_IRQ              21
 
 #define FABRIC_BASE      0x50000000
 

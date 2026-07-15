@@ -1,5 +1,6 @@
 FLASH_LAYOUT = "0:custom_instr/.board/bitstreams=Static-Full,Static-Static,Slot1-DirectOut,Slot1-Graycode,Slot2-LeftShift,Slot2-RightShift,Slot3-Crossover,Slot3-StraightThrough \
-				1:custom_instr_2slot/.board/bitstreams=Static-Full,Static-Static,Slot1_2-Combine,Slot1_2-Function,Slot1_2-Interleave"
+				1:custom_instr_2slot/.board/bitstreams=Static-Full,Static-Static,Slot1_2-Combine,Slot1_2-Function,Slot1_2-Interleave \
+				2:../all_zeros=all_zeros"
 
 all:
 	cd custom_instr; make

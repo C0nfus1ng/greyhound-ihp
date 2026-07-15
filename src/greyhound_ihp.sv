@@ -486,8 +486,8 @@ module greyhound_ihp (
         .miso_i     (spi_controller_miso_i),
 
         // Control
-        .slot_offset_i    (warmboot_offset),
-        .bitstream_finish (fabric_config_configured)
+        .slot_offset_i      (warmboot_offset),
+        .bitstream_finish_i (fabric_config_configured)
     );
     
     // Mux bitstreams: SPI (controller/receiver) <-> CPU    
