@@ -72,7 +72,7 @@ test-all:
 	done; \
 	echo "All tests finished running. Took $$(($$(date +%s) - start_time))s."
 
-	$(MAKE) result -e SIM_RESULTS_FOLDER=results_$$(date +"%d-%m-%Y_%H-%M-%S")
+	@$(MAKE) result -e SIM_RESULTS_FOLDER=results_$$(date +"%d-%m-%Y_%H-%M-%S")
 .phony: test-all
 
 # Do a single test
@@ -167,7 +167,8 @@ test:
 
 # Build a nice result table with all sim results in a single folder
 result:
-	@mkdir -p $(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER); \
+	@echo "Result in folder: $(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)"; \
+	mkdir -p $(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER); \
 	printf '*****************************************************************************************************************************************************************************\n' >$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/results.log; \
 	printf "** " >>$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/results.log; \
 	printf "%-105.105s " "TEST" >>$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/results.log; \
