@@ -226,16 +226,17 @@ module greyhound_ihp (
 
     assign jtag_tck = fpga_sclk_i;
 
+    logic fabric_config_configured_q, fabric_config_configured_pulse;
     logic [2:0] warmboot_boot_shift;
     always_ff @(posedge clk, negedge rst_ni) begin
         if (!rst_ni) begin
             warmboot_boot_shift <= '0;
         end else begin
-            warmboot_boot_shift <= {warmboot_boot_shift[1:0], fabric_warmboot_boot_o};
+            if (fabric_config_configured_pulse) warmboot_boot_shift <= '0;
+            else warmboot_boot_shift <= {warmboot_boot_shift[1:0], fabric_warmboot_boot_o};
         end
     end
 
-    logic fabric_config_configured_q, fabric_config_configured_pulse;
     always_ff @(posedge clk_i, negedge rst_ni) begin
         if (!rst_ni) begin
             fabric_config_configured_q <= '0;

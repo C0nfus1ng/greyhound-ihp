@@ -193,7 +193,7 @@ module fabric_wrapper #(
     logic        fabric_bram3_b_tie_low_o;
 
     // Offset for deduped sttaic slot
-    assign fabric_warmboot_slot_o[8:0] = 9'hA;
+    assign fabric_warmboot_slot_o[8:0] = 9'h0;
 
     eFPGA
     //#(

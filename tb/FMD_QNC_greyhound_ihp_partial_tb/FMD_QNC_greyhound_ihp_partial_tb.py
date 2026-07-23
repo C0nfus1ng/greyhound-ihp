@@ -704,67 +704,93 @@ async def test_trigger_slots(dut):
     
     # Static setup, apply after reset happened (fpga_mode and tap reset share a line)
     dut.io_fpga_mode_PAD.value = 0 # Configure FPGA as controller
-    dut.io_gpio_PAD.value[19:8] = LogicArray("000000000000")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, int(50000*1))
     await FallingEdge(dut.io_config_busy_PAD)
     await ClockCycles(dut.io_clock_PAD, 10)
 
-
     # Load Slot 1
     cocotb.log.info(f"Load Slot 1")
 
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10001")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10110")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010001ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("00000")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000110ZZZZZZZZ")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000000ZZZZZZZZ")
     await FallingEdge(dut.io_config_busy_PAD)
     await ClockCycles(dut.io_clock_PAD, 10)
     
     # Load Slot 2
     cocotb.log.info(f"Load Slot 2")
 
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10010")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10110")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010010ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10010")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010110ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("00000")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000010ZZZZZZZZ")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000000ZZZZZZZZ")
     await FallingEdge(dut.io_config_busy_PAD)
     await ClockCycles(dut.io_clock_PAD, 10)
     
     # Test
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0011001")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ001100100000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0001011")
+    assert(dut.io_gpio_PAD.value[7:4] == 0x7)
+    assert(dut.io_gpio_PAD.value[3:0] == 0x7)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000101100000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0000000")
+    assert(dut.io_gpio_PAD.value[7:4] == 0xD)
+    assert(dut.io_gpio_PAD.value[3:0] == 0xB)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
 
     # Load Slot 3
     cocotb.log.info(f"Load Slot 3")
 
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10011")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("10110")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000010011ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[12:8] = LogicArray("00000")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000110ZZZZZZZZ")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000000ZZZZZZZZ")
     await FallingEdge(dut.io_config_busy_PAD)
     await ClockCycles(dut.io_clock_PAD, 10)
 
     # Test
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0011001")
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ001100100000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0001011")
+    assert(dut.io_gpio_PAD.value[7:4] == 0x7)
+    assert(dut.io_gpio_PAD.value[3:0] == 0xC)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000101100000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0010111")
+    assert(dut.io_gpio_PAD.value[7:4] == 0xD)
+    assert(dut.io_gpio_PAD.value[3:0] == 0x8)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ001011100000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0010110")
+    assert(dut.io_gpio_PAD.value[7:4] == 0xE)
+    assert(dut.io_gpio_PAD.value[3:0] == 0x4)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ001011000000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("1011100")
+    assert(dut.io_gpio_PAD.value[7:4] == 0xA)
+    assert(dut.io_gpio_PAD.value[3:0] == 0x3)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ101110000000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 1)
-    dut.io_gpio_PAD.value[19:13] = LogicArray("0000000")
+    assert(dut.io_gpio_PAD.value[7:4] == 0x3)
+    assert(dut.io_gpio_PAD.value[3:0] == 0x7)
+
+    dut.io_gpio_PAD.value = LogicArray("ZZZZZZZZZZZZ000000000000ZZZZZZZZ")
     await ClockCycles(dut.io_clock_PAD, 100)
 
 if __name__ == "__main__":
