@@ -5,6 +5,8 @@ FLASH_LAYOUT = "0:custom_instr/.board/bitstreams=Static-Full,Static-Static,Slot1
 all:
 	cd custom_instr; make
 	cd custom_instr_2slot; make
+	cd standalone; make
+	cd function; make
 
 	@echo '------------------------------------------------------'
 	@echo 'Build flash image'
@@ -17,6 +19,8 @@ all:
 clean:
 	cd custom_instr; make clean
 	cd custom_instr_2slot; make clean
+	cd standalone; make clean
+	cd function; make clean
 .PHONY: clean
 
 bit-to-flash:

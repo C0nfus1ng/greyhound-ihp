@@ -20,6 +20,8 @@ partial_extension_cpu = {
     'flash0_slot1': '',
     'flash1_slot0': '',
     'flash1_slot1': '',
+    'flash1_slot2': '',
+    'flash1_slot3': '',
     'connect_flash1': False,
     'dump_waveforms': True,
 }
@@ -29,6 +31,8 @@ partial_extension_jtag = {
     'flash0_slot1': '',
     'flash1_slot0': '',
     'flash1_slot1': '',
+    'flash1_slot2': '',
+    'flash1_slot3': '',
     'connect_flash1': False,
     'dump_waveforms': True,
 }
@@ -38,6 +42,8 @@ partial_2slots_jtag = {
     'flash0_slot1': '',
     'flash1_slot0': '',
     'flash1_slot1': '',
+    'flash1_slot2': '',
+    'flash1_slot3': '',
     'connect_flash1': False,
     'dump_waveforms': True,
 }
@@ -47,6 +53,19 @@ flash_image = {
     'flash0_slot1': '',
     'flash1_slot0': '../../../ip/fabric/user_designs/partial/flash_image.hex',
     'flash1_slot1': '',
+    'flash1_slot2': '',
+    'flash1_slot3': '',
+    'connect_flash1': True,
+    'dump_waveforms': True,
+}
+
+trigger_slots = {
+    'flash0_slot0': '',
+    'flash0_slot1': '',
+    'flash1_slot0': '../../../ip/fabric/user_designs/partial/standalone/.board/bitstreams_hex/Static-Static.hex',
+    'flash1_slot1': '../../../ip/fabric/user_designs/partial/standalone/.board/bitstreams_hex/Slot1_2-Interleave.hex',
+    'flash1_slot2': '../../../ip/fabric/user_designs/partial/standalone/.board/bitstreams_hex/Slot1_2-Combine.hex',
+    'flash1_slot3': '../../../ip/fabric/user_designs/partial/standalone/.board/bitstreams_hex/Slot1_2-Function.hex',
     'connect_flash1': True,
     'dump_waveforms': True,
 }
@@ -667,12 +686,86 @@ async def test_flash_image(dut):
 
     # Wait for all messages
     data = bytearray()
-    for i in range(1, 31):
+    for i in range(1, 12):
         await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
         data += uart_sink.read_nowait(-1)
         cocotb.log.info(f"Data thus far: {data}")
 
     cocotb.log.info(f"Finished. UART:\n {data}")
+
+@cocotb.test(skip=enabled!=trigger_slots)
+async def test_trigger_slots(dut):
+    """Run the "Trigger Slots" program"""
+    # Static setup
+    dut.io_fetch_enable_PAD.value = 1
+
+    # Start up
+    await start_up(dut)
+    
+    # Static setup, apply after reset happened (fpga_mode and tap reset share a line)
+    dut.io_fpga_mode_PAD.value = 0 # Configure FPGA as controller
+    dut.io_gpio_PAD.value[19:8] = LogicArray("000000000000")
+    await ClockCycles(dut.io_clock_PAD, int(50000*1))
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, 10)
+
+
+    # Load Slot 1
+    cocotb.log.info(f"Load Slot 1")
+
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10001")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10110")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("00000")
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, 10)
+    
+    # Load Slot 2
+    cocotb.log.info(f"Load Slot 2")
+
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10010")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10110")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10010")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("00000")
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, 10)
+    
+    # Test
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0011001")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0001011")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0000000")
+    await ClockCycles(dut.io_clock_PAD, 1)
+
+    # Load Slot 3
+    cocotb.log.info(f"Load Slot 3")
+
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10011")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("10110")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[12:8] = LogicArray("00000")
+    await FallingEdge(dut.io_config_busy_PAD)
+    await ClockCycles(dut.io_clock_PAD, 10)
+
+    # Test
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0011001")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0001011")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0010111")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0010110")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("1011100")
+    await ClockCycles(dut.io_clock_PAD, 1)
+    dut.io_gpio_PAD.value[19:13] = LogicArray("0000000")
+    await ClockCycles(dut.io_clock_PAD, 100)
 
 if __name__ == "__main__":
     testbench_path = Path(__file__).resolve().parent
@@ -896,6 +989,10 @@ if __name__ == "__main__":
         plusargs += [f'+flash1_slot0={enabled["flash1_slot0"]}']
     if enabled["flash1_slot1"]:
         plusargs += [f'+flash1_slot1={enabled["flash1_slot1"]}']
+    if enabled["flash1_slot2"]:
+        plusargs += [f'+flash1_slot2={enabled["flash1_slot2"]}']
+    if enabled["flash1_slot3"]:
+        plusargs += [f'+flash1_slot3={enabled["flash1_slot3"]}']
 
     if sim == 'icarus':
         plusargs += ['-fst']
