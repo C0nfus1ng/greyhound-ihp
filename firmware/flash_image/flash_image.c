@@ -32,28 +32,38 @@ volatile uint32_t loaded_slots[4] = {0};
 volatile uint8_t  merged_slot = 1;
 volatile uint8_t  triggered_irq = 0;
 
-uint32_t warmboot0_left_shift(uint32_t op1, uint32_t op2) {
+// !!!XIF write back hazards may be ignored by the cpu!!!
+// Must never inline the function so gcc is forced to only ever writeback into rd.
+// On illegal instruction while mepc is set rd will be set to the value in any register, which is currently in the wb stage.
+// Preventing inlining forces the write into a2 in the functions below, since op0=a0 and op1=a1, while ret needs a0 to return.
+
+__attribute__ ((noinline)) uint32_t warmboot0_left_shift(uint32_t op0, uint32_t op1) {
   uint32_t ret;
-  
-  //Instr: .insn <type> <opcode>, <func3>, <func 7>, rd, rs1, rs2
-  __asm__ volatile (".insn r 0x5b, 1, 0, %0, %1, %2" : "=r" (ret)
-                                                     : "r"  (op1),
-                                                       "r"  (op2));
+
+  //Instr: .insn <type> <opcode>, <func3>, <func7>, rd, rs1, rs2
+  __asm__ volatile (".insn r 0x5b, 1, 0, a2, %1, %2\t\n"
+                    "mv %0, a2" 
+                    : "=r" (ret)
+                    : "r"  (op0),
+                      "r"  (op1)
+                    : "a2");
+  return ret;
+}
+
+__attribute__ ((noinline)) uint32_t warmboot0_right_shift(uint32_t op0, uint32_t op1) {
+  uint32_t ret;
+
+  __asm__ volatile (".insn r 0x5b, 2, 0, a2, %1, %2\t\n"
+                    "mv %0, a2" 
+                    : "=r" (ret)
+                    : "r"  (op0),
+                      "r"  (op1)
+                    : "a2");
 
   return ret;
 }
 
-uint32_t warmboot0_right_shift(uint32_t op1, uint32_t op2) {
-  uint32_t ret;
-  
-  __asm__ volatile (".insn r 0x5b, 2, 0, %0, %1, %2" : "=r" (ret)
-                                                     : "r"  (op1),
-                                                       "r"  (op2));
-
-  return ret;
-}
-
-void warmboot1_set_provided(uint32_t op0, uint32_t op1, uint8_t set_mask) {
+__attribute__ ((noinline)) void warmboot1_set_provided(uint32_t op0, uint32_t op1, uint8_t set_mask) {
   static uint32_t op0_q = 0x3;
   static uint32_t op1_q = 0x3;
   
@@ -77,12 +87,15 @@ void warmboot1_set_provided(uint32_t op0, uint32_t op1, uint8_t set_mask) {
                                                           "r"  (op1_q));
 }
 
-uint8_t warmboot1_combine(uint32_t op0, uint32_t op1) {
+__attribute__ ((noinline)) uint8_t warmboot1_combine(uint32_t op0, uint32_t op1) {
   uint32_t ret;
   
-  __asm__ volatile (".insn r 0x5b, 0, 0x0, %0, %1, %2" : "=r" (ret)
-                                                      : "r"  (op0),
-                                                        "r"  (op1));
+  __asm__ volatile (".insn r 0x5b, 0, 0x0, a2, %1, %2\t\n"
+                    "mv %0, a2" 
+                    : "=r" (ret)
+                    : "r"  (op0),
+                      "r"  (op1)
+                    : "a2");
 
   if (loaded_slots[2] == WARMBOOT1_COMBINE_USERCODE) {
     return ret&0xf;
@@ -91,12 +104,15 @@ uint8_t warmboot1_combine(uint32_t op0, uint32_t op1) {
   return (ret>>4)&0xf;
 }
 
-uint8_t warmboot1_function(uint32_t op0, uint32_t op1) {
+__attribute__ ((noinline)) uint8_t warmboot1_function(uint32_t op0, uint32_t op1) {
   uint32_t ret;
   
-  __asm__ volatile (".insn r 0x5b, 0, 0x1, %0, %1, %2" : "=r" (ret)
-                                                      : "r"  (op0),
-                                                        "r"  (op1));
+  __asm__ volatile (".insn r 0x5b, 0, 0x1, a2, %1, %2\t\n"
+                    "mv %0, a2" 
+                    : "=r" (ret)
+                    : "r"  (op0),
+                      "r"  (op1)
+                    : "a2");
 
   if (loaded_slots[2] == WARMBOOT1_FUNCTION_USERCODE) {
     return ret&0xf;
@@ -105,12 +121,15 @@ uint8_t warmboot1_function(uint32_t op0, uint32_t op1) {
   return (ret>>4)&0xf;
 }
 
-uint8_t warmboot1_interleave(uint32_t op0, uint32_t op1) {
+__attribute__ ((noinline)) uint8_t warmboot1_interleave(uint32_t op0, uint32_t op1) {
   uint32_t ret;
   
-  __asm__ volatile (".insn r 0x5b, 0, 0x2, %0, %1, %2" : "=r" (ret)
-                                                      : "r"  (op0),
-                                                        "r"  (op1));
+  __asm__ volatile (".insn r 0x5b, 0, 0x2, a2, %1, %2\t\n"
+                    "mv %0, a2" 
+                    : "=r" (ret)
+                    : "r"  (op0),
+                      "r"  (op1)
+                    : "a2");
 
   if (loaded_slots[2] == WARMBOOT1_INTERLEAVE_USERCODE) {
     return ret&0xf;
@@ -140,211 +159,184 @@ void test_io() {
 }
 
 // System trap handler
-inline __attribute__((always_inline)) uint32_t get_reg_value(uint8_t reg) {
-  // Return the reg value, load caller saved regs from stack
-  
+inline __attribute__((always_inline)) uint32_t load_reg_value(uint8_t reg) {
+  // Load saved regs from stack
   uint32_t reg_val;
   
-  switch(reg) {
-    case 0: // zero
-      __asm__ volatile ("mv %0, x0" : "=r" (reg_val));
-      break;
-    case 1: // ra
-      __asm__ volatile ("lw %0, 0(sp)" : "=r" (reg_val));
-      break;
-    case 2: // sp
-      __asm__ volatile ("mv %0, x2" : "=r" (reg_val));
-      break;
-    case 3: // gp
-      __asm__ volatile ("mv %0, x3" : "=r" (reg_val));
-      break;
-    case 4: // tp
-      __asm__ volatile ("mv %0, x4" : "=r" (reg_val));
-      break;
+  switch(reg) { // ra, sp, gp and tp use is prohibited
     case 5: // t0
-      __asm__ volatile ("lw %0, 36(sp)" : "=r" (reg_val));
+      __asm__ volatile ("lw %0, 84(sp)" : "=r" (reg_val));
       break;
     case 6: // t1
-      __asm__ volatile ("lw %0, 40(sp)" : "=r" (reg_val));
+      __asm__ volatile ("lw %0, 88(sp)" : "=r" (reg_val));
       break;
     case 7: // t2
-      __asm__ volatile ("lw %0, 44(sp)" : "=r" (reg_val));
+      __asm__ volatile ("lw %0, 92(sp)" : "=r" (reg_val));
       break;
     case 8: // fp
-      __asm__ volatile ("mv %0, x8" : "=r" (reg_val));
+      __asm__ volatile ("lw %0, 0(sp)" : "=r" (reg_val));
       break;
     case 9: // s1
-      __asm__ volatile ("mv %0, x9" : "=r" (reg_val));
-      break;
-    case 10: // a0
       __asm__ volatile ("lw %0, 4(sp)" : "=r" (reg_val));
       break;
-    case 11: // a1
-      __asm__ volatile ("lw %0, 8(sp)" : "=r" (reg_val));
-      break;
-    case 12: // a2
-      __asm__ volatile ("lw %0, 12(sp)" : "=r" (reg_val));
-      break;
-    case 13: // a3
-      __asm__ volatile ("lw %0, 16(sp)" : "=r" (reg_val));
-      break;
-    case 14: // a4
-      __asm__ volatile ("lw %0, 20(sp)" : "=r" (reg_val));
-      break;
-    case 15: // a5
-      __asm__ volatile ("lw %0, 24(sp)" : "=r" (reg_val));
-      break;
-    case 16: // a6
-      __asm__ volatile ("lw %0, 28(sp)" : "=r" (reg_val));
-      break;
-    case 17: // a7
-      __asm__ volatile ("lw %0, 32(sp)" : "=r" (reg_val));
-      break;
-    case 18: // s2
-      __asm__ volatile ("mv %0, x18" : "=r" (reg_val));
-      break;
-    case 19: // s3
-      __asm__ volatile ("mv %0, x19" : "=r" (reg_val));
-      break;
-    case 20: // s4
-      __asm__ volatile ("mv %0, x20" : "=r" (reg_val));
-      break;
-    case 21: // s5
-      __asm__ volatile ("mv %0, x21" : "=r" (reg_val));
-      break;
-    case 22: // s6
-      __asm__ volatile ("mv %0, x22" : "=r" (reg_val));
-      break;
-    case 23: // s7
-      __asm__ volatile ("mv %0, x23" : "=r" (reg_val));
-      break;
-    case 24: // s8
-      __asm__ volatile ("mv %0, x24" : "=r" (reg_val));
-      break;
-    case 25: // s9
-      __asm__ volatile ("mv %0, x25" : "=r" (reg_val));
-      break;
-    case 26: // s10
-      __asm__ volatile ("mv %0, x26" : "=r" (reg_val));
-      break;
-    case 27: // s11
-      __asm__ volatile ("mv %0, x27" : "=r" (reg_val));
-      break;
-    case 28: // t3
-      __asm__ volatile ("lw %0, 48(sp)" : "=r" (reg_val));
-      break;
-    case 29: // t4
+    case 10: // a0
       __asm__ volatile ("lw %0, 52(sp)" : "=r" (reg_val));
       break;
-    case 30: // t5
+    case 11: // a1
       __asm__ volatile ("lw %0, 56(sp)" : "=r" (reg_val));
       break;
-    case 31: // t6
+    case 12: // a2
       __asm__ volatile ("lw %0, 60(sp)" : "=r" (reg_val));
       break;
-    default:
+    case 13: // a3
+      __asm__ volatile ("lw %0, 64(sp)" : "=r" (reg_val));
+      break;
+    case 14: // a4
+      __asm__ volatile ("lw %0, 68(sp)" : "=r" (reg_val));
+      break;
+    case 15: // a5
+      __asm__ volatile ("lw %0, 72(sp)" : "=r" (reg_val));
+      break;
+    case 16: // a6
+      __asm__ volatile ("lw %0, 76(sp)" : "=r" (reg_val));
+      break;
+    case 17: // a7
+      __asm__ volatile ("lw %0, 80(sp)" : "=r" (reg_val));
+      break;
+    case 18: // s2
+      __asm__ volatile ("lw %0, 8(sp)" : "=r" (reg_val));
+      break;
+    case 19: // s3
+      __asm__ volatile ("lw %0, 12(sp)" : "=r" (reg_val));
+      break;
+    case 20: // s4
+      __asm__ volatile ("lw %0, 16(sp)" : "=r" (reg_val));
+      break;
+    case 21: // s5
+      __asm__ volatile ("lw %0, 20(sp)" : "=r" (reg_val));
+      break;
+    case 22: // s6
+      __asm__ volatile ("lw %0, 24(sp)" : "=r" (reg_val));
+      break;
+    case 23: // s7
+      __asm__ volatile ("lw %0, 28(sp)" : "=r" (reg_val));
+      break;
+    case 24: // s8
+      __asm__ volatile ("lw %0, 32(sp)" : "=r" (reg_val));
+      break;
+    case 25: // s9
+      __asm__ volatile ("lw %0, 36(sp)" : "=r" (reg_val));
+      break;
+    case 26: // s10
+      __asm__ volatile ("lw %0, 40(sp)" : "=r" (reg_val));
+      break;
+    case 27: // s11
+      __asm__ volatile ("lw %0, 44(sp)" : "=r" (reg_val));
+      break;
+    case 28: // t3
+      __asm__ volatile ("lw %0, 96(sp)" : "=r" (reg_val));
+      break;
+    case 29: // t4
+      __asm__ volatile ("lw %0, 100(sp)" : "=r" (reg_val));
+      break;
+    case 30: // t5
+      __asm__ volatile ("lw %0, 104(sp)" : "=r" (reg_val));
+      break;
+    case 31: // t6
+      __asm__ volatile ("lw %0, 108(sp)" : "=r" (reg_val));
+      break;
+    default: // zero
+      __asm__ volatile ("mv %0, x0" : "=r" (reg_val));
       break;
   }
 
   return reg_val;
 }
 
-inline __attribute__((always_inline)) void return_reg_value(uint8_t reg, uint32_t reg_val) {
-  // Store the reg value in the wanted reg or on the stack for calle saved regs
+inline __attribute__((always_inline)) void store_reg_value(uint8_t reg, uint32_t reg_val) {
+  // Store the reg value on the stack for the saved regs
 
-  switch(reg) {
-    case 1: // ra
-      __asm__ volatile ("sw %0, 0(sp)" :: "r" (reg_val));
-      break;
-    case 2: // sp
-      __asm__ volatile ("mv x2, %0" :: "r" (reg_val)); // sp cannot be clobbered
-      break;
-    case 3: // gp
-      __asm__ volatile ("mv x3, %0" :: "r" (reg_val) : "x3");
-      break;
-    case 4: // tp
-      __asm__ volatile ("mv x4, %0" :: "r" (reg_val) : "x4");
-      break;
+  switch(reg) {  // ra, sp, gp and tp use is prohibited
     case 5: // t0
-      __asm__ volatile ("sw %0, 36(sp)" :: "r" (reg_val));
+      __asm__ volatile ("sw %0, 84(sp)" :: "r" (reg_val));
       break;
     case 6: // t1
-      __asm__ volatile ("sw %0, 40(sp)" :: "r" (reg_val));
+      __asm__ volatile ("sw %0, 88(sp)" :: "r" (reg_val));
       break;
     case 7: // t2
-      __asm__ volatile ("sw %0, 44(sp)" :: "r" (reg_val));
+      __asm__ volatile ("sw %0, 92(sp)" :: "r" (reg_val));
       break;
     case 8: // fp
-      __asm__ volatile ("mv x8, %0" :: "r" (reg_val) : "x8");
+      __asm__ volatile ("sw %0, 0(sp)" :: "r" (reg_val));
       break;
     case 9: // s1
-      __asm__ volatile ("mv x9, %0" :: "r" (reg_val) : "x9");
-      break;
-    case 10: // a0
       __asm__ volatile ("sw %0, 4(sp)" :: "r" (reg_val));
       break;
-    case 11: // a1
-      __asm__ volatile ("sw %0, 8(sp)" :: "r" (reg_val));
-      break;
-    case 12: // a2
-      __asm__ volatile ("sw %0, 12(sp)" :: "r" (reg_val));
-      break;
-    case 13: // a3
-      __asm__ volatile ("sw %0, 16(sp)" :: "r" (reg_val));
-      break;
-    case 14: // a4
-      __asm__ volatile ("sw %0, 20(sp)" :: "r" (reg_val));
-      break;
-    case 15: // a5
-      __asm__ volatile ("sw %0, 24(sp)" :: "r" (reg_val));
-      break;
-    case 16: // a6
-      __asm__ volatile ("sw %0, 28(sp)" :: "r" (reg_val));
-      break;
-    case 17: // a7
-      __asm__ volatile ("sw %0, 32(sp)" :: "r" (reg_val));
-      break;
-    case 18: // s2
-      __asm__ volatile ("mv x18, %0" :: "r" (reg_val) : "x18");
-      break;
-    case 19: // s3
-      __asm__ volatile ("mv x19, %0" :: "r" (reg_val) : "x19");
-      break;
-    case 20: // s4
-      __asm__ volatile ("mv x20, %0" :: "r" (reg_val) : "x20");
-      break;
-    case 21: // s5
-      __asm__ volatile ("mv x21, %0" :: "r" (reg_val) : "x21");
-      break;
-    case 22: // s6
-      __asm__ volatile ("mv x22, %0" :: "r" (reg_val) : "x22");
-      break;
-    case 23: // s7
-      __asm__ volatile ("mv x23, %0" :: "r" (reg_val) : "x23");
-      break;
-    case 24: // s8
-      __asm__ volatile ("mv x24, %0" :: "r" (reg_val) : "x24");
-      break;
-    case 25: // s9
-      __asm__ volatile ("mv x25, %0" :: "r" (reg_val) : "x25");
-      break;
-    case 26: // s10
-      __asm__ volatile ("mv x26, %0" :: "r" (reg_val) : "x26");
-      break;
-    case 27: // s11
-      __asm__ volatile ("mv x27, %0" :: "r" (reg_val) : "x27");
-      break;
-    case 28: // t3
-      __asm__ volatile ("sw %0, 48(sp)" :: "r" (reg_val));
-      break;
-    case 29: // t4
+    case 10: // a0
       __asm__ volatile ("sw %0, 52(sp)" :: "r" (reg_val));
       break;
-    case 30: // t5
+    case 11: // a1
       __asm__ volatile ("sw %0, 56(sp)" :: "r" (reg_val));
       break;
-    case 31: // t6
+    case 12: // a2
       __asm__ volatile ("sw %0, 60(sp)" :: "r" (reg_val));
+      break;
+    case 13: // a3
+      __asm__ volatile ("sw %0, 64(sp)" :: "r" (reg_val));
+      break;
+    case 14: // a4
+      __asm__ volatile ("sw %0, 68(sp)" :: "r" (reg_val));
+      break;
+    case 15: // a5
+      __asm__ volatile ("sw %0, 72(sp)" :: "r" (reg_val));
+      break;
+    case 16: // a6
+      __asm__ volatile ("sw %0, 76(sp)" :: "r" (reg_val));
+      break;
+    case 17: // a7
+      __asm__ volatile ("sw %0, 80(sp)" :: "r" (reg_val));
+      break;
+    case 18: // s2
+      __asm__ volatile ("sw %0, 8(sp)" :: "r" (reg_val));
+      break;
+    case 19: // s3
+      __asm__ volatile ("sw %0, 12(sp)" :: "r" (reg_val));
+      break;
+    case 20: // s4
+      __asm__ volatile ("sw %0, 16(sp)" :: "r" (reg_val));
+      break;
+    case 21: // s5
+      __asm__ volatile ("sw %0, 20(sp)" :: "r" (reg_val));
+      break;
+    case 22: // s6
+      __asm__ volatile ("sw %0, 24(sp)" :: "r" (reg_val));
+      break;
+    case 23: // s7
+      __asm__ volatile ("sw %0, 28(sp)" :: "r" (reg_val));
+      break;
+    case 24: // s8
+      __asm__ volatile ("sw %0, 32(sp)" :: "r" (reg_val));
+      break;
+    case 25: // s9
+      __asm__ volatile ("sw %0, 36(sp)" :: "r" (reg_val));
+      break;
+    case 26: // s10
+      __asm__ volatile ("sw %0, 40(sp)" :: "r" (reg_val));
+      break;
+    case 27: // s11
+      __asm__ volatile ("sw %0, 44(sp)" :: "r" (reg_val));
+      break;
+    case 28: // t3
+      __asm__ volatile ("sw %0, 96(sp)" :: "r" (reg_val));
+      break;
+    case 29: // t4
+      __asm__ volatile ("sw %0, 100(sp)" :: "r" (reg_val));
+      break;
+    case 30: // t5
+      __asm__ volatile ("sw %0, 104(sp)" :: "r" (reg_val));
+      break;
+    case 31: // t6
+      __asm__ volatile ("sw %0, 108(sp)" :: "r" (reg_val));
       break;
     default:
       break;
@@ -359,11 +351,11 @@ void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
   bool fabric_irq_pending = mip&(1<<FABRIC_IRQ);
   bool fabric_busy = (*REG_FABRIC_CONFIG&(1<<FABRIC_CONFIG_BUSY)) | fabric_irq_pending;
 
-  switch (insn&0x707f)
+  switch (insn&0x600707f)
   {
     case ((WARMBOOT0_LEFTSHIFT_FUNC3<<12)|SLOT_OPCODE): // Slot 2 Left shift
       if (!fabric_busy && ((loaded_slots[0] == WARMBOOT0_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT0_STATIC_USERCODE))) {
-          *REG_TRIGGER_SLOT = WARMBOOT0_LEFTSHIFT_USERCODE;
+        *REG_TRIGGER_SLOT = WARMBOOT0_LEFTSHIFT_USERCODE;
       }
 
       rd = rs1 << rs2;
@@ -382,7 +374,7 @@ void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
         if ((loaded_slots[0] == WARMBOOT1_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT1_STATIC_USERCODE)) {
           if (merged_slot == 1) {
             merged_slot = 2;
-            *REG_FABRIC_CONFIG = 0x1c<<FABRIC_CONFIG_OFFSET; // -4
+            *REG_FABRIC_CONFIG |= 0x1c<<FABRIC_CONFIG_COL_OFFSET; // -4
           } else if (merged_slot == 2){
             merged_slot = 1;
           }
@@ -400,7 +392,7 @@ void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
         if ((loaded_slots[0] == WARMBOOT1_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT1_STATIC_USERCODE)) {
           if (merged_slot == 1) {
             merged_slot = 2;
-            *REG_FABRIC_CONFIG = 0x1c<<FABRIC_CONFIG_OFFSET; // -4
+            *REG_FABRIC_CONFIG |= 0x1c<<FABRIC_CONFIG_COL_OFFSET; // -4
           } else if (merged_slot == 2){
             merged_slot = 1;
           }
@@ -443,7 +435,7 @@ void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
         if ((loaded_slots[0] == WARMBOOT1_STATIC_FULL_USERCODE) || (loaded_slots[0] == WARMBOOT1_STATIC_USERCODE)) {
           if (merged_slot == 1) {
             merged_slot = 2;
-            *REG_FABRIC_CONFIG = 0x1c<<FABRIC_CONFIG_OFFSET; // -4
+            *REG_FABRIC_CONFIG |= 0x1c<<FABRIC_CONFIG_COL_OFFSET; // -4
           } else if (merged_slot == 2){
             merged_slot = 1;
           }
@@ -473,42 +465,64 @@ __attribute__((naked)) void handle_illegal_insn() {
   // Get and return reg functions are always inlined so only regs are used. 
   // The software function implementation is wrapped in a function so the stack can be used.
 
-  // Save used callee reg
-  __asm__ volatile ("addi sp, sp, -4\n\t"
-                    "sw s1, 64(sp)");
+  // Save all callee registers
+  __asm__ volatile ("addi sp, sp, -48\n\t"
+                    "sw s0, 0(sp)\n\t"
+                    "sw s1, 4(sp)\n\t"
+                    "sw s2, 8(sp)\n\t"
+                    "sw s3, 12(sp)\n\t"
+                    "sw s4, 16(sp)\n\t"
+                    "sw s5, 20(sp)\n\t"
+                    "sw s6, 24(sp)\n\t"
+                    "sw s7, 28(sp)\n\t"
+                    "sw s8, 32(sp)\n\t"
+                    "sw s9, 36(sp)\n\t"
+                    "sw s10, 40(sp)\n\t"
+                    "sw s11, 44(sp)");
 
   // mepc points to failing instruction, mtval does not contain instruction on this cpu
-  register uint32_t* insn_addr asm ("s1"); // Use callee saved reg, can be used after function call
+  uint32_t* insn_addr;
   __asm__ volatile ("csrr %0, mepc" : "=r" (insn_addr));
 
   if (((*insn_addr)&0x7f) == SLOT_OPCODE) {
-    register uint32_t rs1 asm ("a0") = get_reg_value((*insn_addr&0xf8000) >> 14);
-    register uint32_t rs2 asm ("a1") = get_reg_value((*insn_addr&0x1f00000) >> 19);
+    uint32_t rs1 = load_reg_value((*insn_addr&0xf8000) >> 15);
+    uint32_t rs2 = load_reg_value((*insn_addr&0x1f00000) >> 20);
     // Use a0 and a1 to return values, so no stack is used
     soft_illegal_insn(rs1, rs2, *insn_addr); // Do software instr.
 
-    register uint32_t rd asm ("t0");
-    register uint32_t rd_valid asm ("t1");
+    uint32_t rd;
+    uint32_t rd_valid;
     __asm__ volatile ("mv %0, a0" : "=r" (rd));
     __asm__ volatile ("mv %0, a1" : "=r" (rd_valid));
 
     if (rd_valid) {
-      return_reg_value((*insn_addr&0xf80) >> 6, rd); // Store result, where it would be expected
+      store_reg_value((*insn_addr&0xf80) >> 7, rd); // Store result, where it would be expected
     }
   } else {
     printf("Illegal instruction!\n");
   }
 
-  // Restore used callee reg and jump to mepc exit handler
-  __asm__ volatile ("lw s1, 64(sp)\n\t"
-                    "addi sp, sp, 4\n\t"
+  // Restore used callee registers and jump to mepc exit handler
+  __asm__ volatile ("lw s0, 0(sp)\n\t"
+                    "lw s1, 4(sp)\n\t"
+                    "lw s2, 8(sp)\n\t"
+                    "lw s3, 12(sp)\n\t"
+                    "lw s4, 16(sp)\n\t"
+                    "lw s5, 20(sp)\n\t"
+                    "lw s6, 24(sp)\n\t"
+                    "lw s7, 28(sp)\n\t"
+                    "lw s8, 32(sp)\n\t"
+                    "lw s9, 36(sp)\n\t"
+                    "lw s10, 40(sp)\n\t"
+                    "lw s11, 44(sp)\n\t"
+                    "addi sp, sp, 48\n\t"
                     "j end_handler_incr_mepc"
-                    :::"s1");
+                    :::"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11");
 }
 
 // FPGA config handler
 __attribute__ ((interrupt ("machine"))) void m_fast5_irq_handler() {
-  *REG_FABRIC_CONFIG = (1<<FABRIC_CONFIG_ACK);
+  *REG_FABRIC_CONFIG |= (1<<FABRIC_CONFIG_ACK);
   triggered_irq++;
   printf("IRQ\n");
 
@@ -588,7 +602,7 @@ int main() {
   
   printf("Start\n");
 
-  *REG_WARMBOOT_OFFSET = 0x20;
+  *REG_FABRIC_CONFIG = 0x6<<FABRIC_CONFIG_SLOT_OFFSET;
 
   // enable machine mode interrupts, mstatus.mie
   __asm__ volatile ("csrs mstatus, 0x8");

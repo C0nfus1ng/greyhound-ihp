@@ -32,8 +32,8 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     // Trigger fabric reconfiguration
     output logic            warmboot_boot_o,
     output logic [12:0]     warmboot_slot_o,
-    output logic [5:0]      warmboot_offset_o,
-    output logic [5:0]      fabric_config_o,
+    output logic [2:0]      warmboot_slot_offset_o,
+    output logic [4:0]      warmboot_col_offset_o,
 
     // Custom instruction interface to fabric
     input  logic        fabric_issue_ready_i,
@@ -340,7 +340,9 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
 
     // Fabric IRQ handler
     logic fabric_config_ack, fabric_config_ack_q, fabric_configured_irq;
-    assign fabric_config_ack = fabric_config_o[0];
+    logic [8:0] fabric_config;
+
+    assign fabric_config_ack = fabric_config[0];
     assign fabric_configured_irq = fabric_configured_i & !fabric_config_ack_q;
 
     always_ff @(posedge clk_i, negedge rst_ni) begin
@@ -872,7 +874,6 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     localparam REG_BITSTREAM            = 5'd8;
     localparam REG_TRIGGER_SLOT         = 5'd12;
     localparam REG_USERCODE             = 5'd16; // Place usercode with fabric, as it represents what is loaded
-    localparam REG_WARMBOOT_OFFSET      = 5'd20;
     
     `ifdef DEBUG
     logic [  32-1:0] debug_fabric_config_req;
@@ -905,15 +906,17 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     assign debug_fabric_config_err        = fabric_config_obi_rsp.r.err;
     assign debug_fabric_config_r_optional = fabric_config_obi_rsp.r.r_optional;
     `endif
-    
+
+    assign warmboot_slot_offset_o = fabric_config[8:6];
+    assign warmboot_col_offset_o  = fabric_config[5:1];
+
     always_ff @(posedge clk_i, negedge rst_ni) begin
         if (!rst_ni) begin
             bitstream_valid_o   <= 1'b0;
             bitstream_data_o    <= '0;
             warmboot_boot_o   <= 1'b0;
             warmboot_slot_o   <= '0;
-            warmboot_offset_o <= '0;
-            fabric_config_o   <= '0;
+            fabric_config   <= '0;
 
             fabric_config_obi_rsp.rvalid <= 1'b0;
             fabric_config_obi_rsp.r.rdata <= '0;
@@ -923,7 +926,7 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
             bitstream_valid_o <= 1'b0;
             warmboot_boot_o <= 1'b0;
             
-            if (fabric_config_ack) fabric_config_o <= '0;
+            if (fabric_config_ack) fabric_config[5:0] <= '0;
 
             if (fabric_config_obi_req.req) begin
             
@@ -947,26 +950,19 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
                         warmboot_boot_o <= 1'b1;
                     end
 
-                    if (fabric_config_obi_req.a.addr[4:0] == REG_WARMBOOT_OFFSET) begin
-                        if (fabric_config_obi_req.a.be[0]) warmboot_offset_o <= fabric_config_obi_req.a.wdata[5:0];
-                    end
-
                     if (fabric_config_obi_req.a.addr[4:0] == REG_FABRIC_CONFIG) begin
-                        if (fabric_config_obi_req.a.be[0]) fabric_config_o <= fabric_config_obi_req.a.wdata[6:1];
+                        if (fabric_config_obi_req.a.be[0]) fabric_config[5:0] <= fabric_config_obi_req.a.wdata[6:1];
+                        if (fabric_config_obi_req.a.be[1]) fabric_config[8:6] <= fabric_config_obi_req.a.wdata[10:8];
                     end
                 // Read
                 end else begin
                     fabric_config_obi_rsp.r.rdata <= '0;
                     if (fabric_config_obi_req.a.addr[4:0] == REG_FABRIC_CONFIG) begin
-                        fabric_config_obi_rsp.r.rdata <= {25'd0, fabric_config_o, fabric_config_busy_i};
+                        fabric_config_obi_rsp.r.rdata <= {21'd0, fabric_config[8:6], 1'd0, fabric_config[5:0], fabric_config_busy_i};
                     end
 
                     if (fabric_config_obi_req.a.addr[4:0] == REG_USERCODE) begin
                         fabric_config_obi_rsp.r.rdata <= usercode_i;
-                    end
-
-                    if (fabric_config_obi_req.a.addr[4:0] == REG_WARMBOOT_OFFSET) begin
-                        fabric_config_obi_rsp.r.rdata <= {19'd0, warmboot_offset_o};
                     end
                 end
             end
