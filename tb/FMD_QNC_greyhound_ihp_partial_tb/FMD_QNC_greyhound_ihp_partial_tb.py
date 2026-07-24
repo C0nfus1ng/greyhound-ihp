@@ -686,7 +686,7 @@ async def test_flash_image(dut):
 
     # Wait for all messages
     data = bytearray()
-    for i in range(1, 12):
+    for i in range(1, 13):
         await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
         data += uart_sink.read_nowait(-1)
         cocotb.log.info(f"Data thus far: {data}")
