@@ -622,26 +622,26 @@ int main() {
   int enable_fpga_configured_interrupt = (1<<FABRIC_IRQ);
   __asm__ volatile ("csrs mie, %0" :: "r" (enable_fpga_configured_interrupt));
 
-  for (uint8_t i = 0; i < 13; i++) { // TODO retest and recheckout 2 slots must set funct3 in interrupt
+  for (uint8_t i = 0; i < 13; i++) {
     switch (i)
     {
       default:
         // Wait for Static slot
         break;
       
-      case 1: // TODO Test waited
+      case 1:
         *REG_TRIGGER_SLOT = WARMBOOT0_DIRECTOUT_USERCODE;
         break;
         
-      case 2: // TODO Test waited
+      case 2:
         *REG_TRIGGER_SLOT = WARMBOOT0_STRAIGHTTHROUGH_USERCODE;
         break;
 
-      case 3: // XIF must be initialized, to prevent stalling and force illegal instruction exceptions // TODO Test waited
+      case 3: // XIF must be initialized, to prevent stalling and force illegal instruction exceptions
         *REG_TRIGGER_SLOT = WARMBOOT0_LEFTSHIFT_USERCODE;
         break;
 
-      case 4: // TODO Test IO out and left shift printf
+      case 4:
         test_io();
         *REG_TRIGGER_SLOT = WARMBOOT0_CROSSOVER_USERCODE;
 
@@ -650,7 +650,7 @@ int main() {
         printf("L2: %lx\n", warmboot0_left_shift(0xbeefdead, 0x5)); // Ret 0xddfbd5a0
         break;
 
-      case 5: // TODO Test IO out and software substitution
+      case 5:
         test_io();
 
         printf("R1: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3)); // Ret 0x1bd5b7dd
@@ -658,34 +658,34 @@ int main() {
         printf("R2: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x10)); // Ret 0x0000dead
         break;
 
-      case 6: // TODO Test right shift print and software substitution
+      case 6:
         printf("R3: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3)); // Ret 0x1bd5b7dd
         wait_nop(0x10);
         printf("L3: %lx\n", warmboot0_left_shift(0xbeefdead, 0x10)); // Ret 0xdead0000
         break;
 
-      case 7: // TODO IO
+      case 7:
         *REG_TRIGGER_SLOT = WARMBOOT0_GRAYCODE_USERCODE;
         break;
 
-      case 8: // TODO IO and software substitution
+      case 8:
         test_io();
         printf("I1: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
         break;
 
-      case 9: // TODO check software substitution
+      case 9:
         printf("L4: %lx\n", warmboot0_left_shift(0xbeefdead, 0x10)); // Ret 0xdead0000
         wait_nop(0x10);
         printf("C1: %x\n", warmboot1_combine(0x1, 0x3)); // Ret 0x7
         break;
 
-      case 10: // TODO check combine and software substitution
+      case 10:
         printf("C2: %x\n", warmboot1_combine(0x1, 0x3)); // Ret 0x7
         wait_nop(0x10);
         printf("I2: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
         break;
 
-      case 11: // TODO check combine, interleave, function software substitution and if interleave works while other slot reconfigures
+      case 11:
         printf("C3: %x\n", warmboot1_combine(0x1, 0x3)); // Ret 0x7
         wait_nop(0x10);
         printf("I3: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
@@ -695,7 +695,7 @@ int main() {
         printf("I4: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
         break;
 
-      case 12: // TODO check function, interleave, right_shift software substitution
+      case 12:
         printf("F2: %x\n", warmboot1_function(0x1, 0x3)); // Ret 0xc
         wait_nop(0x10);
         printf("F3: %x\n", warmboot1_function(0x2, 0x7)); // Ret 0xe
@@ -717,7 +717,7 @@ int main() {
     }
   }
 
-  // Trigger IOs zero TODO test if IOs are zero
+  // Set IOs zero
   *REG_TRIGGER_SLOT = WARMBOOT2_ALLZEROS;
   __asm__ volatile ("wfi");
   printf("Finished\n");

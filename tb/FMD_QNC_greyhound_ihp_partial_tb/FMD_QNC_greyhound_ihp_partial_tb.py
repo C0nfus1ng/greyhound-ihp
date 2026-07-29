@@ -657,7 +657,7 @@ async def test_partial_2slots_jtag(dut):
 
 @cocotb.test(skip=enabled!=flash_image)
 async def test_flash_image(dut):
-    """Run the "Flash image" program"""
+    """Run the "Flash image" program (~52h)"""
     # Setup UART
     uart_source = UartSource(dut.io_ser_rx_PAD, baud=115200, bits=8)
     uart_sink = UartSink(dut.io_ser_tx_PAD, baud=115200, bits=8)
@@ -671,33 +671,311 @@ async def test_flash_image(dut):
     # Static setup, apply after reset happened (fpga_mode and tap reset share a line)
     dut.io_fpga_mode_PAD.value = 0 # Configure FPGA as controller
 
-    # Ignore x -> 0 rising edge
-    await ClockCycles(dut.io_clock_PAD, 10)
+    await ClockCycles(dut.io_clock_PAD, int(50000*2.5))
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 Static Slot")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'Start\n'}")
+    assert(read_data == b'Start\n')
 
-    # Wait until core is sleeping
-    # await RisingEdge(dut.io_core_sleep_PAD)
+    # Load base slots
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 DirectOut Slot")
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 StraightThrough Slot")
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 LeftShift Slot")
 
-    # cocotb.log.info("Core is sleeping!")
+    # Test IO
+    await ClockCycles(dut.io_clock_PAD, int(50*100)) # 100µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xECAFECAF")
+    assert(dut.io_gpio_PAD.value == 0xECAF_ECAF)
 
-    # # Wait until core has woken up from the IRQ
-    # await FallingEdge(dut.io_core_sleep_PAD)
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xFECAFECA")
+    assert(dut.io_gpio_PAD.value == 0xFECA_FECA)
 
-    # cocotb.log.info("Core has woken up!")
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xAFECAFEC")
+    assert(dut.io_gpio_PAD.value == 0xAFEC_AFEC)
 
-    # Wait for all messages
-    data = bytearray()
-    for i in range(1, 13):
-        await ClockCycles(dut.io_clock_PAD, int(50000*10.0))
-        data += uart_sink.read_nowait(-1)
-        cocotb.log.info(f"Data thus far: {data}")
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xCAFECAFE")
+    assert(dut.io_gpio_PAD.value == 0xCAFE_CAFE)
 
-    cocotb.log.info(f"Finished. UART:\n {data}")
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xECAFECAF")
+    assert(dut.io_gpio_PAD.value == 0xECAF_ECAF)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xFECAFECA")
+    assert(dut.io_gpio_PAD.value == 0xFECA_FECA)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xAFECAFEC")
+    assert(dut.io_gpio_PAD.value == 0xAFEC_AFEC)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xCAFECAFE")
+    assert(dut.io_gpio_PAD.value == 0xCAFE_CAFE)
+
+    # Check IO reg
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Load Warmboot0 Crossover Slot")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'IO cafecafe\n'}")
+    assert(read_data == b'IO cafecafe\n')
+
+    # Test soft instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 Crossover Slot")
+    await ClockCycles(dut.io_clock_PAD, int(50*800)) # 800µs
+    cocotb.log.info(f"Software substituted LeftShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'L1: beef0000\n'}")
+    assert(read_data == b'L1: beef0000\n')
+
+    # Test soft instr
+    await ClockCycles(dut.io_clock_PAD, int(50000*1.5)) # 1.5ms
+    cocotb.log.info(f"Software substituted LeftShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'L2: ddfbd5a0\n'}")
+    assert(read_data == b'L2: ddfbd5a0\n')
+
+    # Test IO
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF537F537")
+    assert(dut.io_gpio_PAD.value == 0xF537_F537)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x537F537F")
+    assert(dut.io_gpio_PAD.value == 0x537F_537F)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x37F537F5")
+    assert(dut.io_gpio_PAD.value == 0x37F5_37F5)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x7F537F53")
+    assert(dut.io_gpio_PAD.value == 0x7F53_7F53)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF537F537")
+    assert(dut.io_gpio_PAD.value == 0xF537_F537)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x537F537F")
+    assert(dut.io_gpio_PAD.value == 0x537F_537F)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x37F537F5")
+    assert(dut.io_gpio_PAD.value == 0x37F5_37F5)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x7F537F53")
+    assert(dut.io_gpio_PAD.value == 0x7F53_7F53)
+
+    # Check IO reg
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Load Warmboot0 RightShift Slot from exception")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'IO cafecafe\n'}")
+    assert(read_data == b'IO cafecafe\n')
+
+    # Test soft instr
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 RightShift Slot")
+    await ClockCycles(dut.io_clock_PAD, int(50*400)) # 400µs
+    cocotb.log.info(f"Software substituted RightShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'R1: 1bd5b7dd\n'}")
+    assert(read_data == b'R1: 1bd5b7dd\n')
+
+    # Test hard instr
+    await ClockCycles(dut.io_clock_PAD, int(50000*1.3)) # 1.3ms
+    cocotb.log.info(f"Hardware RightShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'R2: dead\n'}")
+    assert(read_data == b'R2: dead\n')
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Hardware RightShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'R3: 1bd5b7dd\n'}")
+    assert(read_data == b'R3: 1bd5b7dd\n')
+
+    # Test soft instr
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Software substituted LeftShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'L3: dead0000\n'}")
+    assert(read_data == b'L3: dead0000\n')
+
+    # Test IO
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot0 Graycode Slot")
+
+    await ClockCycles(dut.io_clock_PAD, int(50*100)) # 100µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x1F581F59")
+    assert(dut.io_gpio_PAD.value == 0x1F58_1F59)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF581F581")
+    assert(dut.io_gpio_PAD.value == 0xF581_F581)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x581F581F")
+    assert(dut.io_gpio_PAD.value == 0x581F_581F)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x81F581F5")
+    assert(dut.io_gpio_PAD.value == 0x81F5_81F5)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x1F581F59")
+    assert(dut.io_gpio_PAD.value == 0x1F58_1F59)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0xF581F581")
+    assert(dut.io_gpio_PAD.value == 0xF581_F581)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x581F581F")
+    assert(dut.io_gpio_PAD.value == 0x581F_581F)
+
+    await ClockCycles(dut.io_clock_PAD, int(50*82)) # 82µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x81F581F5")
+    assert(dut.io_gpio_PAD.value == 0x81F5_81F5)
+
+    # Check Graycode reg
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Load Warmboot1 Static Slot from exception")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'IO af81af81\n'}")
+    assert(read_data == b'IO af81af81\n')
+
+    # Test Warmboot1
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot1 Static Slot from exception")
+    cocotb.log.info(f"Software substituted Interleave")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'I1: b\n'}")
+    assert(read_data == b'I1: b\n')
+    
+    # Software substitute from other slot
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Software substituted LeftShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'L4: dead0000\n'}")
+    assert(read_data == b'L4: dead0000\n')
+
+    # Check correct slot loaded
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot1 Combine Slot")    
+    await ClockCycles(dut.io_clock_PAD, int(50*250)) # 250µs
+    cocotb.log.info(f"Software substituted Combine")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'C1: 7\n'}")
+    assert(read_data == b'C1: 7\n')
+
+    # Check hardware slot
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Hardware Combine")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'C2: 7\n'}")
+    assert(read_data == b'C2: 7\n')
+
+    # Software Interleave
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot1 Interleave Slot")    
+    await ClockCycles(dut.io_clock_PAD, int(50*400)) # 400µs
+    cocotb.log.info(f"Software substituted Interleave")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'I2: b\n'}")
+    assert(read_data == b'I2: b\n')
+
+    # Hardware Combine
+    await ClockCycles(dut.io_clock_PAD, int(50000*1)) # 1ms
+    cocotb.log.info(f"Hardware Combine")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'C3: 7\n'}")
+    assert(read_data == b'C3: 7\n')
+
+    # Hardware Interleave
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Hardware Interleave")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'I3: b\n'}")
+    assert(read_data == b'I3: b\n')
+
+    # Software Function
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded Warmboot1 Function Slot")    
+    cocotb.log.info(f"Software substituted Function")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'F1: 8\n'}")
+    assert(read_data == b'F1: 8\n')
+
+    # Hardware Interleave
+    await ClockCycles(dut.io_clock_PAD, int(50000*1.1)) # 1.1ms
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'I4: b\n'}")
+    assert(read_data == b'I4: b\n')
+
+    # Hardware Function
+    await ClockCycles(dut.io_clock_PAD, int(50000*1)) # 1ms
+    cocotb.log.info(f"Hardware Function")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'F2: c\n'}")
+    assert(read_data == b'F2: c\n')
+
+    await ClockCycles(dut.io_clock_PAD, int(50000*1)) # 1ms
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'F3: e\n'}")
+    assert(read_data == b'F3: e\n')
+
+    await ClockCycles(dut.io_clock_PAD, int(50000*1)) # 1ms
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'F4: 6\n'}")
+    assert(read_data == b'F4: 6\n')
+
+    await ClockCycles(dut.io_clock_PAD, int(50000*1)) # 1ms
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'F5: 1\n'}")
+    assert(read_data == b'F5: 1\n')
+
+    await ClockCycles(dut.io_clock_PAD, int(50000*1)) # 1ms
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'I5: b\n'}")
+    assert(read_data == b'I5: b\n')
+
+    # Software RightShift
+    await RisingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Load Warmboot2 \"All Zeros\"")
+    cocotb.log.info(f"Software substituted RightShift")
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'R4: 1bd5b7dd\n'}")
+    assert(read_data == b'R4: 1bd5b7dd\n')
+
+    # All zeros loaded
+    await FallingEdge(dut.io_config_busy_PAD)
+    cocotb.log.info(f"Loaded All Zeros Slot")
+    await ClockCycles(dut.io_clock_PAD, int(50*100)) # 100µs
+    cocotb.log.info(f"ASSERT {dut.io_gpio_PAD.value.to_unsigned():x} == 0x00000000")
+    assert(dut.io_gpio_PAD.value == 0x0000_0000)
+
+    # Exit sim handler UART msg
+    await RisingEdge(dut.io_core_sleep_PAD)
+    read_data = uart_sink.read_nowait(-1)
+    cocotb.log.info(f"ASSERT: {read_data} == {b'No such slot\nFinished\n'}")
+    assert(read_data == b'No such slot\nFinished\n')
+
+    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
+    cocotb.log.info(f"Finished.")
 
 @cocotb.test(skip=enabled!=trigger_slots)
 async def test_trigger_slots(dut):
     """Run the "Trigger Slots" program"""
     # Static setup
-    dut.io_fetch_enable_PAD.value = 1
+    dut.io_fetch_enable_PAD.value = 0
 
     # Start up
     await start_up(dut)
