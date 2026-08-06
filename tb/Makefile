@@ -1,12 +1,16 @@
 MAX_JOBS   		   ?= 4
-TIMEOUT    		   ?= 43200 # 12h whole test timeout in s
-MFILE_TIMEOUT      ?= 300 # 5m last file modification timeout in s
+TIMEOUT    		   ?= 259200 # 3d whole test timeout in s
+MFILE_TIMEOUT      ?= 1800 # 30m last file modification timeout in s
 SIM_DELAY  		   ?= 30 # Sim parallel startup delay in s
 SIM_RUNNER_FOLDER  ?= sim_build
 SIM_RESULTS_FOLDER ?= results
 PDK_ROOT		   ?= ../../../IHP-Open-PDK
 
-ALL_TESTS ?= FMD_QNC_greyhound_ihp_dbg_tb=hello_world,bitstream_upload FMD_QNC_greyhound_ihp_partial_tb=partial_extension_cpu,partial_extension_jtag,partial_2slots_jtag,flash_image FMD_QNC_greyhound_ihp_tb=hello_world,fpga_all_ones,fpga_all_zeros,cou_trigger_foga,custom_instruction,fpga_peripheral,fpga_peripheral_sram,fpga_irq,fpga_blinky,jtag_bsr_none,jtag_cpu
+ALL_TESTS  = FMD_QNC_greyhound_ihp_dbg_tb=hello_world
+ALL_TESTS += FMD_QNC_greyhound_ihp_partial_tb=partial_extension_cpu,partial_extension_jtag,partial_2slots_jtag,flash_image
+ALL_TESTS += FMD_QNC_greyhound_ihp_tb=hello_world,fpga_all_ones,fpga_all_zeros,cpu_trigger_fpga,custom_instruction,fpga_peripheral,fpga_peripheral_sram,fpga_irq,fpga_blinky,jtag_bsr_none:jtag_enable:jtag_sample:jtag_extest:jtag_intest:jtag_isc,jtag_cpu
+ALL_TESTS += FMD_QNC_greyhound_ihp_dbg_tb=bitstream_upload
+
 GL = 0 # Gate level sim
 
 # Test everything specified by ALL_TESTS. Start up to MAX_JOBS runs at the same time. Start them apart by 30s to avoid memory crunch while compiling. Run until everything is done. Then write the results in the results folder.
@@ -84,24 +88,27 @@ test-single:
 
 # Copy the test into a tmp folder
 copy-test:
-	@mkdir -p $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST); \
-	cp $(TESTBENCH)/*.py $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/ 2>/dev/null || true; \
-	cp $(TESTBENCH)/*.v $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/ 2>/dev/null || true; \
-	cp $(TESTBENCH)/*.sv $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/ 2>/dev/null || true; \
- 	cp $(TESTBENCH)/*.cfg $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/ 2>/dev/null || true;
+	@root_test=$${TEST%%:*}; \
+	mkdir -p $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test; \
+	cp $(TESTBENCH)/*.py $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/ 2>/dev/null || true; \
+	cp $(TESTBENCH)/*.v $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/ 2>/dev/null || true; \
+	cp $(TESTBENCH)/*.sv $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/ 2>/dev/null || true; \
+ 	cp $(TESTBENCH)/*.cfg $(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/ 2>/dev/null || true;
 .phony: copy-test
 
 # Replace all relative paths and mark the selected test to run.
 replace-paths:
-	@sed -i \
-		-e "s/^enabled *=.*/enabled = $(TEST)/" \
+	@root_test=$${TEST%%:*}; \
+	sed -i \
+		-e "s/^enabled *=.*/enabled = $$root_test/" \
 		-e 's|\.\./\.\./|../../../../|g' \
 		-e "s/\('dump_waveforms':[[:space:]]*\).*/\1False,/" \
-		$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/$(TESTBENCH).py
+		$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/$(TESTBENCH).py
 
-	@sed -i \
-		"/^$(TEST)[[:space:]]*=[[:space:]]*{/,/^}/{s/\('dump_waveforms':[[:space:]]*\).*/\1True,/}" \
-		$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/$(TESTBENCH).py
+	@root_test=$${TEST%%:*}; \
+	sed -i \
+		"/^$$root_test[[:space:]]*=[[:space:]]*{/,/^}/{s/\('dump_waveforms':[[:space:]]*\).*/\1True,/}" \
+		$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/$(TESTBENCH).py
 .phony: replace-paths
 
 # Run a test and check if it is stalled (Test stalled after not writing to the waveform file or if timeout is reached)
@@ -110,8 +117,9 @@ test: TEST=partial_extension_cpu
 test: copy-test replace-paths
 test:
 	@set -eu; \
-	echo "Starting $(TESTBENCH).$(TEST)"; \
-	cd "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)"; \
+	root_test=$${TEST%%:*}; \
+	echo "Starting $(TESTBENCH).$$root_test"; \
+	cd "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test"; \
 	GL=$(GL) setsid python3 "$(TESTBENCH).py" >stdout.log 2>stderr.log & \
 	pid=$$!; \
 	\
@@ -162,7 +170,7 @@ test:
 	done; \
 	\
 	wait; \
-	echo "Finished $(TESTBENCH).$(TEST). Took $$(($$(date +%s) - start_time))s.";
+	echo "Finished $(TESTBENCH).$$root_test. Took $$(($$(date +%s) - start_time))s.";
 .phony: test
 
 # Build a nice result table with all sim results in a single folder
@@ -206,54 +214,68 @@ parse-result: TESTBENCH=FMD_QNC_greyhound_ihp_partial_tb
 parse-result: TEST=partial_extension_cpu
 parse-result:
 	@mkdir -p $(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER); \
-	cd "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)"; \
+	split_test="$(TEST)"; \
+	root_test=$${split_test%%:*}; \
+	cd "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test"; \
 	exit_code=$$(grep -o 'EXIT=[0-9]\+' testerr.log | tail -n1 | cut -d= -f2); \
-	printf '** ' >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-	if [ "$$exit_code" = "0" ]; then \
-		line=$$(tac stdout.log | grep -m1 '$(TESTBENCH)\.test_$(TEST)'); \
-		if [ -n "$$line" ]; then \
-			line_clean=$$(echo "$$line" | tr '*' ' '); \
-			set -- $$line_clean; \
-			printf "%-105.105s " "$$1" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-6.6s " "$$2" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-13.13s " "$$3" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-13.13s " "$$4" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-12.12s " "$$5" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-13.13s " "SUCCESS (0)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+	if [ "$$split_test" != "$${split_test#*:}" ]; then \
+		split_test=$${split_test#*:}; \
+	fi; \
+	for test in $$(printf '%s' "$$split_test" | tr ':' '\n'); do \
+		printf '** ' >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+		if [ "$$exit_code" = "0" ]; then \
+			line=$$(awk -v test="$$test" -v tb="$(TESTBENCH)" '($$0 ~ tb "\\.test_" test " ") { \
+					last=$$0 \
+				} \
+				END { \
+					sub(/^[^*]*/, "", last); \
+					print last \
+				}' stdout.log); \
+			if [ -n "$$line" ]; then \
+				line_clean=$$(echo "$$line" | tr '*' ' '); \
+				set -- $$line_clean; \
+				printf "%-105.105s " "$$1" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-6.6s " "$$2" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-13.13s " "$$3" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-13.13s " "$$4" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-12.12s " "$$5" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-13.13s " "SUCCESS (0)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			else \
+				printf "%-105.105s " "$(TESTBENCH).test_$$test" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-6.6s " "SKIP" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-12.12s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+				printf "%-13.13s " "NOT_FOUND (4)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			fi; \
 		else \
-			printf "%-105.105s " "$(TESTBENCH).test_$(TEST)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-6.6s " "SKIP" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			printf "%-105.105s " "$(TESTBENCH).test_$$test" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			printf "%-6.6s " "FAIL" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			printf "%-12.12s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			printf "%-13.13s " "NOT_FOUND (4)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			if [ "$$exit_code" = "1" ]; then \
+				printf "%-13.13s " "HUNGUP (1)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			elif [ "$$exit_code" = "2" ]; then \
+				printf "%-13.13s " "TIMEOUT (2)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			elif [ "$$exit_code" = "3" ]; then \
+				printf "%-13.13s " "KILLED (3)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			else \
+				printf "%-13.13s " "UNKNOWN ($$exit_code)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			fi; \
 		fi; \
-	else \
-		printf "%-105.105s " "$(TESTBENCH).test_$(TEST)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		printf "%-6.6s " "FAIL" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		printf "%-12.12s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		if [ "$$exit_code" = "1" ]; then \
-			printf "%-13.13s " "HUNGUP (1)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		elif [ "$$exit_code" = "2" ]; then \
-			printf "%-13.13s " "TIMEOUT (2)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		elif [ "$$exit_code" = "3" ]; then \
-			printf "%-13.13s " "KILLED (3)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		else \
-			printf "%-13.13s " "UNKNOWN ($$exit_code)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		fi; \
-	fi; \
-	printf '**\n' >>../../$(SIM_RESULTS_FOLDER)/results.log;
+		printf '**\n' >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+	done
 .phony: parse-result
 
 # Copy a result
 copy-result: TESTBENCH=FMD_QNC_greyhound_ihp_partial_tb
 copy-result: TEST=partial_extension_cpu
 copy-result:
-	@mkdir -p $(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/$(TESTBENCH)/$(TEST); \
-	cp "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/"*.log "$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/$(TESTBENCH)/$(TEST)/"; \
-	cp "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$(TEST)/sim_build/$(TESTBENCH).fst" "$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/$(TESTBENCH)/$(TEST)/sim_waves.fst";
+	@root_test=$${TEST%%:*}; \
+	mkdir -p $(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/$(TESTBENCH)/$$root_test; \
+	cp "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/"*.log "$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/$(TESTBENCH)/$$root_test/"; \
+	cp "$(SIM_RUNNER_FOLDER)/$(TESTBENCH)/$$root_test/sim_build/$(TESTBENCH).fst" "$(SIM_RUNNER_FOLDER)/$(SIM_RESULTS_FOLDER)/$(TESTBENCH)/$$root_test/sim_waves.fst";
 .phony: copy-result
 
 # Delete all generated sim files
