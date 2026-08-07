@@ -223,7 +223,6 @@ parse-result:
 	fi; \
 	for test in $$(printf '%s' "$$split_test" | tr ':' '\n'); do \
 		printf '** ' >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-		if [ "$$exit_code" = "0" ]; then \
 			line=$$(awk -v test="$$test" -v tb="$(TESTBENCH)" '($$0 ~ tb "\\.test_" test " ") { \
 					last=$$0 \
 				} \
@@ -239,30 +238,31 @@ parse-result:
 				printf "%-13.13s " "$$3" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 				printf "%-13.13s " "$$4" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 				printf "%-12.12s " "$$5" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			if [ "$$exit_code" = "0" ]; then \
 				printf "%-13.13s " "SUCCESS (0)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			else \
-				printf "%-105.105s " "$(TESTBENCH).test_$$test" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-				printf "%-6.6s " "SKIP" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-				printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-				printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-				printf "%-12.12s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-				printf "%-13.13s " "NOT_FOUND (4)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			fi; \
 		else \
 			printf "%-105.105s " "$(TESTBENCH).test_$$test" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			if [ "$$exit_code" = "0" ]; then \
+				printf "%-6.6s " "SKIP" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			else \
 			printf "%-6.6s " "FAIL" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			fi; \
 			printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			printf "%-13.13s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			printf "%-12.12s " "-.--" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			if [ "$$exit_code" = "0" ]; then \
+				printf "%-13.13s " "NOT_FOUND (4)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
+			fi; \
+		fi; \
 			if [ "$$exit_code" = "1" ]; then \
 				printf "%-13.13s " "HUNGUP (1)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			elif [ "$$exit_code" = "2" ]; then \
 				printf "%-13.13s " "TIMEOUT (2)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 			elif [ "$$exit_code" = "3" ]; then \
 				printf "%-13.13s " "KILLED (3)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			else \
+		elif [ "$$exit_code" != "0" ]; then \
 				printf "%-13.13s " "UNKNOWN ($$exit_code)" >>../../$(SIM_RESULTS_FOLDER)/results.log; \
-			fi; \
 		fi; \
 		printf '**\n' >>../../$(SIM_RESULTS_FOLDER)/results.log; \
 	done
