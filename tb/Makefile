@@ -146,7 +146,7 @@ test:
 		\
 		if [ $$((now - last_change)) -ge $(MFILE_TIMEOUT) ] || [ $$((now - start_time)) -ge $(TIMEOUT) ]; then \
 			kill -TERM -$$pid; \
-			sleep 1; \
+			sleep 10; \
 			\
 			if [ $$((now - last_change)) -ge $(MFILE_TIMEOUT) ]; then \
 				echo "No output file updates for $(MFILE_TIMEOUT) seconds. Sent SIGTERM\nEXIT=1" >testerr.log; \
@@ -154,19 +154,19 @@ test:
 				echo "Test (pid=$$pid) reached timeout of $(TIMEOUT) seconds. Sent SIGTERM\nEXIT=2" >testerr.log; \
 			fi; \
 			\
-			deadline=$$((now + 60)); \
+			deadline=$$((now + 120)); \
 			while kill -0 -$$pid 2>/dev/null && [ $$(date +%s) -lt $$deadline ]; do \
 				sleep 30; \
 			done; \
 			\
 			if kill -0 -$$pid 2>/dev/null; then \
 				kill -KILL -$$pid; \
-				echo "Process did not exit after 60s. Sent SIGKILL\nEXIT=3" >>testerr.log; \
+				echo "Process did not exit after 120s. Sent SIGKILL\nEXIT=3" >>testerr.log; \
 			fi; \
 			break; \
 		fi; \
 		\
-		sleep $$(($(MFILE_TIMEOUT)/2)); \
+		sleep $(SIM_DELAY); \
 	done; \
 	\
 	wait; \
