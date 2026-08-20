@@ -147,7 +147,7 @@ jtag_cpu = {
     'dump_waveforms': True,
 }
 
-enabled = hello_world
+enabled = jtag_cpu
 
 async def start_clock(clock, freq=50):
     """ Start the clock @ freq MHz """
@@ -561,7 +561,7 @@ async def test_instr_force_run(jtag, instr, write_val): # Work around for enteri
 async def test_jtag_enable(dut):
     """Permanently enable jtag interface"""
     jtag = await setup_for_jtag(dut)
-    gl   = os.getenv("GL", False)
+    gl   = int(os.getenv("GL", 0))
 
     # Test interface enabled
     if gl:
@@ -584,7 +584,7 @@ async def test_jtag_enable(dut):
 
     await ClockCycles(dut.io_clock_PAD, 10)
 
-@cocotb.test(skip=(enabled!=jtag_bsr_external and enabled!=jtag_bsr_internal and enabled != jtag_bsr_all) or os.getenv("GL", False))
+@cocotb.test(skip=(enabled!=jtag_bsr_external and enabled!=jtag_bsr_internal and enabled != jtag_bsr_all) or int(os.getenv("GL", 0)))
 async def test_jtag_sample(dut):
     """JTAG SAMPLE command"""
     jtag = await setup_for_jtag(dut)
@@ -667,7 +667,7 @@ async def test_jtag_sample(dut):
 async def test_jtag_extest(dut):
     """JTAG EXTEST command, with stepping through ICS (IEEE1532) testmode"""
     jtag = await setup_for_jtag(dut)
-    gl   = os.getenv("GL", False)
+    gl   = int(os.getenv("GL", 0))
 
     # Set extest inputs
     if enabled == jtag_bsr_external or enabled == jtag_bsr_all:
@@ -849,7 +849,7 @@ async def test_jtag_extest(dut):
 
     await ClockCycles(dut.io_clock_PAD, 10)
 
-@cocotb.test(skip=(enabled!=jtag_bsr_external and enabled!=jtag_bsr_internal and enabled != jtag_bsr_all) or os.getenv("GL", False))
+@cocotb.test(skip=(enabled!=jtag_bsr_external and enabled!=jtag_bsr_internal and enabled != jtag_bsr_all) or int(os.getenv("GL", 0)))
 async def test_jtag_intest(dut):
     """JTAG INTEST command"""
     jtag = await setup_for_jtag(dut)
@@ -963,7 +963,7 @@ async def write_bitstream_jtag(filename, jtag):
 async def test_jtag_isc(dut):
     """ISC (IEEE1532) device programming, with USERCODE command support"""
     jtag = await setup_for_jtag(dut)
-    gl   = os.getenv("GL", False)
+    gl   = int(os.getenv("GL", 0))
 
     # Test USERCODE
     await jtag.read("USERCODE", device=1)
@@ -1059,7 +1059,7 @@ async def test_jtag_isc(dut):
 async def test_jtag_cpu(dut):
     """Program fabric with jtag and cpu"""
     jtag = await setup_for_jtag(dut)
-    gl   = os.getenv("GL", False)
+    gl   = int(os.getenv("GL", 0))
 
     # Program with cpu, jtag not running but in jtag mode
     cocotb.log.info("Waiting for configuration to start.")
@@ -1077,6 +1077,7 @@ async def test_jtag_cpu(dut):
 
     # Check if device is programmed
     await jtag.read("USERCODE", device=1)
+    assert(dut.io_core_sleep_PAD.value == 0x0)
     assert(jtag.ret_val == 0x1)
 
     # Reprogram device (only reprogram parts as to save sim time)
@@ -1092,6 +1093,7 @@ async def test_jtag_cpu(dut):
 
     await jtag.write("ISC_DISABLE", 0x1, device=1)
     await jtag.read("USERCODE", device=1)
+    assert(dut.io_core_sleep_PAD.value == 0x0)
     assert(jtag.ret_val == 0x2)
     if not gl:
         assert(dut.FMD_QNC_greyhound_ihp.i_greyhound_ihp.fpga_dm.i_dm_jtag_tap.tap_isc_state_q.value == 0x2) # ISC Operational
@@ -1100,7 +1102,13 @@ async def test_jtag_cpu(dut):
 
     # Keep running in system mode until fabric is reconfigured
     # Test if isc state changes when fabric is busy
-    for _ in range(100):
+    for _ in range(50):
+        await jtag.write("BYPASS", 0x1, device=1)
+        await jtag.write("ISC_NOOP", 0x1, device=1)
+
+    assert(dut.io_core_sleep_PAD.value == 0x0)
+
+    for _ in range(50):
         await jtag.write("BYPASS", 0x1, device=1)
         await jtag.write("ISC_NOOP", 0x1, device=1)
 
@@ -1120,7 +1128,7 @@ if __name__ == "__main__":
     pdk_root    = os.getenv("PDK_ROOT", testbench_path / '../../IHP-Open-PDK')
     pdk         = os.getenv("PDK", "ihp-sg13g2")
     scl         = os.getenv("SCL", "sg13g2_stdcell")
-    gl          = os.getenv("GL", False)
+    gl          = int(os.getenv("GL", 0))
 
     includes = [testbench_path / '../../rtl/include']
     

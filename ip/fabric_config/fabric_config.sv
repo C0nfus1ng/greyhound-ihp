@@ -24,6 +24,7 @@ module fabric_config #(
     // Bitstream data
     input  [31:0] bitstream_data_i,
     input         bitstream_valid_i,
+    output logic  nextw_fheader_o,
     
     // Configuration in progress
     output logic  busy_o,
@@ -48,6 +49,8 @@ module fabric_config #(
     state_t curr_state;
     state_t next_state;
     
+    assign nextw_fheader_o = next_state==S_HEADER;
+
     logic clk_gated;
     
     (* keep, dont_touch *)

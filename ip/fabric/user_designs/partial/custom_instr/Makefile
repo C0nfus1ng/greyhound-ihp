@@ -5,8 +5,8 @@ SLOT_GEN = ../slot_gen.py
 SLOT_CONFIG = slot_config.yaml
 FABRIC = ../../../fabric.csv
 FASM_FILES = Static=Static Slot1=Graycode,DirectOut Slot2=LeftShift,RightShift Slot3=StraightThrough,Crossover
+USERCODES  = 2,2,2,2,2,2,2
 BOARD = .board
-STATIC_USERCODE = 1
 
 # Make all slots
 all:
@@ -156,7 +156,7 @@ dynamic-gen:
 .PHONY: dynamic-gen
 
 bit-gen:
-	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)" --static_usercode $(STATIC_USERCODE)
+	python3 $(SLOT_GEN) -cbf $(SLOT_CONFIG) --basedir $(BASE_FOLDER) --fabric $(FABRIC) --fasm "$(FASM_FILES)" --usercode "$(USERCODES)"
 .PHONY: bit-gen
 
 open-config:

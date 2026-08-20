@@ -268,6 +268,7 @@ module spiflash (
 	endtask
 
 	always @(csb) begin
+		#0.1;
 		if (csb) begin
 			if (verbose) begin
 				$display("");
@@ -292,6 +293,7 @@ module spiflash (
 
 	always @(csb, clk) begin
 		spi_io_vld = 0;
+		#0.1;
 		if (!csb && !clk) begin
 			if (dummycount > 0) begin
 				io0_oe = 0;
@@ -370,6 +372,7 @@ module spiflash (
 	end
 
 	always @(posedge clk) begin
+		#0.1;
 		if (!csb) begin
 			if (dummycount > 0) begin
 				dummycount = dummycount - 1;

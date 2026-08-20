@@ -67,9 +67,9 @@ all:
 .PHONY: all
 
 # Slot sources
-static-fasm: RTL = static_slot.sv ../../primitive_wrappers.v \
-					$(BASE_FOLDER)/Static/Static_slot_con_X2Y1.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y2.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y3.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y4.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y5.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y6.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y7.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y8.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y9.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y10.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y11.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y12.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y13.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y14.v $(BASE_FOLDER)/Static/Static_slot_con_X2Y15.v \
-					$(BASE_FOLDER)/Static/Static_slot_con_X6Y1.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y2.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y3.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y4.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y5.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y6.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y7.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y8.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y9.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y10.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y11.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y12.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y13.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y14.v $(BASE_FOLDER)/Static/Static_slot_con_X6Y15.v
+static-fasm: RTL = static_slot.sv io_wrapper.sv ../../primitive_wrappers.v \
+					$(BASE_FOLDER)/Static/Static_slot_con_X9Y1.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y2.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y3.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y4.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y5.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y6.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y7.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y8.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y9.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y10.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y11.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y12.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y13.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y14.v $(BASE_FOLDER)/Static/Static_slot_con_X9Y15.v \
+					$(BASE_FOLDER)/Static/Static_slot_con_X5Y1.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y2.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y3.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y4.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y5.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y6.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y7.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y8.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y9.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y10.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y11.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y12.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y13.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y14.v $(BASE_FOLDER)/Static/Static_slot_con_X5Y15.v
 static-fasm: TOP = static_slot
 static-fasm: SLOT_ROOT = Static
 static-fasm: PROG_ROOT = Static
@@ -77,7 +77,7 @@ static-fasm: synth pnr
 .PHONY: static-fasm
 
 slot1_2-interleave-fasm: RTL = slot1_2_wrapper.sv slot1_2_interleave.sv ../../primitive_wrappers.v \
-								$(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y1.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y2.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y3.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y4.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y5.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y6.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y7.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y8.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y9.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y10.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y11.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y12.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y13.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y14.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y15.v
+								$(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y1.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y2.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y3.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y4.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y5.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y6.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y7.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y8.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y9.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y10.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y11.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y12.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y13.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y14.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y15.v
 slot1_2-interleave-fasm: TOP = slot1_2_interleave
 slot1_2-interleave-fasm: SLOT_ROOT = Slot1_2
 slot1_2-interleave-fasm: PROG_ROOT = Interleave
@@ -85,7 +85,7 @@ slot1_2-interleave-fasm: synth pnr
 .PHONY: slot1_2-interleave-fasm
 
 slot1_2-combine-fasm: RTL = slot1_2_wrapper.sv slot1_2_combine.sv ../../primitive_wrappers.v \
-								$(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y1.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y2.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y3.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y4.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y5.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y6.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y7.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y8.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y9.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y10.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y11.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y12.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y13.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y14.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y15.v
+								$(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y1.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y2.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y3.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y4.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y5.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y6.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y7.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y8.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y9.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y10.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y11.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y12.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y13.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y14.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y15.v
 slot1_2-combine-fasm: TOP = slot1_2_combine
 slot1_2-combine-fasm: SLOT_ROOT = Slot1_2
 slot1_2-combine-fasm: PROG_ROOT = Combine
@@ -93,7 +93,7 @@ slot1_2-combine-fasm: synth pnr
 .PHONY: slot1_2-combine-fasm
 
 slot1_2-function-fasm: RTL = slot1_2_wrapper.sv slot1_2_function.sv ../../primitive_wrappers.v \
-								$(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y1.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y2.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y3.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y4.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y5.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y6.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y7.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y8.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y9.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y10.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y11.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y12.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y13.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y14.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X6Y15.v
+								$(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y1.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y2.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y3.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y4.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y5.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y6.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y7.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y8.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y9.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y10.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y11.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y12.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y13.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y14.v $(BASE_FOLDER)/Slot1_2/Slot1_2_slot_con_X5Y15.v
 slot1_2-function-fasm: TOP = slot1_2_function
 slot1_2-function-fasm: SLOT_ROOT = Slot1_2
 slot1_2-function-fasm: PROG_ROOT = Function
@@ -149,13 +149,14 @@ clean:
 
 board: # Parse config param and copy wanted files in priority order to board dir
 	mkdir -p $(BOARD)/bitstreams; \
+	mkdir -p $(BOARD)/bitstreams_hex; \
 	for pair in $(FASM_FILES); do \
 		folder=$$(printf '%s' "$$pair" | cut -d= -f1); \
 		files=$$(printf '%s' "$$pair" | cut -d= -f2-); \
 		for file in $$(printf '%s' "$$files" | tr ',' '\n'); do \
 			for suffix in -slot-dedup -slot -dedup ""; do \
 				if [ -f "$(BASE_FOLDER)/$$folder/$$file$$suffix.bit" ]; then \
-					bitstream="$(BASE_FOLDER)/$$folder/$$file$$suffix.bit"; \
+					bitstream="$(BASE_FOLDER)/$$folder/$$file$$suffix"; \
 					break; \
 				fi; \
 			done; \
@@ -164,7 +165,8 @@ board: # Parse config param and copy wanted files in priority order to board dir
 				exit 1; \
 			fi; \
 			echo "Copy $$bitstream into $(BOARD)/bitstreams/$$folder-$$file.bit"; \
- 			cp "$$bitstream" "$(BOARD)/bitstreams/$$folder-$$file.bit"; \
+ 			cp "$$bitstream.bit" "$(BOARD)/bitstreams/$$folder-$$file.bit"; \
+ 			cp "$$bitstream.hex" "$(BOARD)/bitstreams_hex/$$folder-$$file.hex"; \
 		done; \
 	done; \
 	if [ -f "$(BASE_FOLDER)/Static/Static.bit" ]; then \

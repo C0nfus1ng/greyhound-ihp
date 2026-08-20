@@ -139,7 +139,7 @@ module greyhound_ihp (
     logic spi_controller_miso_i;
     
     logic spi_controller_start_i;
-    logic [3:0] spi_controller_slot_i;
+    logic [12:0] spi_controller_slot_chunk_addr;
     
     // I/Os West
     wire [FABRIC_NUM_IO_WEST-1:0]      fabric_io_west_in_i;
@@ -147,9 +147,9 @@ module greyhound_ihp (
     wire [FABRIC_NUM_IO_WEST-1:0]      fabric_io_west_oe_o;
 
     // WARMBOOT
-    wire        fabric_warmboot_boot_o;
-    wire  [3:0] fabric_warmboot_slot_o;
-    wire        fabric_warmboot_reset_i;
+    wire         fabric_warmboot_boot_o;
+    wire  [12:0] fabric_warmboot_slot_o;
+    wire         fabric_warmboot_reset_i;
 
     // CPU_IRQ
     wire  [3:0] fabric_irq_soc;
@@ -200,7 +200,7 @@ module greyhound_ihp (
     
     // CPU trigger reconfiguration
     wire            cpu_warmboot_boot_o;
-    wire [3:0]      cpu_warmboot_slot_o;
+    wire [12:0]      cpu_warmboot_slot_o;
     
     // At startup, trigger configuration
     // when fpga_mode_sync == 1'b0
@@ -225,6 +225,66 @@ module greyhound_ihp (
     end
 
     assign jtag_tck = fpga_sclk_i;
+
+    logic fabric_config_configured_q, fabric_config_configured_pulse;
+    logic [2:0] warmboot_boot_shift;
+    always_ff @(posedge clk, negedge rst_ni) begin
+        if (!rst_ni) begin
+            warmboot_boot_shift <= '0;
+        end else begin
+            if (fabric_config_configured_pulse) warmboot_boot_shift <= '0;
+            else warmboot_boot_shift <= {warmboot_boot_shift[1:0], fabric_warmboot_boot_o};
+        end
+    end
+
+    always_ff @(posedge clk_i, negedge rst_ni) begin
+        if (!rst_ni) begin
+            fabric_config_configured_q <= '0;
+        end else begin
+            fabric_config_configured_q <= fabric_config_configured;
+        end
+    end
+
+    assign fabric_config_configured_pulse = !fabric_config_configured_q & fabric_config_configured;
+
+    logic        fabric_warmboot_boot;
+    logic [ 2:0] fabric_warmboot_slot_offset;
+    logic [ 4:0] fabric_warmboot_col_offset;
+    logic [12:0] fabric_warmboot_slot_chunk_addr;
+    always_ff @(posedge clk, negedge rst_ni) begin
+        if (!rst_ni) begin
+            fabric_warmboot_slot_offset <= '0;
+            fabric_warmboot_col_offset <= '0;
+            fabric_warmboot_slot_chunk_addr <= '0;
+            fabric_warmboot_boot <= 1'b0;
+        end else begin
+            fabric_warmboot_slot_chunk_addr[8:0] <= fabric_warmboot_slot_o[8:0];
+            fabric_warmboot_boot <= 1'b0;
+
+            if (fabric_config_configured_pulse) fabric_warmboot_col_offset <= '0;
+
+            case (warmboot_boot_shift)
+                3'h1: begin
+                    fabric_warmboot_slot_chunk_addr[12:9] <= fabric_warmboot_slot_o[12:9];
+                    if (!fabric_warmboot_boot_o) fabric_warmboot_boot <= 1'b1;
+                end
+                3'h3: begin
+                    fabric_warmboot_slot_offset <= fabric_warmboot_slot_o[11:9];
+                    fabric_warmboot_col_offset <= fabric_warmboot_slot_o[12];
+                    if (!fabric_warmboot_boot_o) fabric_warmboot_boot <= 1'b1;
+                end
+                3'h7: begin
+                    fabric_warmboot_col_offset[4:1] <= fabric_warmboot_slot_o[12:9];
+                    if (!fabric_warmboot_boot_o) fabric_warmboot_boot <= 1'b1;
+                end
+            endcase
+        end
+    end
+
+    logic [2:0] cpu_warmboot_slot_offset;
+    logic [4:0] cpu_warmboot_col_offset;
+    logic [2:0] spi_controller_slot_offset;
+    logic [4:0] spi_controller_col_offset;
 
     always_comb begin
         jtag_tms         = 1'b0;
@@ -258,8 +318,10 @@ module greyhound_ihp (
             spi_bitstream_valid = '0;
             
             // Slot and trigger
-            spi_controller_slot_i   = '0;
+            spi_controller_slot_chunk_addr = '0;
             spi_controller_start_i  = '0;
+            spi_controller_slot_offset = '0;
+            spi_controller_col_offset = '0;
 
             if (jtag_trst_ni_sync) begin
                 // srst pulled, trst not -> do special init (configure for jtag input instead of spi)
@@ -302,9 +364,10 @@ module greyhound_ihp (
                 spi_bitstream_valid = spi_controller_bitstream_valid_o;
                 
                 // Slot and trigger
-                spi_controller_start_i  = startup_trigger || ((fabric_warmboot_boot_o || cpu_warmboot_boot_o) && !(fabric_config_busy || fabric_spi_controller_busy));
-                spi_controller_slot_i   = startup_trigger ? '0 : cpu_warmboot_boot_o ? cpu_warmboot_slot_o : fabric_warmboot_slot_o;
-                
+                spi_controller_start_i  = startup_trigger || ((fabric_warmboot_boot || cpu_warmboot_boot_o) && !(fabric_config_busy || fabric_spi_controller_busy));
+                spi_controller_slot_chunk_addr = startup_trigger ? '0 : cpu_warmboot_boot_o ? cpu_warmboot_slot_o : fabric_warmboot_slot_chunk_addr;
+                spi_controller_slot_offset = startup_trigger ? '0 : cpu_warmboot_boot_o ? cpu_warmboot_slot_offset : fabric_warmboot_slot_offset;
+                spi_controller_col_offset = startup_trigger ? '0 : cpu_warmboot_boot_o ? cpu_warmboot_col_offset : fabric_warmboot_col_offset;
             end else begin
                 // SPI receiver
                 fpga_sclk_oe_o = 1'b0;
@@ -323,7 +386,9 @@ module greyhound_ihp (
                 
                 // Slot and trigger
                 spi_controller_start_i  = '0;
-                spi_controller_slot_i   = '0;
+                spi_controller_slot_chunk_addr = '0;
+                spi_controller_slot_offset = '0;
+                spi_controller_col_offset = '0;
             end
         end
 
@@ -352,8 +417,10 @@ module greyhound_ihp (
             spi_bitstream_valid = '0;
             
             // Slot and trigger
-            spi_controller_slot_i   = '0;
             spi_controller_start_i  = '0;
+            spi_controller_slot_chunk_addr = '0;
+            spi_controller_slot_offset = '0;
+            spi_controller_col_offset = '0;
         end
     end
     
@@ -378,6 +445,7 @@ module greyhound_ihp (
     logic [31:0] bitstream_data;
     logic        bitstream_valid;
     wire fpga_jtag_tdi;
+    logic [31:0] usercode;
     fpga_dm #(
         .FABRIC_NUM_IO_WEST ( FABRIC_NUM_IO_WEST )
     ) fpga_dm (
@@ -398,6 +466,8 @@ module greyhound_ihp (
         .fabric_configured_i    ( fabric_config_configured ),
         .fabric_bitstream_valid_i ( bitstream_valid         ),
         .fabric_bitstream_data_i  ( bitstream_data          ),
+        // USERCODE
+        .usercode_o             ( usercode                ),
         // Boundary scan register (intercept all relevant fabric connections)
         // GPIOs
         // to boundary
@@ -459,18 +529,15 @@ module greyhound_ihp (
         .fabric_obi_rdata_i     ( fabric_rdata_dm         )
     );
 
-    // TODO adjust BITSTREAM_LENGTH_WORDS
-    fabric_spi_controller #(
-        .BITSTREAM_LENGTH_WORDS (32'h11D6),
-        .SLOT_OFFSET_WORDS      (32'h2000),
-        .NUM_SLOTS              (16)
-    ) fabric_spi_controller (
+    logic       nextw_fheader;
+
+    fabric_spi_controller fabric_spi_controller (
         .clk_i  (clk),
         .rst_ni (rst_n_sync),
         
         // Start reading data at selected slot
-        .start_i    (spi_controller_start_i),
-        .slot_i     (spi_controller_slot_i),
+        .start_i           (spi_controller_start_i),
+        .slot_chunk_addr_i (spi_controller_slot_chunk_addr),
         
         // Bitstream data
         .bitstream_data_o    (spi_controller_bitstream_data_o),
@@ -483,7 +550,13 @@ module greyhound_ihp (
         .sclk_o     (spi_controller_sclk_o),
         .cs_no      (spi_controller_cs_no),
         .mosi_o     (spi_controller_mosi_o),
-        .miso_i     (spi_controller_miso_i)
+        .miso_i     (spi_controller_miso_i),
+
+        // Control
+        .slot_offset_i      (spi_controller_slot_offset),
+        .bitstream_finish_i (fabric_config_configured_pulse),
+        .col_offset_i       (spi_controller_col_offset),
+        .nextw_fheader_i    (nextw_fheader)
     );
     
     // Mux bitstreams: SPI (controller/receiver) <-> CPU    
@@ -512,6 +585,7 @@ module greyhound_ihp (
         // Bitstream
         .bitstream_valid_i  (bitstream_valid),
         .bitstream_data_i   (bitstream_data),
+        .nextw_fheader_o    (nextw_fheader),
         
         // Configuration in progress
         .busy_o             (fabric_config_busy),
@@ -624,8 +698,10 @@ module greyhound_ihp (
         .bitstream_data_o   (bitstream_data_cpu),
         
         // Trigger fabric reconfiguration
-        .warmboot_boot_o    (cpu_warmboot_boot_o),
-        .warmboot_slot_o    (cpu_warmboot_slot_o),
+        .warmboot_boot_o        (cpu_warmboot_boot_o),
+        .warmboot_slot_o        (cpu_warmboot_slot_o),
+        .warmboot_slot_offset_o (cpu_warmboot_slot_offset),
+        .warmboot_col_offset_o  (cpu_warmboot_col_offset),
         
         // Custom instruction interface to fabric
         .fabric_issue_ready_i   (fabric_issue_ready_soc),
@@ -686,7 +762,8 @@ module greyhound_ihp (
         .jtag_tdi_i     ( jtag_tdi           ),
         .jtag_tdo_o     ( fpga_jtag_tdi      ),
         .jtag_tms_i     ( jtag_tms           ),
-        .jtag_trst_ni   ( jtag_trst_n_module_sync )
+        .jtag_trst_ni   ( jtag_trst_n_module_sync ),
+        .usercode_i     ( usercode           )
     );
     
     // Connect SRAM to the SoC

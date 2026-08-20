@@ -103,9 +103,13 @@ module spiflash_powered (
 
 	reg [1023:0] flash1_slot0_file;
 	reg [1023:0] flash1_slot1_file;
+	reg [1023:0] flash1_slot2_file;
+	reg [1023:0] flash1_slot3_file;
 	initial begin
 		if ($value$plusargs("flash1_slot0=%s", flash1_slot0_file)) $readmemh(flash1_slot0_file, memory);
-		if ($value$plusargs("flash1_slot1=%s", flash1_slot1_file)) $readmemh(flash1_slot1_file, memory, 32'h8000);
+		if ($value$plusargs("flash1_slot1=%s", flash1_slot1_file)) $readmemh(flash1_slot1_file, memory, 32'h100000);
+		if ($value$plusargs("flash1_slot2=%s", flash1_slot2_file)) $readmemh(flash1_slot2_file, memory, 32'h200000);
+		if ($value$plusargs("flash1_slot3=%s", flash1_slot3_file)) $readmemh(flash1_slot3_file, memory, 32'h300000);
 	end
 
 	task spi_action;
@@ -266,6 +270,7 @@ module spiflash_powered (
 	endtask
 
 	always @(csb) begin
+		#0.1;
 		if (csb) begin
 			if (verbose) begin
 				$display("");
@@ -290,6 +295,7 @@ module spiflash_powered (
 
 	always @(csb, clk) begin
 		spi_io_vld = 0;
+		#0.1;
 		if (!csb && !clk) begin
 			if (dummycount > 0) begin
 				io0_oe = 0;
