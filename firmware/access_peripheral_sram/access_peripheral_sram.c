@@ -23,7 +23,7 @@ int main()
   EF_UART_setPrescaler(UART0_BASE, F_CPU/(BAUDRATE*8)-1);
 
   // Wait for FPGA to finish configuration
-  while (*REG_FABRIC_CONFIG_BUSY) {;}
+  while (REG_FABRIC_CONFIG_BUSY) {;}
   
   // Set CPU_IF to peripheral
   *REG_XIF_OR_PERIPH = 1;

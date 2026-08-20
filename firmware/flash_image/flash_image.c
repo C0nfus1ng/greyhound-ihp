@@ -349,7 +349,7 @@ void soft_illegal_insn(uint32_t rs1, uint32_t rs2, uint32_t insn) {
   uint32_t mip;
   __asm__ volatile ("csrr %0, mip" : "=r" (mip));
   bool fabric_irq_pending = mip&(1<<FABRIC_IRQ);
-  bool fabric_busy = (*REG_FABRIC_CONFIG&(1<<FABRIC_CONFIG_BUSY)) | fabric_irq_pending;
+  bool fabric_busy = REG_FABRIC_CONFIG_BUSY | fabric_irq_pending;
 
   switch (insn&0x600707f)
   {

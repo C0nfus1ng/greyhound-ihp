@@ -32,6 +32,6 @@ int main()
   return 0;
 }
 
-void m_fast0_irq_handler() {
+__attribute__ ((interrupt ("machine"))) void m_fast0_irq_handler() {
   printf("Interrupt!\n");
 }

@@ -54,13 +54,13 @@ module fabric_spi_controller #(
     logic [12:0] slot_chunk_addr;
     always_comb begin
         casez (slot_offset_i)
-            6'h0:    slot_chunk_addr = {9'h0, slot_chunk_addr_i[3:0]};
-            6'h1:    slot_chunk_addr = {5'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[3:0]};
-            6'h2:    slot_chunk_addr = {4'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[4:0]};
-            6'h3:    slot_chunk_addr = {3'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[5:0]};
-            6'h4:    slot_chunk_addr = {2'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[6:0]};
-            6'h5:    slot_chunk_addr = {1'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[7:0]};
-            6'h6:    slot_chunk_addr = slot_chunk_addr_i;
+            3'h0:    slot_chunk_addr = {9'h0, slot_chunk_addr_i[3:0]};
+            3'h1:    slot_chunk_addr = {5'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[3:0]};
+            3'h2:    slot_chunk_addr = {4'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[4:0]};
+            3'h3:    slot_chunk_addr = {3'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[5:0]};
+            3'h4:    slot_chunk_addr = {2'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[6:0]};
+            3'h5:    slot_chunk_addr = {1'h0, slot_chunk_addr_i[12:9], slot_chunk_addr_i[7:0]};
+            3'h6:    slot_chunk_addr = slot_chunk_addr_i;
             default: slot_chunk_addr = '0;
         endcase
     end
@@ -279,25 +279,27 @@ module fabric_spi_controller #(
         end
     end
 
-    always_comb begin
-        header_col_addr = '0;
+    generate
+        always_comb begin
+            header_col_addr = '0;
 
-        for (int i = 0; i < NumColumns; i++) begin
-            if (i == header_word[FrameBitsPerRow-1:FrameBitsPerRow-FrameSelectWidth]) begin
-                header_col_addr = 6+(MaxFramesPerCol*(NumRows+1)*i);
+            for (logic [$clog2(NumColumns)-1:0] i = 0; i < NumColumns; i++) begin
+                if (i == $clog2(NumColumns)'(header_word[FrameBitsPerRow-1:FrameBitsPerRow-FrameSelectWidth])) begin
+                    header_col_addr = 13'(6+(MaxFramesPerCol*(NumRows+1)*i));
+                end
             end
         end
-    end
 
-    always_comb begin
-        header_frame_addr = '0;
+        always_comb begin
+            header_frame_addr = '0;
 
-        for (int i = 0; i < MaxFramesPerCol; i++) begin
-            if (header_word[i]) begin
-                header_frame_addr = header_col_addr + ((MaxFramesPerCol-1)*i);
+            for (int i = 0; i < MaxFramesPerCol; i++) begin
+                if (header_word[i]) begin
+                    header_frame_addr = header_col_addr + 13'((MaxFramesPerCol-1)*i);
+                end
             end
         end
-    end
+    endgenerate
 
     always_comb begin
         bitstream_data = shift_register;
@@ -308,13 +310,13 @@ module fabric_spi_controller #(
 
         if ((use_tile == 2'h2) && !inhibit_load_row_tiles) begin
             casez (slot_offset)
-                6'h0:    address_words = {9'h0, header_addr};
-                6'h1:    address_words = {5'h0, address_counter_words[16:13], header_addr};
-                6'h2:    address_words = {4'h0, address_counter_words[17:14], 1'h0, header_addr};
-                6'h3:    address_words = {3'h0, address_counter_words[18:15], 2'h0, header_addr};
-                6'h4:    address_words = {2'h0, address_counter_words[19:16], 3'h0, header_addr};
-                6'h5:    address_words = {1'h0, address_counter_words[20:17], 4'h0, header_addr};
-                6'h6:    address_words = {address_counter_words[21:18], 5'h0, header_addr};
+                3'h0:    address_words = {9'h0, header_addr};
+                3'h1:    address_words = {5'h0, address_counter_words[16:13], header_addr};
+                3'h2:    address_words = {4'h0, address_counter_words[17:14], 1'h0, header_addr};
+                3'h3:    address_words = {3'h0, address_counter_words[18:15], 2'h0, header_addr};
+                3'h4:    address_words = {2'h0, address_counter_words[19:16], 3'h0, header_addr};
+                3'h5:    address_words = {1'h0, address_counter_words[20:17], 4'h0, header_addr};
+                3'h6:    address_words = {address_counter_words[21:18], 5'h0, header_addr};
                 default: address_words = '0;
             endcase
         end

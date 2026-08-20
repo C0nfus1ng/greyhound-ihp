@@ -14,7 +14,7 @@ void wait_for_config() {
 
   while (!busy_prev || busy) {
     busy_prev = busy;
-    busy = (uint8_t)*REG_FABRIC_CONFIG_BUSY;
+    busy = (uint8_t)REG_FABRIC_CONFIG_BUSY;
   }
 }
 

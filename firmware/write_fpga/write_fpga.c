@@ -29,7 +29,7 @@ int main()
   }
 
   // Wait for FPGA to finish configuration
-  while (*REG_FABRIC_CONFIG_BUSY) {;}
+  while (REG_FABRIC_CONFIG_BUSY) {;}
 
   if (*REG_USERCODE != 0x2) {
     return -1;

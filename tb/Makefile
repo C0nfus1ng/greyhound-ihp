@@ -7,7 +7,7 @@ SIM_RESULTS_FOLDER ?= results
 PDK_ROOT		   ?= ../../../IHP-Open-PDK
 
 ALL_TESTS  = FMD_QNC_greyhound_ihp_dbg_tb=hello_world
-ALL_TESTS += FMD_QNC_greyhound_ihp_partial_tb=partial_extension_cpu,partial_extension_jtag,partial_2slots_jtag,flash_image
+ALL_TESTS += FMD_QNC_greyhound_ihp_partial_tb=partial_extension_cpu,partial_extension_jtag,partial_2slots_jtag,flash_image,trigger_slots
 ALL_TESTS += FMD_QNC_greyhound_ihp_tb=hello_world,fpga_all_ones,fpga_all_zeros,cpu_trigger_fpga,custom_instruction,fpga_peripheral,fpga_peripheral_sram,fpga_irq,fpga_blinky,jtag_bsr_none:jtag_enable:jtag_sample:jtag_extest:jtag_intest:jtag_isc,jtag_cpu
 ALL_TESTS += FMD_QNC_greyhound_ihp_dbg_tb=bitstream_upload
 

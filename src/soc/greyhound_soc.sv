@@ -90,11 +90,13 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     output logic            core_sleep_o,
 
     // JTAG
-    input  logic      jtag_tck_i,
-    input  logic      jtag_tdi_i,
-    output logic      jtag_tdo_o,
-    input  logic      jtag_tms_i,
-    input  logic      jtag_trst_ni,
+    input  logic        jclk_i,
+    input  logic        jclk_rising_i,
+    input  logic        jclk_falling_i,
+    input  logic        jtag_tdi_i,
+    output logic        jtag_tdo_o,
+    input  logic        jtag_tms_i,
+    input  logic        jtag_trst_n_sync_i,
     input  logic [31:0] usercode_i
 );
 
@@ -1045,12 +1047,11 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
   dm::dmi_req_t dmi_req;
   dm::dmi_resp_t dmi_resp;
 
-  dmi_jtag #(
+  soc_dmi_jtag #(
     .IdcodeValue ( GreyhoundJtagIdCodeCore )
   ) i_dmi_jtag (
-    .clk_i,
+    .clk_i            ( jclk_i     ),
     .rst_ni,
-    .testmode_i       ( 1'b0           ),
  
     .dmi_rst_no       ( dmi_rst_n      ),
     .dmi_req_o        ( dmi_req        ),
@@ -1061,11 +1062,12 @@ module greyhound_soc import cv32e40x_pkg::*, soc_pkg::*;
     .dmi_resp_ready_o ( dmi_resp_ready ),
     .dmi_resp_valid_i ( dmi_resp_valid ),
 
-    .tck_i            ( jtag_tck_i     ),
-    .tms_i            ( jtag_tms_i     ),
-    .trst_ni          ( jtag_trst_ni   ),
-    .td_i             ( jtag_tdi_i     ),
-    .td_o             ( jtag_tdo_o     ),
+    .jclk_rising_i,
+    .jclk_falling_i,
+    .jtag_trst_n_sync_i,
+    .tms_i            ( jtag_tms_i         ),
+    .td_i             ( jtag_tdi_i         ),
+    .td_o             ( jtag_tdo_o         ),
     .tdo_oe_o         ()
   );
 

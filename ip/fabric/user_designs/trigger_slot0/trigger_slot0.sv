@@ -22,9 +22,12 @@ module top(
             counter <= '1;
             boot <= 1'b0;
         end else begin
+            boot <= 1'b0;
             if (counter > 0) begin
                 counter <= counter - 1;
-            end else begin
+            end
+
+            if (counter == 1) begin
                 boot <= 1'b1;
             end
         end
@@ -36,7 +39,7 @@ module top(
         .RESET  (RESET)
     );
     
-    	assign io_out = '1;
+    assign io_out = '1;
 	assign io_oeb = '0;
 
 endmodule
