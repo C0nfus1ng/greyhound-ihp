@@ -19,7 +19,7 @@ def gen_flash_image(image_args:{(int, str):[str]}, output_file:str, warmboot_slo
                         raise RuntimeError("Stream start not found in bitstream. Is the file a bitstream in the correct format?")
 
                     stream_start_index += 4
-                    bitstream[stream_start_index:stream_start_index+4] = ((int.from_bytes(bitstream[stream_start_index:stream_start_index+4], "big")&0xFFFF_8000) | ((warmboot_slot_addr>>11)&0x7FFF)).to_bytes(4)
+                    bitstream[stream_start_index:stream_start_index+4] = ((int.from_bytes(bitstream[stream_start_index:stream_start_index+4], "big")&0xFFFF_E000) | ((warmboot_slot_addr>>11)&0x1FFF)).to_bytes(4)
                     print(f"USERCODE for {bitstream_folder_path}/{bitstream_file_name}.bit changed to 0x{int.from_bytes(bitstream[stream_start_index:stream_start_index+4], "big"):08x}")
 
                     if warmboot_slot_addr+len(bitstream) > (warmboot_slot+1) * warmboot_slot_offset:

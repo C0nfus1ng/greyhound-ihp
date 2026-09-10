@@ -1250,9 +1250,9 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
             seek_word = ((seek_word & 0xFFFFFF) << 8) | int.from_bytes(seek_byte, "big")
         
         if usercodes and f"Static/{static_prog}" in usercodes.keys():
-            static_usercode = usercodes[f"Static/{static_prog}"]<<15
+            static_usercode = usercodes[f"Static/{static_prog}"]<<13
         else:
-            static_usercode = 1<<15
+            static_usercode = 1<<13
         
         static_bitstream_file.write(static_usercode.to_bytes(4))
 
@@ -1288,7 +1288,7 @@ def gen_bitstream(layout:FabricLayout, option_nomerge:bool, base_dir:str, fasm_f
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}.hex", bytes_per_word=1)
             gen_dedup_bitstream(layout, f"{base_dir}/{slot.name}/{fasm_file}.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/Static/{static_prog}.bit", [slot])
             bit_to_hex(f"{base_dir}/{slot.name}/{fasm_file}-dedup.bit", f"{base_dir}/{slot.name}/{fasm_file}-dedup.hex", bytes_per_word=1)
-            usercode = usercodes[f"{slot.name}/{fasm_file}"]<<15 if usercodes else 1<<15
+            usercode = usercodes[f"{slot.name}/{fasm_file}"]<<13 if usercodes else 1<<13
             print(f"{slot.name}/{fasm_file} has usercode: {usercode:08x}")
 
             # Create the slot only representation
@@ -1483,8 +1483,8 @@ def parse_usercode(fasm_files:{str:[str]}, arg_usercode:str) -> {str:int}:
 # 7) Start over from 4 for other slots
 # 8) When slots are symetrical allow changing the header to change uploaded slot
 if __name__ == "__main__":
-    usage = "Generate eFPGA Slots\n"\
-            "Use -h, --help to get the help text for all flags\n"\
+    usage = "Generate eFPGA Slots.\n"\
+            "Use -h, --help to get the help text for all flags.\n"\
             "Usage:\n"\
             "1) Run -i to create a config file\n"\
             "2) Run -gsf <conf_file> to generate the static slot config\n"\
@@ -1508,7 +1508,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--spec", help="bitStreamSpec.bin file path, defaults to bitStreamSpec.bin")
     arg_parser.add_argument("--fasm", help="FASM file to generate the bitstream for a slot, defaults to slot name=slot name. Use with specifiying the slot, like --fasm \"Slot1=Prog1,Prog2,.. Slot2=...\"")
     arg_parser.add_argument("--nomerge", action="store_true", help="Prevent merging of slots, may allow routing for static slot with high congestion by sacrificing slot interoperability")
-    arg_parser.add_argument("--usercode", help="17bit wide USERCODES to use for the slots delimited by a ','. Use like --usercode \"1,2,3,4,...\", will be padded with 1 until it haas the same length as bitstreaams specified")
+    arg_parser.add_argument("--usercode", help="17bit wide USERCODES to use for the slots delimited by a ','. Use like --usercode \"1,2,3,4,...\", will be padded with 1 until it has the same length as bitstreams specified")
 
     args = arg_parser.parse_args()
     
