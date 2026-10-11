@@ -151,6 +151,7 @@ module fabric_spi_controller #(
                         address_counter_words <= {slot_chunk_addr, 9'h0};
                         col_offset <= col_offset_i;
                         slot_offset <= slot_offset_i;
+                        loaded_row_tiles_word <= '0;
                     end
                     
                     sclk_o <= 1'b0;

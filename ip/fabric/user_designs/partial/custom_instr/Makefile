@@ -181,7 +181,7 @@ synth:
 pnr:
 	FAB_ROOT=$(BASE_FOLDER)/$(SLOT_ROOT)/ \
 	nextpnr-generic \
-	--uarch fabulous \
+	--seed 1 --uarch fabulous \
 	--json $(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).json \
 	-o fasm=$(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).fasm \
 	--verbose \

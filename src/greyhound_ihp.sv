@@ -146,7 +146,8 @@ module greyhound_ihp (
 
     // WARMBOOT
     wire         fabric_warmboot_boot;
-    wire  [12:0] fabric_warmboot_slot;
+    wire   [3:0] fabric_warmboot_slot;
+    wire  [12:0] fabric_warmboot_slot_chunk_addr;
     wire         fabric_warmboot_reset_i;
 
     // CPU_IRQ
@@ -236,7 +237,7 @@ module greyhound_ihp (
         .spi_controller_bitstream_valid_i   ( spi_controller_bitstream_valid  ),
         .spi_controller_bitstream_finish_o  ( spi_controller_bitstream_finish ),
         .fabric_warmboot_boot_i             ( fabric_warmboot_boot            ),
-        .fabric_warmboot_slot_chunk_addr_i  ( fabric_warmboot_slot            ),
+        .fabric_warmboot_slot_chunk_addr_i  ( fabric_warmboot_slot_chunk_addr ),
         .cpu_warmboot_boot_i                ( cpu_warmboot_boot               ),
         .cpu_warmboot_slot_chunk_addr_i     ( cpu_warmboot_slot_chunk_addr    ),
         .cpu_warmboot_slot_offset_i         ( cpu_warmboot_slot_offset        ),
@@ -441,7 +442,8 @@ module greyhound_ihp (
         .FrameStrobe_o      (FrameStrobe)
     );
 
-    assign fabric_warmboot_reset_i = fabric_config_busy;
+    assign fabric_warmboot_reset_i         = fabric_config_busy;
+    assign fabric_warmboot_slot_chunk_addr = {fabric_warmboot_slot, 9'h0};
 
     (* keep *) fabric_wrapper fabric_wrapper (
         .clk_i          (clk),

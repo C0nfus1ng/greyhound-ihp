@@ -529,7 +529,7 @@ __attribute__((naked)) void handle_illegal_insn() {
                     "lw s11, 44(sp)\n\t"
                     "addi sp, sp, 48\n\t"
                     "j end_handler_incr_mepc"
-                    :::"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11");
+                    :::"s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11");
 }
 
 // FPGA config handler
@@ -646,7 +646,6 @@ int main() {
         *REG_TRIGGER_SLOT = WARMBOOT0_CROSSOVER_USERCODE;
 
         printf("L1: %lx\n", warmboot0_left_shift(0xdeadbeef, 0x10)); // Ret 0xbeef0000
-        wait_nop(0x10);
         printf("L2: %lx\n", warmboot0_left_shift(0xbeefdead, 0x5)); // Ret 0xddfbd5a0
         break;
 
@@ -654,13 +653,11 @@ int main() {
         test_io();
 
         printf("R1: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3)); // Ret 0x1bd5b7dd
-        wait_nop(0x10);
         printf("R2: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x10)); // Ret 0x0000dead
         break;
 
       case 6:
         printf("R3: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3)); // Ret 0x1bd5b7dd
-        wait_nop(0x10);
         printf("L3: %lx\n", warmboot0_left_shift(0xbeefdead, 0x10)); // Ret 0xdead0000
         break;
 
@@ -675,37 +672,27 @@ int main() {
 
       case 9:
         printf("L4: %lx\n", warmboot0_left_shift(0xbeefdead, 0x10)); // Ret 0xdead0000
-        wait_nop(0x10);
         printf("C1: %x\n", warmboot1_combine(0x1, 0x3)); // Ret 0x7
         break;
 
       case 10:
         printf("C2: %x\n", warmboot1_combine(0x1, 0x3)); // Ret 0x7
-        wait_nop(0x10);
         printf("I2: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
         break;
 
       case 11:
         printf("C3: %x\n", warmboot1_combine(0x1, 0x3)); // Ret 0x7
-        wait_nop(0x10);
         printf("I3: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
-        wait_nop(0x10);
         printf("F1: %x\n", warmboot1_function(0x3, 0x1)); // Ret 0x8
-        wait_nop(0x10);
         printf("I4: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
         break;
 
       case 12:
         printf("F2: %x\n", warmboot1_function(0x1, 0x3)); // Ret 0xc
-        wait_nop(0x10);
         printf("F3: %x\n", warmboot1_function(0x2, 0x7)); // Ret 0xe
-        wait_nop(0x10);
         printf("F4: %x\n", warmboot1_function(0x2, 0x6)); // Ret 0x6
-        wait_nop(0x10);
         printf("F5: %x\n", warmboot1_function(0xb, 0x4)); // Ret 0x1
-        wait_nop(0x10);
         printf("I5: %x\n", warmboot1_interleave(0x3, 0x1)); // Ret 0xb
-        wait_nop(0x10);
         printf("R4: %lx\n", warmboot0_right_shift(0xdeadbeef, 0x3)); // Ret 0x1bd5b7dd
         triggered_irq++;
         break;

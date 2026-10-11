@@ -184,7 +184,7 @@ klayout-drc-nodensity:
 .PHONY: drc-latest-nodensity
 
 klayout-drc:
-	python3 ${HOME}/Repositories/IHP-Open-PDK-latest/ihp-sg13g2/libs.tech/klayout/tech/drc/run_drc.py --path final/gds_fill/${TOP}.gds.gz --run_mode=deep --disable_extra_rules
+	python3 ${PDK_ROOT}/ihp-sg13g2/libs.tech/klayout/tech/drc/run_drc.py --path final/gds_fill/${TOP}.gds.gz --run_mode=deep --disable_extra_rules
 .PHONY: drc-latest
 
 zip:

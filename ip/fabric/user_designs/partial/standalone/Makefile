@@ -64,6 +64,13 @@ all:
 	@echo '------------------------------------------------------'
 	@echo ''
 	$(MAKE) board
+
+	@echo ''
+	@echo '------------------------------------------------------'
+	@echo 'Standalone bitstreams'
+	@echo '------------------------------------------------------'
+	@echo ''
+	$(MAKE) standalone_board
 .PHONY: all
 
 # Slot sources
@@ -135,7 +142,7 @@ synth:
 pnr:
 	FAB_ROOT=$(BASE_FOLDER)/$(SLOT_ROOT)/ \
 	nextpnr-generic \
-	--uarch fabulous \
+	--seed 1 --uarch fabulous \
 	--json $(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).json \
 	-o fasm=$(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).fasm \
 	--verbose \
@@ -174,3 +181,21 @@ board: # Parse config param and copy wanted files in priority order to board dir
 		cp "$(BASE_FOLDER)/Static/Static.bit" "$(BOARD)/bitstreams/Static-Full.bit"; \
 	fi ;
 .PHONY: board
+
+standalone_board: # Pad bitstream for lookup
+	mkdir -p $(BOARD)/bitstreams; \
+	mkdir -p $(BOARD)/bitstreams_hex; \
+	for pair in $(FASM_FILES); do \
+		slot=$${pair%%=*}; \
+		[ "$$slot" = "Static" ] && continue; \
+		bitstreams=$${pair#*=}; \
+		IFS=','; \
+		for bitstream in $$bitstreams; do \
+			input="$(BOARD)/bitstreams_hex/$$slot-$$bitstream.hex"; \
+			static="$(BOARD)/bitstreams/Static-Full.bit"; \
+			output="$(BOARD)/bitstreams_hex/$$slot-$$bitstream-standalone.hex"; \
+			python3 build_standalone.py "$$input" "$$static" "$$output"; \
+		done; \
+		unset IFS; \
+	done; 
+.PHONY: standalone_board

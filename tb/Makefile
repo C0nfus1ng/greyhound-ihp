@@ -1,6 +1,6 @@
-MAX_JOBS   		   ?= 4
-TIMEOUT    		   ?= 259200 # 3d whole test timeout in s
-MFILE_TIMEOUT      ?= 1800 # 30m last file modification timeout in s
+MAX_JOBS   		   ?= 1
+TIMEOUT    		   ?= 432000 # 5d whole test timeout in s
+MFILE_TIMEOUT      ?= 3600 # 1h last file modification timeout in s
 SIM_DELAY  		   ?= 30 # Sim parallel startup delay in s
 SIM_RUNNER_FOLDER  ?= sim_build
 SIM_RESULTS_FOLDER ?= results
