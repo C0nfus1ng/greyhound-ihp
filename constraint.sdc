@@ -68,16 +68,22 @@ set_output_delay $output_delay_value -clock $clocks $clk_core_output_ports
 # Bidirectional pads
 set clk_core_inout_ports [get_ports { 
 	io_flash_io_PAD[*]
-	io_fpga_sclk_PAD
-	io_fpga_cs_n_PAD
-	io_fpga_mosi_PAD
-	io_fpga_miso_PAD
 	io_gpio_PAD[*]
-}] 
+}]
 
 set_input_delay -min 0 -clock $clocks $clk_core_inout_ports
 set_input_delay -max $input_delay_value -clock $clocks $clk_core_inout_ports
 set_output_delay $output_delay_value -clock $clocks $clk_core_inout_ports
+
+# Bidirectional SPI synchronized pads (Input is async until synchronizer)
+set spi_jtag_inout_ports [get_ports { 
+	io_fpga_sclk_PAD
+	io_fpga_cs_n_PAD
+	io_fpga_mosi_PAD
+	io_fpga_miso_PAD
+}]
+
+set_output_delay $output_delay_value -clock $clocks $spi_jtag_inout_ports
 
 # Output load
 set cap_load [expr $::env(OUTPUT_CAP_LOAD) / 1000.0]
@@ -99,4 +105,105 @@ if { [info exists ::env(OPENLANE_SDC_IDEAL_CLOCKS)] && $::env(OPENLANE_SDC_IDEAL
 } else {
     set_propagated_clock [all_clocks]
 }
+
+# False paths
+
+set_false_path -setup -hold -from [get_ports {io_reset_PAD}]
+
+set_false_path -setup -hold -from [get_ports {io_fpga_mode_PAD}]
+set_false_path -setup -hold -from [get_ports {io_fetch_enable_PAD}]
+
+set_false_path -setup -hold -from [get_ports {io_ser_rx_PAD}]
+
+set_false_path -setup -hold -through [get_ports {io_gpio_PAD[*]}]
+
+# SPI/JTAG synchronizer interface
+# Find first FF/D to constrain edge pin input with synchronizer without hold buffers
+proc getFFCellfromQNet {qnet_name} {
+    set qnet [get_nets -quiet $qnet_name]
+
+    if {[llength $qnet] != 1} {
+        foreach qn $qnet {
+            puts "Q net: [get_name $qn]"
+        }
+
+        error "Multiple Q nets."
+    }
+
+    set qnet [lindex $qnet 0]
+    set qpins [get_pins -of_objects $qnet]
+
+    if {[llength $qpins] == 0} {
+        error "No pins found on Q net: ${qnet_name}"
+    }
+
+    set ff_cell ""
+
+    foreach qp $qpins {
+        set cell [get_cells -of_objects $qp]
+
+        if {[llength $cell] != 1} {
+            continue
+        }
+
+        set c [lindex $cell 0]
+        set pin_name [get_property $qp name]
+        set ref_name [get_property $c ref_name]
+
+        # Only Q pins can be the FF driver.
+        if {$pin_name ne "Q"} {
+            continue
+        }
+
+        if {$ref_name ne "sg13g2_dfrbpq_1"} {
+            error "Q net is driven by non sg13g2_dfrbpq_1 cell."
+        }
+
+        set ff_cell $c
+    }
+
+    if {$ff_cell eq ""} {
+        error "No FF for Q net found."
+    }
+
+    return $ff_cell
+}
+
+proc getCDCDPinFromQNet {port qnet_name} {
+    puts "Find FF/D ${port} -> ${qnet_name}."
+
+    set ff_cell [getFFCellfromQNet $qnet_name]
+    if {[llength $ff_cell] == 0} {
+        return {}
+    }
+    
+    set ff_name [get_property $ff_cell name]
+    set dpins [get_pins -of_objects $ff_cell -filter {name == D}]
+    set dpin [lindex $dpins 0]
+    set dnets [get_nets -of_objects $dpin]
+    set dnet [lindex $dnets 0]
+    set dnet_name [get_property $dnet full_name]
+    puts "  CDC: ${port} -> ... -> ${dnet_name} -> ${ff_name}/D"
+
+    return $dpin
+}
+
+set max_delay [expr {$::env(CLOCK_PERIOD) / 2.0}]
+set min_delay [expr {-$::env(CLOCK_UNCERTAINTY_CONSTRAINT)}]
+
+set select_dpin [getCDCDPinFromQNet {io_fpga_cs_n_PAD} {i_greyhound_ihp.controller_io_interface.select_d[0]}]
+set_max_delay $max_delay -from [get_ports {io_fpga_cs_n_PAD}] -to $select_dpin -ignore_clock_latency
+set_min_delay $min_delay -from [get_ports {io_fpga_cs_n_PAD}] -to $select_dpin -ignore_clock_latency
+
+set c_clk_dpin [getCDCDPinFromQNet {io_fpga_sclk_PAD} {i_greyhound_ihp.controller_io_interface.c_clk_d[0]}]
+set_max_delay $max_delay -from [get_ports {io_fpga_sclk_PAD}] -to $c_clk_dpin -ignore_clock_latency
+set_min_delay $min_delay -from [get_ports {io_fpga_sclk_PAD}] -to $c_clk_dpin -ignore_clock_latency
+
+set pico_dpin [getCDCDPinFromQNet {io_fpga_mosi_PAD} {i_greyhound_ihp.controller_io_interface.pico_d[0]}]
+set_max_delay $max_delay -from [get_ports {io_fpga_mosi_PAD}] -to $pico_dpin -ignore_clock_latency
+set_min_delay $min_delay -from [get_ports {io_fpga_mosi_PAD}] -to $pico_dpin -ignore_clock_latency
+
+set shift_dpin [getCDCDPinFromQNet {io_fpga_miso_PAD} {i_greyhound_ihp.fabric_spi_controller/shift_register[0]}]
+set_max_delay $max_delay -from [get_ports {io_fpga_miso_PAD}] -to $shift_dpin -ignore_clock_latency
+set_min_delay $min_delay -from [get_ports {io_fpga_miso_PAD}] -to $shift_dpin -ignore_clock_latency
 

@@ -14,7 +14,7 @@ synth:
 pnr:
 	FAB_ROOT=$(FABULOUS_ROOT) \
 	nextpnr-generic \
-	--uarch fabulous \
+	--seed 1 --uarch fabulous \
 	--json $(DESIGN_NAME).json \
 	-o fasm=$(DESIGN_NAME).fasm \
 	--verbose \
