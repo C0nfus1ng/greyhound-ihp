@@ -9,7 +9,8 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 from cocotb.triggers import Timer, Edge, RisingEdge, FallingEdge
 from cocotb.regression import TestFactory
-from cocotb_tools.runner import get_runner
+from cocotb.runner import get_runner
+#from cocotb_tools.runner import get_runner
 from cocotbext.uart import UartSource, UartSink
 
 from cocotbext.spi import SpiBus, SpiConfig, SpiMaster
@@ -95,25 +96,7 @@ fpga_blinky = {
     'dump_waveforms': False,
 }
 
-partial = {
-    'flash0_slot0': '../../../firmware/partial/partial.hex',
-    'flash0_slot1': '',
-    'flash1_slot0': '',
-    'flash1_slot1': '',
-    'connect_flash1': False,
-    'dump_waveforms': True,
-}
-
-partial_2slots = {
-    'flash0_slot0': '../../../firmware/partial_2slots/partial_2slots.hex',
-    'flash0_slot1': '',
-    'flash1_slot0': '',
-    'flash1_slot1': '',
-    'connect_flash1': False,
-    'dump_waveforms': True,
-}
-
-enabled = partial
+enabled = hello_world
 
 async def start_clock(clock, freq=50):
     """ Start the clock @ freq MHz """
@@ -422,113 +405,10 @@ async def test_fpga_blinky(dut):
     await ClockCycles(dut.io_clock_PAD, 10)
     assert(dut.io_gpio_PAD.value == 0x00000000)
 
-@cocotb.test(skip=enabled!=partial)
-async def test_partial(dut):
-    """Run the "Partial" program"""
-
-    # Static setup
-    dut.io_fetch_enable_PAD.value = 1
-    dut.io_fpga_mode_PAD.value = 1 # Configure FPGA as receiver
-
-    # Start up
-    await start_up(dut)
-
-    # Wait for first 3 slots to upload
-    await FallingEdge(dut.io_config_busy_PAD)
-    await FallingEdge(dut.io_config_busy_PAD)
-    await FallingEdge(dut.io_config_busy_PAD)
-    assert(dut.io_gpio_PAD.value == 0x0)
-    await ClockCycles(dut.io_clock_PAD, int(50*20)) # 20µs
-    assert(dut.io_gpio_PAD.value == 0x9)
-    await ClockCycles(dut.io_clock_PAD, int(50*20)) # 20µs
-    assert(dut.io_gpio_PAD.value == 0xA)
-    await ClockCycles(dut.io_clock_PAD, int(50*20)) # 20µs
-    assert(dut.io_gpio_PAD.value == 0xB)
-    
-    # Wait to reconfigure to crossover slot
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
-    assert(dut.io_gpio_PAD.value == 0x0)
-    await ClockCycles(dut.io_clock_PAD, int(50*9)) # 9µs
-    assert(dut.io_gpio_PAD.value == 0x9000_0000)
-    await ClockCycles(dut.io_clock_PAD, int(50*9)) # 9µs
-    assert(dut.io_gpio_PAD.value == 0x5000_0000)
-    await ClockCycles(dut.io_clock_PAD, int(50*9)) # 9µs
-    assert(dut.io_gpio_PAD.value == 0xD000_0000)
-
-    # Wait for first Xif instr
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
-    assert(dut.io_gpio_PAD.value == 0x7E47_9201)
-
-    # Wait for second Xif instr
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
-    assert(dut.io_gpio_PAD.value == 0xC06D_1341)
-
-    # Wait for third Xif instr
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
-    assert(dut.io_gpio_PAD.value == 0x9C06_D134)
-
-    # Wait for fourth Xif instr
-    await FallingEdge(dut.io_config_busy_PAD)
-    await FallingEdge(dut.io_clock_PAD)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x07E5_E727)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0xE5E7_2702)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0xE727_0200)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x2702_001E)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x0)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x2)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x200)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x2_001E)
-    await FallingEdge(dut.io_clock_PAD)
-    assert(dut.io_gpio_PAD.value == 0x0)
-    
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1us
-
-@cocotb.test(skip=enabled!=partial_2slots)
-async def test_partial_2slots(dut):
-    """Run the "Partial 2slots" program"""
-
-    # Static setup
-    dut.io_fetch_enable_PAD.value = 1
-    dut.io_fpga_mode_PAD.value = 1 # Configure FPGA as receiver
-
-    # Start up
-    await start_up(dut)
-    
-    # Wait for firts 3 slots to upload
-    await FallingEdge(dut.io_config_busy_PAD)
-    await FallingEdge(dut.io_config_busy_PAD)
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*120)) # 120µs
-    assert(dut.io_gpio_PAD.value[7:0] == 0x59)
-
-    # Wait for seconf Xif instr
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
-    assert(dut.io_gpio_PAD.value[7:0] == 0x99)
-
-    # Wait for third Xif instr
-    await FallingEdge(dut.io_config_busy_PAD)
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1µs
-    assert(dut.io_gpio_PAD.value[7:0] == 0x95)
-
-    await ClockCycles(dut.io_clock_PAD, int(50*1)) # 1us
-
 if __name__ == "__main__":
 
     sim         = os.getenv("SIM", "icarus")
-    pdk_root    = os.getenv("PDK_ROOT", "../../../greyhound-ihp/IHP-Open-PDK/")
+    pdk_root    = os.getenv("PDK_ROOT", "~/.volare")
     pdk         = os.getenv("PDK", "ihp-sg13g2")
     scl         = os.getenv("SCL", "sg13g2_stdcell")
     gl          = os.getenv("GL", False)

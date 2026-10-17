@@ -11,6 +11,8 @@ OBJ = partial_2slots.o
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS) -I ../bsp -I ../bsp/drivers/EF_UART
 
 TARGET = partial_2slots
+SLOT_NAMES = Static Slot1-Interleave Slot1-Reverse Slot2-Interleave Slot2-Reverse
+SLOT_HEADERS = $(addsuffix .h, $(SLOT_NAMES))
 ELF_TARGET = $(TARGET).elf
 BIN_TARGET = $(TARGET).bin
 HEX_TARGET= $(TARGET).hex
@@ -29,6 +31,19 @@ all: $(HEX_TARGET)
 %.o : %.S
 	$(RISCV_GCC) $(CFLAGS) -c $< -o $@
 
+tile_offset = $(if $(filter Slot1-%,$1),0,$(if $(filter Slot2-%,$1),2,0))
+bit_name = $(patsubst Slot1-%,%,$(patsubst Slot2-%,%,$1))
+
+define SLOT_HEADER_RULE
+$1.h: ../../ip/fabric/user_designs/partial/custom_instr_2slots/board/bitstreams/$(call bit_name,$1).bit
+	$$(PYTHON) build_lookup.py --bytes_per_frame 68 --tile_x_offset $(call tile_offset,$1) $$< ../../ip/fabric/user_designs/partial/custom_instr_2slots/board/bitstreams/Static-full.bit $$@
+endef
+
+$(foreach name,$(SLOT_NAMES),$(eval $(call SLOT_HEADER_RULE,$(name))))
+
+
+$(OBJ): $(SLOT_HEADERS)
+
 $(ELF_TARGET): $(OBJ)
 	$(RISCV_GCC) $(CFLAGS) $< -L$(BSP_PATH) -l:bsp.a -o $@ $(LDFLAGS)
 
@@ -44,7 +59,7 @@ dump: $(ELF_TARGET)
 
 
 clean:
-	rm -f $(OBJ) $(ELF_TARGET) $(BIN_TARGET) $(HEX_TARGET)
+	rm -f $(SLOT_HEADERS) $(OBJ) $(ELF_TARGET) $(BIN_TARGET) $(HEX_TARGET)
 .phony: clean
 
 vars:

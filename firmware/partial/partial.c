@@ -2,14 +2,14 @@
 #include <stdint.h>
 #include <soc.h>
 
-#include "static.h"
-#include "slot1_crossover.h"
-#include "slot1_direct_out.h"
-#include "slot1_graycode.h"
-#include "slot1_stage.h"
-#include "slot2_peripheral.h"
-#include "slot2_xif_left_roll.h"
-#include "slot2_xif_right_roll.h"
+#include "Static.h"
+#include "Crossover.h"
+#include "DirectOut.h"
+#include "Graycode.h"
+#include "Stage.h"
+#include "Peripheral.h"
+#include "XifLeftRoll.h"
+#include "XifRightRoll.h"
 
 #define F_CPU 50000000
 #define BAUDRATE 115200
@@ -38,13 +38,13 @@ int main()
   }
 
   // Write Slot1 bitstream
-  for (uint32_t i = 0; i < sizeof(slot1_direct_out_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_direct_out_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(directOut_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = directOut_bitstream[i];
   }
 
   // Write Slot2 bitstream
-  for (uint32_t i = 0; i < sizeof(slot2_peripheral_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot2_peripheral_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(peripheral_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = peripheral_bitstream[i];
   }
   wait_nop(0x10);
 
@@ -64,8 +64,8 @@ int main()
   *((int*)FABRIC_BASE) = 0x0;
 
   // Write Slot1 bitstream
-  for (uint32_t i = 0; i < sizeof(slot1_crossover_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_crossover_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(crossover_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = crossover_bitstream[i];
   }
 
   *((int*)FABRIC_BASE) = 0x0;
@@ -83,32 +83,32 @@ int main()
   // Test Xif
   *REG_XIF_OR_PERIPH = 0; // Set CPU_IF to xif
   // Write Slot2 bitstream
-  for (uint32_t i = 0; i < sizeof(slot2_xif_left_roll_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot2_xif_left_roll_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(xifLeftRoll_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = xifLeftRoll_bitstream[i];
   }
 
   custom_instruction(0xA012789F, 0x2);
   wait_nop(0x10);
 
   // Write Slot1 bitstream
-  for (uint32_t i = 0; i < sizeof(slot1_graycode_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_graycode_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(graycode_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = graycode_bitstream[i];
   }
 
   custom_instruction(0xA012789F, 0x2);
   wait_nop(0x10);
 
   // Write Slot2 bitstream
-  for (uint32_t i = 0; i < sizeof(slot2_xif_right_roll_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot2_xif_right_roll_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(xifRightRoll_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = xifRightRoll_bitstream[i];
   }
 
   custom_instruction(0xA012789F, 0x2);
   wait_nop(0x10);
 
   // Write Slot1 bitstream
-  for (uint32_t i = 0; i < sizeof(slot1_stage_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_stage_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(stage_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = stage_bitstream[i];
   }
 
   custom_instruction(0xA012789F, 0x2);

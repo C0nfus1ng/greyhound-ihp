@@ -1,0 +1,38 @@
+Slot1 merged with Slot2
+Slots merged into Slot1_2
+
+[3mItalic[0m for non static bridging tiles
+[1mBold[0m for connection tiles between static and dynamic slots
+[31m          |<                                                                             Static                                                                              >|[0m
+[32m                         |<   Slot1   >|[0m
+[33m                                                       |<   Slot2   >|[0m
+[32m                         |<  Slot1_2  >|[0m[33m               |<  Slot1_2  >|[0m
+Row/Col | X00            X01            X02            X03            X04            X05            X06            X07            X08            X09            X10            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Y00     | [31mNULL           [0mN_IO           [0m[31mN_IO           [0mN_term_single  [0m[31mN_term_single2 [0m[31mN_term_single  [0m[31mN_term_single  [0m[31mN_term_DSP     [0m[31mN_term_single  [0m[31mN_term_single  [0m[31mN_term_IHP_SRAM[0m
+Y01     | [31mW_IO           [0m[32mLUT4AB         [0m[31mLUT4AB         [0m[33mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y02     | [31mW_IO           [0m[32mLUT4AB         [0m[31mLUT4AB         [0m[33mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y03     | [31mW_IO           [0m[32mLUT4AB         [0m[31mLUT4AB         [0m[33mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y04     | [31mW_IO           [0m[32mLUT4AB         [0m[31mLUT4AB         [0m[33mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y05     | [31mW_IO           [0m[32mLUT4AB         [0m[31mLUT4AB         [0m[33mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y06     | [31mW_IO           [0m[32mLUT4AB         [0m[31mLUT4AB         [0m[33mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y07     | [31mW_IO           [0m[32m[1mLUT4AB         [0m[31mLUT4AB         [0m[33m[1mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y08     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y09     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y10     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y11     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y12     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y13     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_top        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_top   [0m
+Y14     | [31mW_IO           [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mRegFile        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mDSP_bot        [0m[31mLUT4AB         [0m[31mLUT4AB         [0m[31mIHP_SRAM_bot   [0m
+Y15     | [31mNULL           [0m[31mS_term_single  [0m[31mS_WARMBOOT     [0m[31mS_CPU_IRQ      [0m[31mS_term_single2 [0m[31mS_CPU_IF       [0m[31mS_CPU_IF       [0m[31mS_term_DSP     [0m[31mS_CPU_IF       [0m[31mS_CPU_IF       [0m[31mS_term_IHP_SRAM[0m
+
+Help:
+n for new slot or connection/bridge point
+e to edit an existing slot or connection/bridge point
+d to delete an existing slot or connection/bridge point
+q to quit
+p to view config
+l to load/use another config
+w to write the config and generate the nextpnr, combine the fasm files, generate the bitstream depending on the set flags
+h for this help text
+Command: Quitting

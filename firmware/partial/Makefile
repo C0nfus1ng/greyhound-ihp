@@ -11,6 +11,8 @@ OBJ = partial.o
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS) -I ../bsp -I ../bsp/drivers/EF_UART
 
 TARGET = partial
+SLOT_NAMES = Static Counter Crossover DirectOut Graycode Peripheral Stage XifLeftRoll XifRightRoll 
+SLOT_HEADERS = $(addsuffix .h, $(SLOT_NAMES))
 ELF_TARGET = $(TARGET).elf
 BIN_TARGET = $(TARGET).bin
 HEX_TARGET= $(TARGET).hex
@@ -28,6 +30,11 @@ all: $(HEX_TARGET)
 
 %.o : %.S
 	$(RISCV_GCC) $(CFLAGS) -c $< -o $@
+
+%.h : ../../ip/fabric/user_designs/partial/custom_instr/board/bitstreams/%.bit
+	$(PYTHON) build_lookup.py --bytes_per_frame 68 $< ../../ip/fabric/user_designs/partial/custom_instr/board/bitstreams/Static-full.bit $@
+
+$(OBJ): $(SLOT_HEADERS)
 
 $(ELF_TARGET): $(OBJ)
 	$(RISCV_GCC) $(CFLAGS) $< -L$(BSP_PATH) -l:bsp.a -o $@ $(LDFLAGS)

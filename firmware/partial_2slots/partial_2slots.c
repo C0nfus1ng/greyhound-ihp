@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <soc.h>
 
-#include "static.h"
-#include "slot1_2_interleave_slot1.h"
-#include "slot1_2_interleave_slot2.h"
-#include "slot1_2_reverse_slot1.h"
-#include "slot1_2_reverse_slot2.h"
+#include "Static.h"
+#include "Slot1-Interleave.h"
+#include "Slot2-Interleave.h"
+#include "Slot1-Reverse.h"
+#include "Slot2-Reverse.h"
 
 
 #define F_CPU 50000000
@@ -37,28 +37,28 @@ int main()
   wait_nop(0x100);
 
   // Write Slot1 bitstream
-  for (uint32_t i = 0; i < sizeof(slot1_2_interleave_slot1_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_2_interleave_slot1_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(slot1_interleave_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot1_interleave_bitstream[i];
   }
   wait_nop(0x100);
 
   // Write Slot2 bitstream
-  for (uint32_t i = 0; i < sizeof(slot1_2_reverse_slot2_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_2_reverse_slot2_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(slot2_reverse_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot2_reverse_bitstream[i];
   }
   wait_nop(0x100);
 
   custom_instruction(0xa, 0x0);
 
-  for (uint32_t i = 0; i < sizeof(slot1_2_interleave_slot2_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_2_interleave_slot2_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(slot2_interleave_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot2_interleave_bitstream[i];
   }
 
   custom_instruction(0xa, 0x0);
   wait_nop(0x100);
 
-  for (uint32_t i = 0; i < sizeof(slot1_2_reverse_slot1_bitstream)/sizeof(uint32_t); i++) {
-    *REG_BITSTREAM = slot1_2_reverse_slot1_bitstream[i];
+  for (uint32_t i = 0; i < sizeof(slot1_reverse_bitstream)/sizeof(uint32_t); i++) {
+    *REG_BITSTREAM = slot1_reverse_bitstream[i];
   }
 
   custom_instruction(0xa, 0x0);

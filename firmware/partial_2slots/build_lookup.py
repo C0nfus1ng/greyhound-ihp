@@ -2,7 +2,7 @@
 import argparse
 from pathlib import Path
 
-def load_bitstream(file:Path, tile_x_offset:int=0):
+def load_bitstream(file:Path, tile_x_offset:int=0, bytes_per_frame:int=76):
     with file.open("rb") as bitstream:
         # Find bitstream start
         loaded_bitstream = {"tiles":[], "usercode":1, "data":{"pre_frame":bytes(), "frame":{}, "post_frame":bytes()}}
@@ -30,7 +30,6 @@ def load_bitstream(file:Path, tile_x_offset:int=0):
         loaded_bitstream["tiles"].reverse()
 
         # Load frame data
-        bytes_per_frame = 68
         data = bitstream.read(bytes_per_frame)
         while data:
             if len(data) != bytes_per_frame:
@@ -52,15 +51,15 @@ def load_bitstream(file:Path, tile_x_offset:int=0):
 
         return loaded_bitstream
 
-def gen_bitstream_file(file:Path, static_file:Path=None, tile_x_offset:int=0) -> [int]:
+def gen_bitstream_file(file:Path, static_file:Path=None, tile_x_offset:int=0, bytes_per_frame:int=76) -> [int]:
     # Load static bitstream
 
     loaded_static_bitstream = None
     if static_file:
-        loaded_static_bitstream = load_bitstream(static_file)
+        loaded_static_bitstream = load_bitstream(static_file, bytes_per_frame=bytes_per_frame)
 
     # Load bitstream
-    loaded_bitstream = load_bitstream(file, tile_x_offset)
+    loaded_bitstream = load_bitstream(file, tile_x_offset, bytes_per_frame)
     output_bitstream = []
 
     # Write bitstream to list
@@ -100,11 +99,14 @@ def gen_bitstream_file(file:Path, static_file:Path=None, tile_x_offset:int=0) ->
 
     return output_bitstream
 
-def build_lookup(input_file:Path, static_input_file:Path, output_file:Path, tile_x_offset:int=0):
-    bitstream_words = gen_bitstream_file(input_file, static_input_file, tile_x_offset)
+def build_lookup(input_file:Path, static_input_file:Path, output_file:Path, tile_x_offset:int=0, bytes_per_frame:int=76):
+    bitstream_words = gen_bitstream_file(input_file, static_input_file, tile_x_offset, bytes_per_frame)
 
     with output_file.open("w") as c_file:
-        c_file.write(f"static const uint32_t {output_file.stem}_bitstream[] = "+r"{"+f"\n0x")
+        replace_pos = output_file.stem.find("-")
+        var_name = output_file.stem.replace("-", "_")
+        var_name = var_name[0:replace_pos+2].lower() + var_name[replace_pos+2:]
+        c_file.write(f"static const uint32_t {var_name}_bitstream[] = "+r"{"+f"\n0x")
         c_file.write(f"{",\n0x".join([f"{word:08x}" for word in bitstream_words])}")
         c_file.write(f"\n"+r"}"+f";\n")
 
@@ -114,6 +116,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("static_i_bitstream", help="Path to static input bitstream")
     arg_parser.add_argument("o_c_file", help="Path to output c file")
     arg_parser.add_argument("--tile_x_offset", type=int, default=0, help="Offset for the slot to generate")
+    arg_parser.add_argument("--bytes_per_frame", type=int, default=76, help="Bytes in a single frame, including the header")
     args = arg_parser.parse_args()
     
-    build_lookup(Path(args.i_bitstream), Path(args.static_i_bitstream), Path(args.o_c_file), args.tile_x_offset)
+    build_lookup(Path(args.i_bitstream), Path(args.static_i_bitstream), Path(args.o_c_file), args.tile_x_offset, args.bytes_per_frame)

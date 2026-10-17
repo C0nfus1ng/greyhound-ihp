@@ -210,7 +210,7 @@ synth:
 pnr:
 	FAB_ROOT=$(BASE_FOLDER)/$(SLOT_ROOT)/ \
 	nextpnr-generic \
-	--uarch fabulous \
+	--seed 0 --uarch fabulous \
 	--json $(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).json \
 	-o fasm=$(BASE_FOLDER)/$(SLOT_ROOT)/$(PROG_ROOT).fasm \
 	--verbose \
@@ -224,7 +224,7 @@ clean:
 
 board: # Parse config param and copy wanted files in priority order to board dir
 	mkdir -p $(BOARD)/bitstreams; \
-	for pair in $(FASM_FILES); do \
+	for pair in $(FASM_FILES) Static=Static; do \
 		folder=$$(printf '%s' "$$pair" | cut -d= -f1); \
 		files=$$(printf '%s' "$$pair" | cut -d= -f2-); \
 		for file in $$(printf '%s' "$$files" | tr ',' '\n'); do \
